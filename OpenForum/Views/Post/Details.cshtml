@@ -1,0 +1,128 @@
+﻿@model ViewModels.Topic.TopicDetailsView
+
+@{
+    ViewData["Title"] = Model.Title;
+}
+
+
+<div class="row">
+
+    <div class="col-lg-10">
+
+        <h1 class="mb-4">
+            @Model.Title
+        </h1>
+
+
+        <div class="card shadow-sm mb-4">
+
+            <div class="card-header">
+                <h2 class="h5 mb-0">
+                    Create Post
+                </h2>
+            </div>
+
+            <div class="card-body">
+
+                @await Html.PartialAsync("_Create", Model.CreatePost)
+
+            </div>
+
+        </div>
+
+
+
+        <h2 class="h4 mb-3">
+            Posts
+        </h2>
+
+
+        @if (!Model.Posts.Any())
+        {
+            <div class="alert alert-info">
+                No posts exist yet.
+            </div>
+        }
+        else
+        {
+            @foreach (var post in Model.Posts)
+            {
+                <div class="card shadow-sm mb-3">
+
+                    <div class="card-body">
+
+                        <p class="mb-3">
+                            @post.Content
+                        </p>
+
+                        <p class="text-muted small">
+                            Created: @post.CreatedAt
+                        </p>
+
+                        <div class="d-flex gap-2">
+
+                            <a asp-controller="Comment"
+                               asp-action="Details"
+                               asp-route-id="@post.Id"
+                               class="btn btn-primary btn-sm">
+                                View Post
+                            </a>
+
+                            <a asp-action="Edit"
+                               asp-route-id="@post.Id"
+                               class="btn btn-outline-secondary btn-sm">
+                                Edit
+                            </a>
+
+                            <form asp-action="Delete"
+                                  method="post">
+
+                                <input type="hidden"
+                                       name="id"
+                                       value="@post.Id" />
+
+                                <input type="hidden"
+                                       name="topicId"
+                                       value="@Model.Id" />
+
+                                <button type="submit"
+                                        class="btn btn-outline-danger btn-sm">
+                                    Delete
+                                </button>
+
+                            </form>
+
+                        </div>
+
+                    </div>
+
+                </div>
+            }
+        }
+
+
+
+        @if (Model.EditPost != null)
+        {
+            <div class="card shadow-sm mt-4">
+
+                <div class="card-header">
+
+                    <h2 class="h5 mb-0">
+                        Edit Post
+                    </h2>
+
+                </div>
+
+                <div class="card-body">
+
+                    @await Html.PartialAsync("_Edit", Model.EditPost)
+
+                </div>
+
+            </div>
+        }
+
+    </div>
+
+</div>

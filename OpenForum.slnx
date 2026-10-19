@@ -1,0 +1,9 @@
+<Solution>
+  <Project Path="Application/Application.csproj" Id="d61d7824-debb-40f3-ba47-3d46bc7e2ea8" />
+  <Project Path="EntityContext/EntityContext.csproj" />
+  <Project Path="EntityModels/EntityModels.csproj" />
+  <Project Path="Identity/Identity.csproj" Id="bfd74eed-996b-4b52-86d3-d9a4826dc2ea" />
+  <Project Path="OpenForum/OpenForum.csproj" />
+  <Project Path="Repository/Repository.csproj" />
+  <Project Path="ViewModels/ViewModels.csproj" />
+</Solution>

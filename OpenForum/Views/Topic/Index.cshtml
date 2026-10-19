@@ -1,0 +1,130 @@
+﻿@model ViewModels.Topic.TopicIndexView
+
+@{
+    ViewData["Title"] = "Topics";
+}
+
+
+<div class="row">
+
+    <div class="col-lg-8">
+
+        <h1 class="mb-4">
+            Forum Topics
+        </h1>
+
+
+        <div class="card shadow-sm mb-4">
+
+            <div class="card-header">
+                <h2 class="h5 mb-0">
+                    Create Topic
+                </h2>
+            </div>
+
+            <div class="card-body">
+
+                @await Html.PartialAsync("_Create", Model.CreateTopic)
+
+            </div>
+
+        </div>
+
+
+
+        <h2 class="h4 mb-3">
+            Existing Topics
+        </h2>
+
+
+        @if (!Model.Topics.Any())
+        {
+            <div class="alert alert-info">
+                No topics exist yet.
+            </div>
+        }
+        else
+        {
+            foreach (var topic in Model.Topics)
+            {
+                <div class="card shadow-sm mb-3">
+
+                    <div class="card-body">
+
+                        <h3 class="h5">
+                            @topic.Title
+                        </h3>
+
+
+                        <p class="text-muted">
+                            Created:
+                            @topic.CreatedAt
+                        </p>
+
+
+                        <div class="d-flex gap-2">
+
+                            <a asp-controller="Post"
+                               asp-action="Details"
+                               asp-route-id="@topic.Id"
+                               class="btn btn-primary btn-sm">
+                                View Topic
+                            </a>
+
+
+                            <a asp-action="Edit"
+                               asp-route-id="@topic.Id"
+                               class="btn btn-outline-secondary btn-sm">
+                                Edit
+                            </a>
+
+
+                            <form asp-action="Delete"
+                                  method="post">
+
+                                <input type="hidden"
+                                       name="id"
+                                       value="@topic.Id" />
+
+
+                                <button type="submit"
+                                        class="btn btn-outline-danger btn-sm">
+                                    Delete
+                                </button>
+
+                            </form>
+
+                        </div>
+
+                    </div>
+
+                </div>
+            }
+        }
+
+
+        @if (Model.EditTopic != null)
+        {
+            <div class="card shadow-sm mt-4">
+
+                <div class="card-header">
+
+                    <h2 class="h5 mb-0">
+                        Edit Topic
+                    </h2>
+
+                </div>
+
+
+                <div class="card-body">
+
+                    @await Html.PartialAsync("_Edit", Model.EditTopic)
+
+                </div>
+
+            </div>
+        }
+
+    </div>
+
+</div>

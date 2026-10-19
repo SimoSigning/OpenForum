@@ -1,0 +1,207 @@
+﻿@model ViewModels.Post.PostDetailsView
+
+@{
+    ViewData["Title"] = "Post Details";
+}
+
+
+<div class="row">
+
+    <div class="col-lg-10">
+
+
+        <div class="card shadow-sm mb-4">
+
+            <div class="card-header">
+
+                <h1 class="h5 mb-0">
+                    Post
+                </h1>
+
+            </div>
+
+
+            <div class="card-body">
+
+
+                <h2 class="h6 text-muted">
+                    Post Content
+                </h2>
+
+
+                <p class="mb-3">
+                    @Model.Content
+                </p>
+
+
+                <p class="text-muted small">
+
+                    Created:
+                    @Model.CreatedAt
+
+                </p>
+
+
+                <a asp-controller="Post"
+                   asp-action="Details"
+                   asp-route-id="@Model.TopicId"
+                   class="btn btn-outline-secondary btn-sm">
+
+                    Back to Topic
+
+                </a>
+
+
+            </div>
+
+        </div>
+
+
+
+
+        <div class="card shadow-sm mb-4">
+
+            <div class="card-header">
+
+                <h2 class="h5 mb-0">
+                    Create Comment
+                </h2>
+
+            </div>
+
+
+            <div class="card-body">
+
+                @await Html.PartialAsync("_Create", Model.CreateComment)
+
+            </div>
+
+        </div>
+
+
+
+
+
+        <h2 class="h4 mb-3">
+            Comments
+        </h2>
+
+
+
+        @if (!Model.Comments.Any())
+        {
+            <div class="alert alert-info">
+
+                No comments exist yet.
+
+            </div>
+        }
+        else
+        {
+
+            foreach (var comment in Model.Comments)
+            {
+
+                <div class="card shadow-sm mb-3">
+
+                    <div class="card-body">
+
+
+                        <p class="mb-3">
+                            @comment.Content
+                        </p>
+
+
+                        <p class="text-muted small">
+
+                            Created:
+                            @comment.CreatedAt
+
+                        </p>
+
+
+
+                        <div class="d-flex gap-2">
+
+
+                            <a asp-action="Edit"
+                               asp-route-id="@comment.Id"
+                               class="btn btn-outline-secondary btn-sm">
+
+                                Edit
+
+                            </a>
+
+
+
+                            <form asp-action="Delete"
+                                  method="post">
+
+
+                                <input type="hidden"
+                                       name="id"
+                                       value="@comment.Id" />
+
+
+                                <input type="hidden"
+                                       name="postId"
+                                       value="@Model.Id" />
+
+
+
+                                <button type="submit"
+                                        class="btn btn-outline-danger btn-sm">
+
+                                    Delete
+
+                                </button>
+
+
+                            </form>
+
+
+                        </div>
+
+
+                    </div>
+
+                </div>
+
+            }
+
+        }
+
+
+
+
+        @if (Model.EditComment != null)
+        {
+
+            <div class="card shadow-sm mt-4">
+
+
+                <div class="card-header">
+
+                    <h2 class="h5 mb-0">
+                        Edit Comment
+                    </h2>
+
+                </div>
+
+
+
+                <div class="card-body">
+
+                    @await Html.PartialAsync("_Edit", Model.EditComment)
+
+                </div>
+
+
+            </div>
+
+        }
+
+
+    </div>
+
+</div>

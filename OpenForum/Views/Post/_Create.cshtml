@@ -1,0 +1,35 @@
+﻿@model ViewModels.Post.PostCreateView
+
+
+<form asp-action="Create"
+      method="post">
+
+
+    <input asp-for="TopicId"
+           type="hidden" />
+
+
+    <div class="mb-3">
+
+        <label asp-for="Content"
+               class="form-label">
+        </label>
+
+        <textarea asp-for="Content"
+                  class="form-control"
+                  rows="5">
+        </textarea>
+
+        <span asp-validation-for="Content"
+              class="text-danger">
+        </span>
+
+    </div>
+
+
+    <button type="submit"
+            class="btn btn-success">
+        Create Post
+    </button>
+
+</form>
