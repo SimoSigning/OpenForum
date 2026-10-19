@@ -30,8 +30,6 @@ namespace EntityContext
 
             SeedData(modelBuilder);
         }
-
-
         private static void SeedData(ModelBuilder modelBuilder)
         {
             var topicId = 1;
@@ -44,6 +42,7 @@ namespace EntityContext
                 {
                     Id = topicId,
                     Title = "Welcome to the forum",
+                    CreatedByUserId = "seed-user",
                     CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc)
                 }
             );
@@ -55,6 +54,7 @@ namespace EntityContext
                     Id = postId,
                     TopicId = topicId,
                     Content = "This is the first post",
+                    CreatedByUserId = "seed-user",
                     CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc)
                 }
             );
@@ -66,6 +66,7 @@ namespace EntityContext
                     Id = commentId,
                     PostId = postId,
                     Content = "First comment!",
+                    CreatedByUserId = "seed-user",
                     CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc)
                 }
             );

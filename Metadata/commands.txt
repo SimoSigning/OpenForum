@@ -1,0 +1,5 @@
+Add-Migration Init -Context IdentityContext
+Update-Database -Context IdentityContext
+
+Add-Migration Init -Context ForumContext
+Update-Database -Context ForumContext

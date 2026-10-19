@@ -3530,3 +3530,283 @@ Current next step:
 
 End of handover document
 
+------New session begun 19-10-2026. ----------
+Following is the handover from that session. # OpenForum — Project Handover
+
+## 1. Project overview
+
+OpenForum is an educational forum application built with ASP.NET Core MVC, Entity Framework Core, and ASP.NET Core Identity.
+
+The project was initially scaffolded with AI assistance. The goal now is to understand the existing architecture and develop additional functionality independently, using AI when needed for specific questions, explanations, or unfamiliar concepts.
+
+The forum has three main content types:
+
+- **Topics** — the top-level discussion subjects.
+- **Posts** — posts belonging to a topic.
+- **Comments** — comments belonging to a post.
+
+The application supports CRUD operations, authentication, authorization, role management, and ownership checks.
+
+## 2. Solution architecture
+
+The solution is divided into the following projects/layers:
+
+- **OpenForum** — ASP.NET Core MVC web application, controllers, views, startup configuration, and HTTP-specific functionality.
+- **Forum.Application** — application services, service interfaces, mappers, and application-level context interfaces.
+- **Forum.Repository** — repository implementations and repository interfaces.
+- **Forum.EntityContext** — the forum's Entity Framework Core `ForumContext`.
+- **Forum.EntityModels** — the `Topic`, `Post`, and `Comment` entities.
+- **Forum.ViewModels** — ViewModels used by the MVC views.
+- **Identity** — a separate class library containing ASP.NET Core Identity models, context, and seeding logic.
+
+Actual namespaces used in the code include `Application`, `Repository`, `EntityContext`, `EntityModels`, `ViewModels`, and `Identity`.
+
+Preserve the existing separation between the forum and Identity. In particular, the application and repository layers should not need to reference the Identity project just to implement forum ownership.
+
+## 3. Database contexts
+
+There are two separate EF Core contexts and connection strings.
+
+### Forum database
+
+`ForumContext` is located in `EntityContext` and manages:
+
+- `DbSet<Topic> Topics`
+- `DbSet<Post> Posts`
+- `DbSet<Comment> Comments`
+
+It configures these relationships:
+
+- A post belongs to a topic through `TopicId`.
+- A comment belongs to a post through `PostId`.
+- Both relationships use cascade delete.
+
+`ForumContext.OnModelCreating()` calls `SeedData(modelBuilder)`.
+
+The seed data creates one topic, one post, and one comment. Each has `CreatedByUserId = "seed-user"`, a fixed ID, and a fixed creation timestamp. The placeholder user ID is intentional: the forum context must not depend on Identity.
+
+### Identity database
+
+`IdentityContext` inherits from `IdentityDbContext<ApplicationUser>` and is located in the Identity project.
+
+It stores Identity users, roles, and related authentication data.
+
+The Identity database and migration have been recreated and applied using Package Manager Console:
+
+```powershell
+Add-Migration Init -Context IdentityContext
+Update-Database -Context IdentityContext
+```
+
+When working with migrations, specify the relevant context because the solution contains more than one `DbContext`.
+
+Do not create an Identity migration just because a forum entity changes. Only migrate the context whose schema has changed.
+
+## 4. Identity and authentication
+
+`ApplicationUser` inherits from `IdentityUser`.
+
+Authentication and role management are configured in `OpenForum/Program.cs` using:
+
+```csharp
+builder.Services
+    .AddIdentity<ApplicationUser, IdentityRole>(...)
+    .AddEntityFrameworkStores<IdentityContext>()
+    .AddDefaultTokenProviders();
+```
+
+The application uses cookie authentication. Login and access-denied paths are configured in `Program.cs`.
+
+The following roles are used:
+
+- `Admin`
+- `User`
+
+New registrations are assigned the `User` role. The seeded administrator receives the `Admin` role.
+
+### IdentitySeeder
+
+`IdentitySeeder` is located in `Identity.Services`. It uses `RoleManager<IdentityRole>`, `UserManager<ApplicationUser>`, and `IConfiguration`.
+
+Its `SeedAsync()` method:
+
+1. Creates the `Admin` role if it does not exist.
+2. Creates the `User` role if it does not exist.
+3. Creates the configured administrator account if it does not already exist and assigns it the `Admin` role.
+
+The seeder is registered in `Program.cs`:
+
+```csharp
+builder.Services.AddScoped<IdentitySeeder>();
+```
+
+It is executed automatically at application startup, after `builder.Build()` and before `app.Run()`:
+
+```csharp
+using (var scope = app.Services.CreateScope())
+{
+    var seeder = scope.ServiceProvider
+        .GetRequiredService<IdentitySeeder>();
+
+    await seeder.SeedAsync();
+}
+```
+
+The admin email and password are read from the `AdminUser:Email` and `AdminUser:Password` configuration keys. Keep actual credentials out of source control.
+
+The startup seeding has been run and tested successfully.
+
+## 5. User context and ownership
+
+A user context abstraction was implemented so the application layer can identify the authenticated user without referencing ASP.NET Core Identity directly.
+
+The interface is:
+
+`Application.Interfaces.Contexts.IUserContext`
+
+The MVC implementation is:
+
+`OpenForum.Contexts.UserContext`
+
+It uses `IHttpContextAccessor` to retrieve the current user's ID from the `NameIdentifier` claim and exposes authentication status.
+
+Both services are registered in `Program.cs`:
+
+```csharp
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<IUserContext, UserContext>();
+```
+
+This has already been implemented and tested. **Do not redo this setup.**
+
+### Entity ownership fields
+
+All three forum entities have:
+
+```csharp
+public string CreatedByUserId { get; set; } = string.Empty;
+public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+```
+
+The entities also retain their existing IDs, content fields, and relationships.
+
+There is intentionally no foreign key from `CreatedByUserId` to an Identity user. The two contexts remain separate.
+
+### Service-level ownership enforcement
+
+`TopicService`, `PostService`, and `CommentService` inject `IUserContext`.
+
+Their create methods assign the current user's ID to `CreatedByUserId`. The user ID is not supplied by the ViewModel.
+
+Their update and delete methods load the entity, compare its `CreatedByUserId` against the authenticated user's ID, and throw `UnauthorizedAccessException` if the current user is not the owner.
+
+The services also have a `GetRequiredUserId()` helper that checks authentication and verifies that a user ID is available.
+
+The edit retrieval methods perform ownership checks as well, preventing users from accessing another user's content through the edit workflow.
+
+Missing entities are handled by returning without performing the update or delete, or by returning `null` from retrieval methods, as appropriate to the existing service implementation.
+
+**Preserve service-level ownership checks.** `[Authorize]` alone is not sufficient for ownership: it ensures authentication, not that a user owns a particular record.
+
+## 6. Controllers and CRUD
+
+The main controllers are:
+
+- `TopicController`
+- `PostController`
+- `CommentController`
+
+Their existing patterns are:
+
+- Public read actions display topic, post, and comment content.
+- Create, edit, update, and delete actions require authentication.
+- POST actions use `[ValidateAntiForgeryToken]`.
+- Write operations catch `UnauthorizedAccessException` and return `Forbid()`.
+- Invalid models rebuild the relevant ViewModel before returning the view.
+- Successful operations redirect to the relevant topic or post details page.
+
+Be careful with the meaning of `id` in each controller:
+
+- `TopicController` uses topic IDs.
+- `PostController.Details(int id)` expects a topic ID, while its edit actions use post IDs.
+- `CommentController.Details(int id)` expects a post ID, while its edit actions use comment IDs.
+
+These routes and redirect conventions are already implemented. Do not casually change them during unrelated work.
+
+## 7. ViewModels and mappers
+
+The ViewModels are page-oriented. They contain the data needed by the relevant pages and do not expose `CreatedByUserId` as an editable input.
+
+The application layer uses separate mapper classes and interfaces for topics, posts, and comments.
+
+When adding functionality, preserve the existing pattern of:
+
+1. Retrieving entities through repositories.
+2. Using application services to coordinate operations.
+3. Mapping entities into ViewModels.
+4. Returning ViewModels to MVC views.
+
+Do not add user IDs to editable ViewModels just to support ownership; ownership is already handled by the services.
+
+## 8. Current status
+
+The following has been implemented and tested:
+
+- MVC forum CRUD workflows.
+- Separate forum and Identity contexts.
+- Registration, login, and logout.
+- Identity role creation and administrator seeding.
+- Default `User` role assignment for new registrations.
+- `IUserContext` and its MVC implementation.
+- Creator ID and timestamp fields on forum entities.
+- Service-level ownership checks for editing and deleting topics, posts, and comments.
+- Forum seed data using `"seed-user"` as the placeholder creator ID.
+- Identity migration/database recreation and startup seeding.
+
+The application has been run and tested after the recent changes, and the user reports that everything appears to work as intended.
+
+No additional refactoring is currently required based on the code reviewed.
+
+## 9. Possible future feature: display usernames
+
+A possible future enhancement is to display the creator's username alongside topics, posts, and comments.
+
+The entities already store `CreatedByUserId`, so the necessary identifier is available.
+
+If this feature is implemented:
+
+- Add display-only properties such as `CreatedByUsername` to the relevant ViewModels.
+- Resolve user IDs to usernames when preparing data for display.
+- Preserve the separation between the forum and Identity contexts.
+- Do not introduce an Identity dependency into `ForumContext` or the forum repositories merely to look up usernames.
+
+This feature has **not** been implemented. It is optional and can be approached when the user decides to add it.
+
+## 10. Working preferences for future AI assistance
+
+The user wants to develop the project independently and use AI as a learning aid when necessary.
+
+When assisting:
+
+- Be concise and stay focused on the question asked.
+- Explain the reason for a change, not just the code.
+- Prefer small, incremental changes that fit the existing architecture.
+- Do not repeatedly suggest changes that have already been implemented and tested.
+- Do not introduce optional refactors or new architectural patterns unless they are genuinely necessary.
+- Do not create unnecessary work by raising hypothetical issues that do not apply to the actual code.
+- If reviewing code, distinguish between a genuine defect, a necessary change, and an optional improvement.
+- Ask for the relevant code when something cannot be verified rather than guessing.
+- Preserve the current architecture and existing working behavior unless the user explicitly wants to change them.
+
+The project is a study project. The goal is not to make it unnecessarily enterprise-grade, but to understand and extend the application correctly.
+
+## 11. Where to resume
+
+There is no outstanding required implementation task identified in the reviewed code.
+
+The user intends to continue developing OpenForum independently and may return for help with a specific question or feature. A suitable starting point for any future session is to ask what they want to implement or understand next, rather than proposing a list of additional changes.
+
+**Overall status:** the authentication, ownership, and database-seeding work reviewed so far is implemented. Preserve the current setup and build on it only when a concrete need arises.
+
+---------End of handover 19-10-2026-----------
+

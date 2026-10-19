@@ -1,4 +1,6 @@
-﻿using Application.Interfaces.Services;
+﻿
+using Application.Interfaces.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ViewModels.Topic;
 
@@ -21,17 +23,26 @@ namespace OpenForum.Controllers
             return View(model);
         }
 
+        [Authorize]
         [HttpGet]
         public async Task<IActionResult> Edit(int id)
         {
-            var model = await topicService.GetEditViewAsync(id);
+            try
+            {
+                var model = await topicService.GetEditViewAsync(id);
 
-            if (model == null)
-                return NotFound();
+                if (model == null)
+                    return NotFound();
 
-            return View("Index", model);
+                return View("Index", model);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Forbid();
+            }
         }
 
+        [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(TopicCreateView model)
@@ -39,45 +50,72 @@ namespace OpenForum.Controllers
             if (!ModelState.IsValid)
             {
                 var viewModel = await topicService.GetTopicIndexViewAsync();
-
                 viewModel.CreateTopic = model;
 
                 return View("Index", viewModel);
             }
 
-            await topicService.CreateAsync(model);
-
-            return RedirectToAction(nameof(Index));
+            try
+            {
+                await topicService.CreateAsync(model);
+                return RedirectToAction(nameof(Index));
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Forbid();
+            }
         }
 
+        [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Update(TopicEditView model)
         {
             if (!ModelState.IsValid)
             {
-                var viewModel = await topicService.GetEditViewAsync(model.Id);
+                try
+                {
+                    var viewModel =
+                        await topicService.GetEditViewAsync(model.Id);
 
-                if (viewModel == null)
-                    return NotFound();
+                    if (viewModel == null)
+                        return NotFound();
 
-                viewModel.EditTopic = model;
+                    viewModel.EditTopic = model;
 
-                return View("Index", viewModel);
+                    return View("Index", viewModel);
+                }
+                catch (UnauthorizedAccessException)
+                {
+                    return Forbid();
+                }
             }
 
-            await topicService.UpdateAsync(model);
-
-            return RedirectToAction(nameof(Index));
+            try
+            {
+                await topicService.UpdateAsync(model);
+                return RedirectToAction(nameof(Index));
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Forbid();
+            }
         }
 
+        [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id)
         {
-            await topicService.DeleteAsync(id);
-
-            return RedirectToAction(nameof(Index));
+            try
+            {
+                await topicService.DeleteAsync(id);
+                return RedirectToAction(nameof(Index));
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Forbid();
+            }
         }
     }
 }

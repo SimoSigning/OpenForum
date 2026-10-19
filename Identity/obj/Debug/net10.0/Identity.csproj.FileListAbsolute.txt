@@ -7,6 +7,7 @@ C:\Users\MisterDerp\source\repos\OpenForum\Identity\obj\Debug\net10.0\Identity.G
 C:\Users\MisterDerp\source\repos\OpenForum\Identity\obj\Debug\net10.0\Identity.AssemblyInfoInputs.cache
 C:\Users\MisterDerp\source\repos\OpenForum\Identity\obj\Debug\net10.0\Identity.AssemblyInfo.cs
 C:\Users\MisterDerp\source\repos\OpenForum\Identity\obj\Debug\net10.0\Identity.csproj.CoreCompileInputs.cache
+C:\Users\MisterDerp\source\repos\OpenForum\Identity\obj\Debug\net10.0\Identity.sourcelink.json
 C:\Users\MisterDerp\source\repos\OpenForum\Identity\obj\Debug\net10.0\Identity.dll
 C:\Users\MisterDerp\source\repos\OpenForum\Identity\obj\Debug\net10.0\refint\Identity.dll
 C:\Users\MisterDerp\source\repos\OpenForum\Identity\obj\Debug\net10.0\Identity.pdb

@@ -12,15 +12,15 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EntityContext.Migrations
 {
     [DbContext(typeof(ForumContext))]
-    [Migration("20260617161943_init")]
-    partial class init
+    [Migration("20261019192655_Init")]
+    partial class Init
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.9")
+                .HasAnnotation("ProductVersion", "10.0.10")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -40,6 +40,10 @@ namespace EntityContext.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("CreatedByUserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int>("PostId")
                         .HasColumnType("int");
 
@@ -55,6 +59,7 @@ namespace EntityContext.Migrations
                             Id = 1,
                             Content = "First comment!",
                             CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedByUserId = "seed-user",
                             PostId = 1
                         });
                 });
@@ -74,6 +79,10 @@ namespace EntityContext.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("CreatedByUserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int>("TopicId")
                         .HasColumnType("int");
 
@@ -89,6 +98,7 @@ namespace EntityContext.Migrations
                             Id = 1,
                             Content = "This is the first post",
                             CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedByUserId = "seed-user",
                             TopicId = 1
                         });
                 });
@@ -104,6 +114,10 @@ namespace EntityContext.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("CreatedByUserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -117,6 +131,7 @@ namespace EntityContext.Migrations
                         {
                             Id = 1,
                             CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedByUserId = "seed-user",
                             Title = "Welcome to the forum"
                         });
                 });

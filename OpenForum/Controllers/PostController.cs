@@ -1,4 +1,6 @@
-﻿using Application.Interfaces.Services;
+﻿
+using Application.Interfaces.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ViewModels.Post;
 
@@ -24,24 +26,34 @@ namespace OpenForum.Controllers
             return View(model);
         }
 
+        [Authorize]
         [HttpGet]
         public async Task<IActionResult> Edit(int id)
         {
-            var model = await postService.GetEditViewAsync(id);
+            try
+            {
+                var model = await postService.GetEditViewAsync(id);
 
-            if (model == null)
-                return NotFound();
+                if (model == null)
+                    return NotFound();
 
-            return View("Details", model);
+                return View("Details", model);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Forbid();
+            }
         }
 
+        [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(PostCreateView model)
         {
             if (!ModelState.IsValid)
             {
-                var viewModel = await postService.GetTopicDetailsViewAsync(model.TopicId);
+                var viewModel =
+                    await postService.GetTopicDetailsViewAsync(model.TopicId);
 
                 if (viewModel == null)
                     return NotFound();
@@ -51,39 +63,76 @@ namespace OpenForum.Controllers
                 return View("Details", viewModel);
             }
 
-            await postService.CreateAsync(model);
+            try
+            {
+                await postService.CreateAsync(model);
 
-            return RedirectToAction(nameof(Details), new { id = model.TopicId });
+                return RedirectToAction(
+                    nameof(Details),
+                    new { id = model.TopicId });
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Forbid();
+            }
         }
 
+        [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Update(PostEditView model)
         {
             if (!ModelState.IsValid)
             {
-                var viewModel = await postService.GetEditViewAsync(model.Id);
+                try
+                {
+                    var viewModel =
+                        await postService.GetEditViewAsync(model.Id);
 
-                if (viewModel == null)
-                    return NotFound();
+                    if (viewModel == null)
+                        return NotFound();
 
-                viewModel.EditPost = model;
+                    viewModel.EditPost = model;
 
-                return View("Details", viewModel);
+                    return View("Details", viewModel);
+                }
+                catch (UnauthorizedAccessException)
+                {
+                    return Forbid();
+                }
             }
 
-            await postService.UpdateAsync(model);
+            try
+            {
+                await postService.UpdateAsync(model);
 
-            return RedirectToAction(nameof(Details), new { id = model.TopicId });
+                return RedirectToAction(
+                    nameof(Details),
+                    new { id = model.TopicId });
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Forbid();
+            }
         }
 
+        [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id, int topicId)
         {
-            await postService.DeleteAsync(id);
+            try
+            {
+                await postService.DeleteAsync(id);
 
-            return RedirectToAction(nameof(Details), new { id = topicId });
+                return RedirectToAction(
+                    nameof(Details),
+                    new { id = topicId });
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Forbid();
+            }
         }
     }
 }

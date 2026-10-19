@@ -9,6 +9,7 @@ C:\Users\MisterDerp\source\repos\OpenForum\EntityContext\obj\Debug\net10.0\Entit
 C:\Users\MisterDerp\source\repos\OpenForum\EntityContext\obj\Debug\net10.0\EntityContext.AssemblyInfoInputs.cache
 C:\Users\MisterDerp\source\repos\OpenForum\EntityContext\obj\Debug\net10.0\EntityContext.AssemblyInfo.cs
 C:\Users\MisterDerp\source\repos\OpenForum\EntityContext\obj\Debug\net10.0\EntityContext.csproj.CoreCompileInputs.cache
+C:\Users\MisterDerp\source\repos\OpenForum\EntityContext\obj\Debug\net10.0\EntityContext.sourcelink.json
 C:\Users\MisterDerp\source\repos\OpenForum\EntityContext\obj\Debug\net10.0\EntityCo.E7B552B2.Up2Date
 C:\Users\MisterDerp\source\repos\OpenForum\EntityContext\obj\Debug\net10.0\EntityContext.dll
 C:\Users\MisterDerp\source\repos\OpenForum\EntityContext\obj\Debug\net10.0\refint\EntityContext.dll

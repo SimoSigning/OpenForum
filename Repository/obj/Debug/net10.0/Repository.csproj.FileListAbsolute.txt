@@ -11,6 +11,7 @@ C:\Users\MisterDerp\source\repos\OpenForum\Repository\obj\Debug\net10.0\Reposito
 C:\Users\MisterDerp\source\repos\OpenForum\Repository\obj\Debug\net10.0\Repository.AssemblyInfoInputs.cache
 C:\Users\MisterDerp\source\repos\OpenForum\Repository\obj\Debug\net10.0\Repository.AssemblyInfo.cs
 C:\Users\MisterDerp\source\repos\OpenForum\Repository\obj\Debug\net10.0\Repository.csproj.CoreCompileInputs.cache
+C:\Users\MisterDerp\source\repos\OpenForum\Repository\obj\Debug\net10.0\Repository.sourcelink.json
 C:\Users\MisterDerp\source\repos\OpenForum\Repository\obj\Debug\net10.0\Repository.csproj.Up2Date
 C:\Users\MisterDerp\source\repos\OpenForum\Repository\obj\Debug\net10.0\Repository.dll
 C:\Users\MisterDerp\source\repos\OpenForum\Repository\obj\Debug\net10.0\refint\Repository.dll

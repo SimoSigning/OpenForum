@@ -7,6 +7,7 @@ C:\Users\MisterDerp\source\repos\OpenForum\EntityModels\obj\Debug\net10.0\Entity
 C:\Users\MisterDerp\source\repos\OpenForum\EntityModels\obj\Debug\net10.0\EntityModels.AssemblyInfoInputs.cache
 C:\Users\MisterDerp\source\repos\OpenForum\EntityModels\obj\Debug\net10.0\EntityModels.AssemblyInfo.cs
 C:\Users\MisterDerp\source\repos\OpenForum\EntityModels\obj\Debug\net10.0\EntityModels.csproj.CoreCompileInputs.cache
+C:\Users\MisterDerp\source\repos\OpenForum\EntityModels\obj\Debug\net10.0\EntityModels.sourcelink.json
 C:\Users\MisterDerp\source\repos\OpenForum\EntityModels\obj\Debug\net10.0\EntityModels.dll
 C:\Users\MisterDerp\source\repos\OpenForum\EntityModels\obj\Debug\net10.0\refint\EntityModels.dll
 C:\Users\MisterDerp\source\repos\OpenForum\EntityModels\obj\Debug\net10.0\EntityModels.pdb
