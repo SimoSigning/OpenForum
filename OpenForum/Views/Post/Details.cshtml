@@ -1,4 +1,4 @@
-﻿@model ViewModels.Topic.TopicDetailsView
+﻿@model ViewModels.Post.PostIndexView
 
 @{
     ViewData["Title"] = Model.Title;
@@ -40,7 +40,7 @@
         }
         else
         {
-            @foreach (var post in Model.Posts)
+            @foreach (ViewModels.Post.PostListItemView post in Model.Posts)
             {
                 <div class="card shadow-sm mb-3">
 

@@ -18,7 +18,7 @@ namespace OpenForum.Controllers
         [HttpGet]
         public async Task<IActionResult> Index()
         {
-            var model = await topicService.GetTopicIndexViewAsync();
+            TopicIndexView model = await topicService.GetTopicIndexViewAsync();
 
             return View(model);
         }
@@ -29,7 +29,7 @@ namespace OpenForum.Controllers
         {
             try
             {
-                var model = await topicService.GetEditViewAsync(id);
+                TopicIndexView? model = await topicService.GetEditViewAsync(id);
 
                 if (model == null)
                     return NotFound();
@@ -49,7 +49,7 @@ namespace OpenForum.Controllers
         {
             if (!ModelState.IsValid)
             {
-                var viewModel = await topicService.GetTopicIndexViewAsync();
+                TopicIndexView viewModel = await topicService.GetTopicIndexViewAsync();
                 viewModel.CreateTopic = model;
 
                 return View("Index", viewModel);
@@ -75,7 +75,7 @@ namespace OpenForum.Controllers
             {
                 try
                 {
-                    var viewModel = await topicService.GetEditViewAsync(model.Id);
+                    TopicIndexView? viewModel = await topicService.GetEditViewAsync(model.Id);
 
                     if (viewModel == null)
                         return NotFound();

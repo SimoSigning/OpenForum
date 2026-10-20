@@ -1,7 +1,7 @@
-﻿
-using Application.Interfaces.Contexts;
+﻿using Application.Interfaces.Contexts;
 using Application.Interfaces.Mappers;
 using Application.Interfaces.Services;
+using EntityModels;
 using Repository.interfaces;
 using ViewModels.Topic;
 
@@ -25,7 +25,7 @@ namespace Application.Services
 
         public async Task<TopicIndexView> GetTopicIndexViewAsync()
         {
-            var topics = await topicRepository.GetAllAsync();
+            IEnumerable<Topic> topics = await topicRepository.GetAllAsync();
 
             return new TopicIndexView
             {
@@ -37,17 +37,16 @@ namespace Application.Services
 
         public async Task<TopicIndexView?> GetEditViewAsync(int id)
         {
-            var topics = await topicRepository.GetAllAsync();
-            var topic = await topicRepository.GetByIdAsync(id);
+            IEnumerable<Topic> topics = await topicRepository.GetAllAsync();
+            Topic? topic = await topicRepository.GetByIdAsync(id);
 
             if (topic == null)
                 return null;
 
-            var userId = GetRequiredUserId();
+            string userId = GetRequiredUserId();
 
             if (topic.CreatedByUserId != userId)
-                throw new UnauthorizedAccessException(
-                    "You are not allowed to edit this topic.");
+                throw new UnauthorizedAccessException("You are not allowed to edit this topic.");
 
             return new TopicIndexView
             {
@@ -59,9 +58,8 @@ namespace Application.Services
 
         public async Task CreateAsync(TopicCreateView model)
         {
-            var userId = GetRequiredUserId();
-
-            var topic = topicMapper.ToEntity(model);
+            string userId = GetRequiredUserId();
+            Topic topic = topicMapper.ToEntity(model);
             topic.CreatedByUserId = userId;
 
             await topicRepository.AddAsync(topic);
@@ -69,15 +67,14 @@ namespace Application.Services
 
         public async Task UpdateAsync(TopicEditView model)
         {
-            var userId = GetRequiredUserId();
-            var topic = await topicRepository.GetByIdAsync(model.Id);
+            string userId = GetRequiredUserId();
+            Topic? topic = await topicRepository.GetByIdAsync(model.Id);
 
             if (topic == null)
                 return;
 
             if (topic.CreatedByUserId != userId)
-                throw new UnauthorizedAccessException(
-                    "You are not allowed to edit this topic.");
+                throw new UnauthorizedAccessException("You are not allowed to edit this topic.");
 
             topic.Title = model.Title;
 
@@ -86,26 +83,23 @@ namespace Application.Services
 
         public async Task DeleteAsync(int id)
         {
-            var userId = GetRequiredUserId();
-            var topic = await topicRepository.GetByIdAsync(id);
+            string userId = GetRequiredUserId();
+            Topic? topic = await topicRepository.GetByIdAsync(id);
 
             if (topic == null)
                 return;
 
             if (topic.CreatedByUserId != userId)
-                throw new UnauthorizedAccessException(
-                    "You are not allowed to delete this topic.");
+                throw new UnauthorizedAccessException("You are not allowed to delete this topic.");
 
             await topicRepository.DeleteAsync(id);
         }
 
         private string GetRequiredUserId()
         {
-            if (!userContext.IsAuthenticated ||
-                string.IsNullOrWhiteSpace(userContext.UserId))
+            if (!userContext.IsAuthenticated || string.IsNullOrWhiteSpace(userContext.UserId))
             {
-                throw new UnauthorizedAccessException(
-                    "An authenticated user is required.");
+                throw new UnauthorizedAccessException("An authenticated user is required.");
             }
 
             return userContext.UserId;

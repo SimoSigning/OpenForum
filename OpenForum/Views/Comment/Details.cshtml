@@ -1,4 +1,4 @@
-﻿@model ViewModels.Post.PostDetailsView
+﻿@model ViewModels.Comment.CommentIndexView
 
 @{
     ViewData["Title"] = "Post Details";
@@ -83,7 +83,7 @@
         else
         {
 
-            foreach (var comment in Model.Comments)
+            foreach (ViewModels.Comment.CommentListItemView comment in Model.Comments)
             {
 
                 <div class="card shadow-sm mb-3">

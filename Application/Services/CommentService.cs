@@ -1,10 +1,9 @@
-﻿
-using Application.Interfaces.Contexts;
+﻿using Application.Interfaces.Contexts;
 using Application.Interfaces.Mappers;
 using Application.Interfaces.Services;
+using EntityModels;
 using Repository.interfaces;
 using ViewModels.Comment;
-using ViewModels.Post;
 
 namespace Application.Services
 {
@@ -27,16 +26,16 @@ namespace Application.Services
             this.userContext = userContext;
         }
 
-        public async Task<PostDetailsView?> GetPostDetailsViewAsync(int postId)
+        public async Task<CommentIndexView?> GetPostDetailsViewAsync(int postId)
         {
-            var post = await postRepository.GetByIdAsync(postId);
+            Post? post = await postRepository.GetByIdAsync(postId);
 
             if (post == null)
                 return null;
 
-            var comments = await commentRepository.GetByPostIdAsync(postId);
+            IEnumerable<Comment> comments = await commentRepository.GetByPostIdAsync(postId);
 
-            return new PostDetailsView
+            return new CommentIndexView
             {
                 Id = post.Id,
                 TopicId = post.TopicId,
@@ -51,27 +50,25 @@ namespace Application.Services
             };
         }
 
-        public async Task<PostDetailsView?> GetEditViewAsync(int commentId)
+        public async Task<CommentIndexView?> GetEditViewAsync(int commentId)
         {
-            var comment = await commentRepository.GetByIdAsync(commentId);
+            Comment? comment = await commentRepository.GetByIdAsync(commentId);
 
             if (comment == null)
                 return null;
 
-            var userId = GetRequiredUserId();
+            string userId = GetRequiredUserId();
 
-            if (comment.CreatedByUserId != userId)
-                throw new UnauthorizedAccessException(
-                    "You are not allowed to edit this comment.");
+            if (comment.CreatedByUserId != userId) throw new UnauthorizedAccessException("You are not allowed to edit this comment.");
 
-            var post = await postRepository.GetByIdAsync(comment.PostId);
+            Post? post = await postRepository.GetByIdAsync(comment.PostId);
 
             if (post == null)
                 return null;
 
-            var comments = await commentRepository.GetByPostIdAsync(post.Id);
+            IEnumerable<Comment> comments = await commentRepository.GetByPostIdAsync(post.Id);
 
-            return new PostDetailsView
+            return new CommentIndexView
             {
                 Id = post.Id,
                 TopicId = post.TopicId,
@@ -88,9 +85,9 @@ namespace Application.Services
 
         public async Task CreateAsync(CommentCreateView model)
         {
-            var userId = GetRequiredUserId();
+            string userId = GetRequiredUserId();
 
-            var comment = commentMapper.ToEntity(model);
+            Comment comment = commentMapper.ToEntity(model);
             comment.CreatedByUserId = userId;
 
             await commentRepository.AddAsync(comment);
@@ -98,8 +95,8 @@ namespace Application.Services
 
         public async Task UpdateAsync(CommentEditView model)
         {
-            var userId = GetRequiredUserId();
-            var comment = await commentRepository.GetByIdAsync(model.Id);
+            string userId = GetRequiredUserId();
+            Comment? comment = await commentRepository.GetByIdAsync(model.Id);
 
             if (comment == null)
                 return;
@@ -115,8 +112,8 @@ namespace Application.Services
 
         public async Task DeleteAsync(int id)
         {
-            var userId = GetRequiredUserId();
-            var comment = await commentRepository.GetByIdAsync(id);
+            string userId = GetRequiredUserId();
+            Comment? comment = await commentRepository.GetByIdAsync(id);
 
             if (comment == null)
                 return;

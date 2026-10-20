@@ -1,10 +1,9 @@
-﻿
-using Application.Interfaces.Contexts;
+﻿using Application.Interfaces.Contexts;
 using Application.Interfaces.Mappers;
 using Application.Interfaces.Services;
+using EntityModels;
 using Repository.interfaces;
 using ViewModels.Post;
-using ViewModels.Topic;
 
 namespace Application.Services
 {
@@ -27,16 +26,16 @@ namespace Application.Services
             this.userContext = userContext;
         }
 
-        public async Task<TopicDetailsView?> GetTopicDetailsViewAsync(int topicId)
+        public async Task<PostIndexView?> GetTopicDetailsViewAsync(int topicId)
         {
-            var topic = await topicRepository.GetByIdAsync(topicId);
+            Topic? topic = await topicRepository.GetByIdAsync(topicId);
 
             if (topic == null)
                 return null;
 
-            var posts = await postRepository.GetByTopicIdAsync(topicId);
+            IEnumerable<Post> posts = await postRepository.GetByTopicIdAsync(topicId);
 
-            return new TopicDetailsView
+            return new PostIndexView
             {
                 Id = topic.Id,
                 Title = topic.Title,
@@ -49,27 +48,26 @@ namespace Application.Services
             };
         }
 
-        public async Task<TopicDetailsView?> GetEditViewAsync(int postId)
+        public async Task<PostIndexView?> GetEditViewAsync(int postId)
         {
-            var post = await postRepository.GetByIdAsync(postId);
+            Post? post = await postRepository.GetByIdAsync(postId);
 
             if (post == null)
                 return null;
 
-            var userId = GetRequiredUserId();
+            string userId = GetRequiredUserId();
 
             if (post.CreatedByUserId != userId)
-                throw new UnauthorizedAccessException(
-                    "You are not allowed to edit this post.");
+                throw new UnauthorizedAccessException("You are not allowed to edit this post.");
 
-            var topic = await topicRepository.GetByIdAsync(post.TopicId);
+            Topic? topic = await topicRepository.GetByIdAsync(post.TopicId);
 
             if (topic == null)
                 return null;
 
-            var posts = await postRepository.GetByTopicIdAsync(post.TopicId);
+            IEnumerable<Post> posts = await postRepository.GetByTopicIdAsync(post.TopicId);
 
-            return new TopicDetailsView
+            return new PostIndexView
             {
                 Id = topic.Id,
                 Title = topic.Title,
@@ -84,9 +82,9 @@ namespace Application.Services
 
         public async Task CreateAsync(PostCreateView model)
         {
-            var userId = GetRequiredUserId();
+            string userId = GetRequiredUserId();
 
-            var post = postMapper.ToEntity(model);
+            Post post = postMapper.ToEntity(model);
             post.CreatedByUserId = userId;
 
             await postRepository.AddAsync(post);
@@ -94,15 +92,14 @@ namespace Application.Services
 
         public async Task UpdateAsync(PostEditView model)
         {
-            var userId = GetRequiredUserId();
-            var post = await postRepository.GetByIdAsync(model.Id);
+            string userId = GetRequiredUserId();
+            Post? post = await postRepository.GetByIdAsync(model.Id);
 
             if (post == null)
                 return;
 
             if (post.CreatedByUserId != userId)
-                throw new UnauthorizedAccessException(
-                    "You are not allowed to edit this post.");
+                throw new UnauthorizedAccessException("You are not allowed to edit this post.");
 
             post.Content = model.Content;
 
@@ -111,26 +108,23 @@ namespace Application.Services
 
         public async Task DeleteAsync(int id)
         {
-            var userId = GetRequiredUserId();
-            var post = await postRepository.GetByIdAsync(id);
+            string userId = GetRequiredUserId();
+            Post? post = await postRepository.GetByIdAsync(id);
 
             if (post == null)
                 return;
 
             if (post.CreatedByUserId != userId)
-                throw new UnauthorizedAccessException(
-                    "You are not allowed to delete this post.");
+                throw new UnauthorizedAccessException("You are not allowed to delete this post.");
 
             await postRepository.DeleteAsync(id);
         }
 
         private string GetRequiredUserId()
         {
-            if (!userContext.IsAuthenticated ||
-                string.IsNullOrWhiteSpace(userContext.UserId))
+            if (!userContext.IsAuthenticated || string.IsNullOrWhiteSpace(userContext.UserId))
             {
-                throw new UnauthorizedAccessException(
-                    "An authenticated user is required.");
+                throw new UnauthorizedAccessException("An authenticated user is required.");
             }
 
             return userContext.UserId;

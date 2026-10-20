@@ -18,7 +18,7 @@ namespace OpenForum.Controllers
         [HttpGet]
         public async Task<IActionResult> Details(int id)
         {
-            var model = await postService.GetTopicDetailsViewAsync(id);
+            PostIndexView? model = await postService.GetTopicDetailsViewAsync(id);
 
             if (model == null)
                 return NotFound();
@@ -32,7 +32,7 @@ namespace OpenForum.Controllers
         {
             try
             {
-                var model = await postService.GetEditViewAsync(id);
+                PostIndexView? model = await postService.GetEditViewAsync(id);
 
                 if (model == null)
                     return NotFound();
@@ -52,7 +52,7 @@ namespace OpenForum.Controllers
         {
             if (!ModelState.IsValid)
             {
-                var viewModel = await postService.GetTopicDetailsViewAsync(model.TopicId);
+                PostIndexView? viewModel = await postService.GetTopicDetailsViewAsync(model.TopicId);
 
                 if (viewModel == null)
                     return NotFound();
@@ -85,7 +85,7 @@ namespace OpenForum.Controllers
             {
                 try
                 {
-                    var viewModel = await postService.GetEditViewAsync(model.Id);
+                    PostIndexView? viewModel = await postService.GetEditViewAsync(model.Id);
 
                     if (viewModel == null)
                         return NotFound();

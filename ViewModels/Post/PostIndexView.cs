@@ -1,11 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using ViewModels.Post;
 
-namespace ViewModels.Topic
+namespace ViewModels.Post
 {
-    public class TopicDetailsView
+    public class PostIndexView
     {
         public int Id { get; set; }
 

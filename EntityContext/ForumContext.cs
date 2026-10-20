@@ -5,7 +5,7 @@ namespace EntityContext
 {
     public class ForumContext : DbContext
     {
-       public ForumContext(DbContextOptions<ForumContext> options) : base(options){}
+        public ForumContext(DbContextOptions<ForumContext> options) : base(options){}
 
         public DbSet<Topic> Topics => Set<Topic>();
         public DbSet<Post> Posts => Set<Post>();
@@ -32,9 +32,9 @@ namespace EntityContext
         }
         private static void SeedData(ModelBuilder modelBuilder)
         {
-            var topicId = 1;
-            var postId = 1;
-            var commentId = 1;
+            int topicId = 1;
+            int postId = 1;
+            int commentId = 1;
 
 
             modelBuilder.Entity<Topic>().HasData(

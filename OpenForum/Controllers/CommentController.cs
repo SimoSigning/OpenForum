@@ -18,7 +18,7 @@ namespace OpenForum.Controllers
         [HttpGet]
         public async Task<IActionResult> Details(int id)
         {
-            var model = await commentService.GetPostDetailsViewAsync(id);
+            CommentIndexView? model = await commentService.GetPostDetailsViewAsync(id);
 
             if (model == null)
                 return NotFound();
@@ -32,7 +32,7 @@ namespace OpenForum.Controllers
         {
             try
             {
-                var model = await commentService.GetEditViewAsync(id);
+                CommentIndexView? model = await commentService.GetEditViewAsync(id);
 
                 if (model == null)
                     return NotFound();
@@ -52,8 +52,7 @@ namespace OpenForum.Controllers
         {
             if (!ModelState.IsValid)
             {
-                var viewModel =
-                    await commentService.GetPostDetailsViewAsync(model.PostId);
+                CommentIndexView? viewModel = await commentService.GetPostDetailsViewAsync(model.PostId);
 
                 if (viewModel == null)
                     return NotFound();
@@ -86,8 +85,7 @@ namespace OpenForum.Controllers
             {
                 try
                 {
-                    var viewModel =
-                        await commentService.GetEditViewAsync(model.Id);
+                    CommentIndexView? viewModel = await commentService.GetEditViewAsync(model.Id);
 
                     if (viewModel == null)
                         return NotFound();
