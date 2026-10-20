@@ -27,8 +27,7 @@ namespace Application.Services
             this.userContext = userContext;
         }
 
-        public async Task<TopicDetailsView?> GetTopicDetailsViewAsync(
-            int topicId)
+        public async Task<TopicDetailsView?> GetTopicDetailsViewAsync(int topicId)
         {
             var topic = await topicRepository.GetByIdAsync(topicId);
 
@@ -82,7 +81,6 @@ namespace Application.Services
                 EditPost = postMapper.ToEditView(post)
             };
         }
-
 
         public async Task CreateAsync(PostCreateView model)
         {

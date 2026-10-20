@@ -1,34 +1,23 @@
 ﻿@model ViewModels.Topic.TopicCreateView
 
-
-<form asp-action="Create"
-      method="post">
-
+<form asp-action="Create" method="post">
 
     <div class="mb-3">
 
-        <label asp-for="Title"
-               class="form-label">
+        <label asp-for="Title" class="form-label">
         </label>
 
+        <input asp-for="Title" class="form-control" />
 
-        <input asp-for="Title"
-               class="form-control" />
-
-
-        <span asp-validation-for="Title"
-              class="text-danger">
+        <span asp-validation-for="Title" class="text-danger">
         </span>
 
     </div>
 
-
-    <button type="submit"
-            class="btn btn-success">
+    <button type="submit" class="btn btn-success">
 
         Create Topic
 
     </button>
-
 
 </form>

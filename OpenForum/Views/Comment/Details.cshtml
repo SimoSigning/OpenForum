@@ -4,11 +4,9 @@
     ViewData["Title"] = "Post Details";
 }
 
-
 <div class="row">
 
     <div class="col-lg-10">
-
 
         <div class="card shadow-sm mb-4">
 
@@ -19,7 +17,6 @@
                 </h1>
 
             </div>
-
 
             <div class="card-body">
 
@@ -33,14 +30,12 @@
                     @Model.Content
                 </p>
 
-
                 <p class="text-muted small">
 
                     Created:
                     @Model.CreatedAt
 
                 </p>
-
 
                 <a asp-controller="Post"
                    asp-action="Details"
@@ -51,13 +46,9 @@
 
                 </a>
 
-
             </div>
 
         </div>
-
-
-
 
         <div class="card shadow-sm mb-4">
 
@@ -69,7 +60,6 @@
 
             </div>
 
-
             <div class="card-body">
 
                 @await Html.PartialAsync("_Create", Model.CreateComment)
@@ -78,15 +68,9 @@
 
         </div>
 
-
-
-
-
         <h2 class="h4 mb-3">
             Comments
         </h2>
-
-
 
         @if (!Model.Comments.Any())
         {
@@ -119,35 +103,23 @@
 
                         </p>
 
-
-
                         <div class="d-flex gap-2">
-
 
                             <a asp-action="Edit"
                                asp-route-id="@comment.Id"
                                class="btn btn-outline-secondary btn-sm">
-
                                 Edit
-
                             </a>
 
-
-
-                            <form asp-action="Delete"
-                                  method="post">
-
+                            <form asp-action="Delete" method="post">
 
                                 <input type="hidden"
                                        name="id"
                                        value="@comment.Id" />
 
-
                                 <input type="hidden"
                                        name="postId"
                                        value="@Model.Id" />
-
-
 
                                 <button type="submit"
                                         class="btn btn-outline-danger btn-sm">
@@ -156,12 +128,9 @@
 
                                 </button>
 
-
                             </form>
 
-
                         </div>
-
 
                     </div>
 
@@ -171,14 +140,10 @@
 
         }
 
-
-
-
         @if (Model.EditComment != null)
         {
 
             <div class="card shadow-sm mt-4">
-
 
                 <div class="card-header">
 
@@ -188,19 +153,14 @@
 
                 </div>
 
-
-
                 <div class="card-body">
 
                     @await Html.PartialAsync("_Edit", Model.EditComment)
 
                 </div>
 
-
             </div>
-
         }
-
 
     </div>
 

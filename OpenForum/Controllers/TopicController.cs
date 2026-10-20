@@ -75,8 +75,7 @@ namespace OpenForum.Controllers
             {
                 try
                 {
-                    var viewModel =
-                        await topicService.GetEditViewAsync(model.Id);
+                    var viewModel = await topicService.GetEditViewAsync(model.Id);
 
                     if (viewModel == null)
                         return NotFound();

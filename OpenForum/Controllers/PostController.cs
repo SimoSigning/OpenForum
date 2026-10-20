@@ -52,8 +52,7 @@ namespace OpenForum.Controllers
         {
             if (!ModelState.IsValid)
             {
-                var viewModel =
-                    await postService.GetTopicDetailsViewAsync(model.TopicId);
+                var viewModel = await postService.GetTopicDetailsViewAsync(model.TopicId);
 
                 if (viewModel == null)
                     return NotFound();
@@ -86,8 +85,7 @@ namespace OpenForum.Controllers
             {
                 try
                 {
-                    var viewModel =
-                        await postService.GetEditViewAsync(model.Id);
+                    var viewModel = await postService.GetEditViewAsync(model.Id);
 
                     if (viewModel == null)
                         return NotFound();

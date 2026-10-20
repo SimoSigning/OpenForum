@@ -11,3 +11,4 @@ C:\Users\MisterDerp\source\repos\OpenForum\ViewModels\obj\Debug\net10.0\refint\V
 C:\Users\MisterDerp\source\repos\OpenForum\ViewModels\obj\Debug\net10.0\ViewModels.pdb
 C:\Users\MisterDerp\source\repos\OpenForum\ViewModels\obj\Debug\net10.0\ref\ViewModels.dll
 C:\Users\MisterDerp\source\repos\OpenForum\ViewModels\obj\Debug\net10.0\ViewModels.csproj.Up2Date
+C:\Users\MisterDerp\source\repos\OpenForum\ViewModels\obj\Debug\net10.0\ViewModels.csproj.AssemblyReference.cache

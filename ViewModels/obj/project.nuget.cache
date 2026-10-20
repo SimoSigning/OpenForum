@@ -1,8 +1,10 @@
 {
   "version": 2,
-  "dgSpecHash": "BB4g0gYY2Dk=",
+  "dgSpecHash": "65QkidfTqSA=",
   "success": true,
   "projectFilePath": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\ViewModels\\ViewModels.csproj",
-  "expectedPackageFiles": [],
+  "expectedPackageFiles": [
+    "C:\\Users\\MisterDerp\\.nuget\\packages\\system.security.cryptography.pkcs\\10.0.13\\system.security.cryptography.pkcs.10.0.13.nupkg.sha512"
+  ],
   "logs": []
 }

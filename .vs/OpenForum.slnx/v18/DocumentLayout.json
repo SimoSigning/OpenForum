@@ -3,44 +3,20 @@
   "WorkspaceRootPath": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{4E8ED199-50A4-6D22-F320-E112A27B83DE}|OpenForum\\OpenForum.csproj|c:\\users\\misterderp\\source\\repos\\openforum\\openforum\\controllers\\topiccontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{4E8ED199-50A4-6D22-F320-E112A27B83DE}|OpenForum\\OpenForum.csproj|solutionrelative:openforum\\controllers\\topiccontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{4E8ED199-50A4-6D22-F320-E112A27B83DE}|OpenForum\\OpenForum.csproj|c:\\users\\misterderp\\source\\repos\\openforum\\openforum\\controllers\\commentcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{4E8ED199-50A4-6D22-F320-E112A27B83DE}|OpenForum\\OpenForum.csproj|solutionrelative:openforum\\controllers\\commentcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{D61D7824-DEBB-40F3-BA47-3D46BC7E2EA8}|Application\\Application.csproj|c:\\users\\misterderp\\source\\repos\\openforum\\application\\services\\topicservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{D61D7824-DEBB-40F3-BA47-3D46BC7E2EA8}|Application\\Application.csproj|solutionrelative:application\\services\\topicservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{4E8ED199-50A4-6D22-F320-E112A27B83DE}|OpenForum\\OpenForum.csproj|c:\\users\\misterderp\\source\\repos\\openforum\\openforum\\controllers\\postcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{4E8ED199-50A4-6D22-F320-E112A27B83DE}|OpenForum\\OpenForum.csproj|solutionrelative:openforum\\controllers\\postcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{CE8F3387-4CAB-64ED-80E3-18319C5DCD81}|Repository\\Repository.csproj|c:\\users\\misterderp\\source\\repos\\openforum\\repository\\commentrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{CE8F3387-4CAB-64ED-80E3-18319C5DCD81}|Repository\\Repository.csproj|solutionrelative:repository\\commentrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{4E8ED199-50A4-6D22-F320-E112A27B83DE}|OpenForum\\OpenForum.csproj|c:\\users\\misterderp\\source\\repos\\openforum\\openforum\\views\\topic\\index.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{4E8ED199-50A4-6D22-F320-E112A27B83DE}|OpenForum\\OpenForum.csproj|solutionrelative:openforum\\views\\topic\\index.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{CE8F3387-4CAB-64ED-80E3-18319C5DCD81}|Repository\\Repository.csproj|c:\\users\\misterderp\\source\\repos\\openforum\\repository\\postrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{CE8F3387-4CAB-64ED-80E3-18319C5DCD81}|Repository\\Repository.csproj|solutionrelative:repository\\postrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{CE8F3387-4CAB-64ED-80E3-18319C5DCD81}|Repository\\Repository.csproj|c:\\users\\misterderp\\source\\repos\\openforum\\repository\\topicrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{CE8F3387-4CAB-64ED-80E3-18319C5DCD81}|Repository\\Repository.csproj|solutionrelative:repository\\topicrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{4E8ED199-50A4-6D22-F320-E112A27B83DE}|OpenForum\\OpenForum.csproj|c:\\users\\misterderp\\source\\repos\\openforum\\openforum\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{4E8ED199-50A4-6D22-F320-E112A27B83DE}|OpenForum\\OpenForum.csproj|solutionrelative:openforum\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{21B788FA-DEF4-1204-272F-CC4E3259BF18}|EntityContext\\EntityContext.csproj|c:\\users\\misterderp\\source\\repos\\openforum\\entitycontext\\forumcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{21B788FA-DEF4-1204-272F-CC4E3259BF18}|EntityContext\\EntityContext.csproj|solutionrelative:entitycontext\\forumcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{D084054C-AC22-C662-AC1A-FD5DDEB95E68}|EntityModels\\EntityModels.csproj|c:\\users\\misterderp\\source\\repos\\openforum\\entitymodels\\comment.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{D084054C-AC22-C662-AC1A-FD5DDEB95E68}|EntityModels\\EntityModels.csproj|solutionrelative:entitymodels\\comment.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{D084054C-AC22-C662-AC1A-FD5DDEB95E68}|EntityModels\\EntityModels.csproj|c:\\users\\misterderp\\source\\repos\\openforum\\entitymodels\\post.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{D084054C-AC22-C662-AC1A-FD5DDEB95E68}|EntityModels\\EntityModels.csproj|solutionrelative:entitymodels\\post.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{D084054C-AC22-C662-AC1A-FD5DDEB95E68}|EntityModels\\EntityModels.csproj|c:\\users\\misterderp\\source\\repos\\openforum\\entitymodels\\topic.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{D084054C-AC22-C662-AC1A-FD5DDEB95E68}|EntityModels\\EntityModels.csproj|solutionrelative:entitymodels\\topic.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{4E8ED199-50A4-6D22-F320-E112A27B83DE}|OpenForum\\OpenForum.csproj|c:\\users\\misterderp\\source\\repos\\openforum\\openforum\\views\\post\\details.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{4E8ED199-50A4-6D22-F320-E112A27B83DE}|OpenForum\\OpenForum.csproj|solutionrelative:openforum\\views\\post\\details.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
     }
   ],
   "DocumentGroupContainers": [
@@ -55,131 +31,53 @@
             {
               "$type": "Document",
               "DocumentIndex": 0,
-              "Title": "TopicController.cs",
-              "DocumentMoniker": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\OpenForum\\Controllers\\TopicController.cs",
-              "RelativeDocumentMoniker": "OpenForum\\Controllers\\TopicController.cs",
-              "ToolTip": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\OpenForum\\Controllers\\TopicController.cs",
-              "RelativeToolTip": "OpenForum\\Controllers\\TopicController.cs",
-              "ViewState": "AgIAABcAAAAAAAAAAAAwwCAAAAAAAAAAAAAAAA==",
+              "Title": "CommentController.cs",
+              "DocumentMoniker": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\OpenForum\\Controllers\\CommentController.cs",
+              "RelativeDocumentMoniker": "OpenForum\\Controllers\\CommentController.cs",
+              "ToolTip": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\OpenForum\\Controllers\\CommentController.cs",
+              "RelativeToolTip": "OpenForum\\Controllers\\CommentController.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAoAAAA4AAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-10-19T20:22:42.233Z",
+              "WhenOpened": "2026-10-20T19:07:39.854Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
               "DocumentIndex": 1,
-              "Title": "TopicService.cs",
-              "DocumentMoniker": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\Application\\Services\\TopicService.cs",
-              "RelativeDocumentMoniker": "Application\\Services\\TopicService.cs",
-              "ToolTip": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\Application\\Services\\TopicService.cs",
-              "RelativeToolTip": "Application\\Services\\TopicService.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAkAAAAtAAAAAAAAAA==",
+              "Title": "PostController.cs",
+              "DocumentMoniker": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\OpenForum\\Controllers\\PostController.cs",
+              "RelativeDocumentMoniker": "OpenForum\\Controllers\\PostController.cs",
+              "ToolTip": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\OpenForum\\Controllers\\PostController.cs",
+              "RelativeToolTip": "OpenForum\\Controllers\\PostController.cs",
+              "ViewState": "AgIAAGYAAAAAAAAAAAAmwBcAAAAiAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-10-19T19:45:50.262Z",
+              "WhenOpened": "2026-10-20T19:00:53.509Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
               "DocumentIndex": 2,
-              "Title": "CommentRepository.cs",
-              "DocumentMoniker": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\Repository\\CommentRepository.cs",
-              "RelativeDocumentMoniker": "Repository\\CommentRepository.cs",
-              "ToolTip": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\Repository\\CommentRepository.cs",
-              "RelativeToolTip": "Repository\\CommentRepository.cs",
-              "ViewState": "AgIAAB8AAAAAAAAAAAAcwCUAAAAvAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-10-19T19:44:49.537Z",
+              "Title": "Index.cshtml",
+              "DocumentMoniker": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\OpenForum\\Views\\Topic\\Index.cshtml",
+              "RelativeDocumentMoniker": "OpenForum\\Views\\Topic\\Index.cshtml",
+              "ToolTip": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\OpenForum\\Views\\Topic\\Index.cshtml",
+              "RelativeToolTip": "OpenForum\\Views\\Topic\\Index.cshtml",
+              "ViewState": "AgIAACQAAAAAAAAAAAAAAD0AAAA3AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-10-20T19:00:19.613Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
               "DocumentIndex": 3,
-              "Title": "PostRepository.cs",
-              "DocumentMoniker": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\Repository\\PostRepository.cs",
-              "RelativeDocumentMoniker": "Repository\\PostRepository.cs",
-              "ToolTip": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\Repository\\PostRepository.cs",
-              "RelativeToolTip": "Repository\\PostRepository.cs",
-              "ViewState": "AgIAAB8AAAAAAAAAAAAcwDkAAAAXAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-10-19T19:44:19.17Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 5,
-              "Title": "Program.cs",
-              "DocumentMoniker": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\OpenForum\\Program.cs",
-              "RelativeDocumentMoniker": "OpenForum\\Program.cs",
-              "ToolTip": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\OpenForum\\Program.cs",
-              "RelativeToolTip": "OpenForum\\Program.cs",
-              "ViewState": "AgIAAC0AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-10-19T19:43:21.75Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 7,
-              "Title": "Comment.cs",
-              "DocumentMoniker": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\EntityModels\\Comment.cs",
-              "RelativeDocumentMoniker": "EntityModels\\Comment.cs",
-              "ToolTip": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\EntityModels\\Comment.cs",
-              "RelativeToolTip": "EntityModels\\Comment.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAABIAAAAYAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-10-19T19:41:00.071Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 8,
-              "Title": "Post.cs",
-              "DocumentMoniker": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\EntityModels\\Post.cs",
-              "RelativeDocumentMoniker": "EntityModels\\Post.cs",
-              "ToolTip": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\EntityModels\\Post.cs",
-              "RelativeToolTip": "EntityModels\\Post.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAABQAAAAmAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-10-19T19:40:24.151Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 9,
-              "Title": "Topic.cs",
-              "DocumentMoniker": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\EntityModels\\Topic.cs",
-              "RelativeDocumentMoniker": "EntityModels\\Topic.cs",
-              "ToolTip": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\EntityModels\\Topic.cs",
-              "RelativeToolTip": "EntityModels\\Topic.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAoAAAAdAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-10-19T19:40:15.44Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 4,
-              "Title": "TopicRepository.cs",
-              "DocumentMoniker": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\Repository\\TopicRepository.cs",
-              "RelativeDocumentMoniker": "Repository\\TopicRepository.cs",
-              "ToolTip": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\Repository\\TopicRepository.cs",
-              "RelativeToolTip": "Repository\\TopicRepository.cs",
-              "ViewState": "AgIAABcAAAAAAAAAAAAwwCEAAAAbAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-10-19T19:39:22.952Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 6,
-              "Title": "ForumContext.cs",
-              "DocumentMoniker": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\EntityContext\\ForumContext.cs",
-              "RelativeDocumentMoniker": "EntityContext\\ForumContext.cs",
-              "ToolTip": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\EntityContext\\ForumContext.cs",
-              "RelativeToolTip": "EntityContext\\ForumContext.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA0AAAAiAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-10-19T19:38:14.508Z",
+              "Title": "Details.cshtml",
+              "DocumentMoniker": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\OpenForum\\Views\\Post\\Details.cshtml",
+              "RelativeDocumentMoniker": "OpenForum\\Views\\Post\\Details.cshtml",
+              "ToolTip": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\OpenForum\\Views\\Post\\Details.cshtml",
+              "RelativeToolTip": "OpenForum\\Views\\Post\\Details.cshtml",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-10-20T19:00:08.471Z",
               "EditorCaption": ""
             }
           ]
