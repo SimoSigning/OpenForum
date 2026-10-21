@@ -17,11 +17,13 @@ namespace Application.Services
         public TopicService(
             ITopicRepository topicRepository,
             ITopicMapper topicMapper,
-            ICurrentUserService currentUser)
+            ICurrentUserService currentUser,
+            IUserService userService)
         {
             this.topicRepository = topicRepository;
             this.topicMapper = topicMapper;
             this.currentUser = currentUser;
+            this.userService = userService;
         }
 
         public async Task<TopicIndexView> GetTopicIndexViewAsync()

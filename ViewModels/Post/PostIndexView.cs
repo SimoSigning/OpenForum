@@ -10,6 +10,8 @@ namespace ViewModels.Post
 
         public string Title { get; set; } = string.Empty;
 
+        public string Creator { get; set; } = string.Empty;
+
         public IEnumerable<PostListItemView> Posts { get; set; } = Enumerable.Empty<PostListItemView>();
 
         public PostCreateView CreatePost { get; set; } = new();

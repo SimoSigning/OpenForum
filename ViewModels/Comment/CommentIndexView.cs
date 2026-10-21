@@ -12,6 +12,8 @@ namespace ViewModels.Comment
 
         public string Content { get; set; } = string.Empty;
 
+        public string Creator { get; set; } = string.Empty;
+
         public DateTime CreatedAt { get; set; }
 
         public IEnumerable<CommentListItemView> Comments { get; set; } = Enumerable.Empty<CommentListItemView>();
