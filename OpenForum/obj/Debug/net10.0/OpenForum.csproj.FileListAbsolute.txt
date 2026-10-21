@@ -151,11 +151,11 @@ C:\Users\MisterDerp\source\repos\OpenForum\OpenForum\bin\Debug\net10.0\Identity.
 C:\Users\MisterDerp\source\repos\OpenForum\OpenForum\bin\Debug\net10.0\Repository.dll
 C:\Users\MisterDerp\source\repos\OpenForum\OpenForum\bin\Debug\net10.0\ViewModels.dll
 C:\Users\MisterDerp\source\repos\OpenForum\OpenForum\bin\Debug\net10.0\Application.pdb
+C:\Users\MisterDerp\source\repos\OpenForum\OpenForum\bin\Debug\net10.0\Identity.pdb
+C:\Users\MisterDerp\source\repos\OpenForum\OpenForum\bin\Debug\net10.0\ViewModels.pdb
 C:\Users\MisterDerp\source\repos\OpenForum\OpenForum\bin\Debug\net10.0\EntityContext.pdb
 C:\Users\MisterDerp\source\repos\OpenForum\OpenForum\bin\Debug\net10.0\EntityModels.pdb
-C:\Users\MisterDerp\source\repos\OpenForum\OpenForum\bin\Debug\net10.0\Identity.pdb
 C:\Users\MisterDerp\source\repos\OpenForum\OpenForum\bin\Debug\net10.0\Repository.pdb
-C:\Users\MisterDerp\source\repos\OpenForum\OpenForum\bin\Debug\net10.0\ViewModels.pdb
 C:\Users\MisterDerp\source\repos\OpenForum\OpenForum\obj\Debug\net10.0\OpenForum.csproj.AssemblyReference.cache
 C:\Users\MisterDerp\source\repos\OpenForum\OpenForum\obj\Debug\net10.0\rpswa.dswa.cache.json
 C:\Users\MisterDerp\source\repos\OpenForum\OpenForum\obj\Debug\net10.0\OpenForum.GeneratedMSBuildEditorConfig.editorconfig

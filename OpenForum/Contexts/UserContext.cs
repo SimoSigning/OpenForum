@@ -20,6 +20,11 @@ namespace OpenForum.Services
                 .User?
                 .FindFirstValue(ClaimTypes.NameIdentifier);
 
+        public string? UserName => 
+            httpContextAccessor.HttpContext?
+                .User?
+                .Identity?
+                .Name;
 
         public bool IsAuthenticated =>
             httpContextAccessor.HttpContext?

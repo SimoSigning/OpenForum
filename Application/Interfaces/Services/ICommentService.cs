@@ -7,7 +7,7 @@ namespace Application.Interfaces.Services
 {
     public interface ICommentService
     {
-        Task<CommentIndexView?> GetPostDetailsViewAsync(int postId);
+        Task<CommentIndexView?> GetCommentIndexViewAsync(int postId);
 
         Task<CommentIndexView?> GetEditViewAsync(int commentId);
 

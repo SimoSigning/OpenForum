@@ -8,6 +8,8 @@ namespace Application.Interfaces.Contexts
     {
         string? UserId { get; }
 
+        string? UserName { get; }
+
         bool IsAuthenticated { get; }
     }
 }

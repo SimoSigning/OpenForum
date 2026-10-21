@@ -12,21 +12,21 @@ namespace Application.Services
         private readonly ICommentRepository commentRepository;
         private readonly IPostRepository postRepository;
         private readonly ICommentMapper commentMapper;
-        private readonly IUserContext userContext;
+        private readonly ICurrentUserService currentUser;
 
         public CommentService(
             ICommentRepository commentRepository,
             IPostRepository postRepository,
             ICommentMapper commentMapper,
-            IUserContext userContext)
+            ICurrentUserService currentUser)
         {
             this.commentRepository = commentRepository;
             this.postRepository = postRepository;
             this.commentMapper = commentMapper;
-            this.userContext = userContext;
+            this.currentUser = currentUser;
         }
 
-        public async Task<CommentIndexView?> GetPostDetailsViewAsync(int postId)
+        public async Task<CommentIndexView?> GetCommentIndexViewAsync(int postId)
         {
             Post? post = await postRepository.GetByIdAsync(postId);
 
@@ -57,7 +57,7 @@ namespace Application.Services
             if (comment == null)
                 return null;
 
-            string userId = GetRequiredUserId();
+            string userId = currentUser.GetRequiredUserId();
 
             if (comment.CreatedByUserId != userId) throw new UnauthorizedAccessException("You are not allowed to edit this comment.");
 
@@ -85,7 +85,7 @@ namespace Application.Services
 
         public async Task CreateAsync(CommentCreateView model)
         {
-            string userId = GetRequiredUserId();
+            string userId = currentUser.GetRequiredUserId();
 
             Comment comment = commentMapper.ToEntity(model);
             comment.CreatedByUserId = userId;
@@ -95,7 +95,7 @@ namespace Application.Services
 
         public async Task UpdateAsync(CommentEditView model)
         {
-            string userId = GetRequiredUserId();
+            string userId = currentUser.GetRequiredUserId();
             Comment? comment = await commentRepository.GetByIdAsync(model.Id);
 
             if (comment == null)
@@ -112,7 +112,7 @@ namespace Application.Services
 
         public async Task DeleteAsync(int id)
         {
-            string userId = GetRequiredUserId();
+            string userId = currentUser.GetRequiredUserId();
             Comment? comment = await commentRepository.GetByIdAsync(id);
 
             if (comment == null)
@@ -125,16 +125,5 @@ namespace Application.Services
             await commentRepository.DeleteAsync(id);
         }
 
-        private string GetRequiredUserId()
-        {
-            if (!userContext.IsAuthenticated ||
-                string.IsNullOrWhiteSpace(userContext.UserId))
-            {
-                throw new UnauthorizedAccessException(
-                    "An authenticated user is required.");
-            }
-
-            return userContext.UserId;
-        }
     }
 }

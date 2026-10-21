@@ -18,7 +18,7 @@ namespace OpenForum.Controllers
         [HttpGet]
         public async Task<IActionResult> Details(int id)
         {
-            PostIndexView? model = await postService.GetTopicDetailsViewAsync(id);
+            PostIndexView? model = await postService.GetPostIndexViewAsync(id);
 
             if (model == null)
                 return NotFound();
@@ -52,7 +52,7 @@ namespace OpenForum.Controllers
         {
             if (!ModelState.IsValid)
             {
-                PostIndexView? viewModel = await postService.GetTopicDetailsViewAsync(model.TopicId);
+                PostIndexView? viewModel = await postService.GetPostIndexViewAsync(model.TopicId);
 
                 if (viewModel == null)
                     return NotFound();

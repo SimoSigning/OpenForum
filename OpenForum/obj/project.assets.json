@@ -1188,6 +1188,7 @@
         "type": "project",
         "framework": ".NETCoreApp,Version=v10.0",
         "dependencies": {
+          "Application": "1.0.0",
           "Microsoft.AspNetCore.Identity.EntityFrameworkCore": "10.0.13",
           "Microsoft.AspNetCore.Identity.UI": "10.0.13",
           "Microsoft.EntityFrameworkCore.SqlServer": "10.0.13",
@@ -3490,15 +3491,12 @@
   "projectFileDependencyGroups": {
     "net10.0": [
       "Application >= 1.0.0",
-      "EntityContext >= 1.0.0",
-      "EntityModels >= 1.0.0",
       "Identity >= 1.0.0",
       "Microsoft.AspNetCore.Identity.EntityFrameworkCore >= 10.0.13",
       "Microsoft.AspNetCore.Identity.UI >= 10.0.13",
       "Microsoft.EntityFrameworkCore.Design >= 10.0.13",
       "Microsoft.EntityFrameworkCore.SqlServer >= 10.0.13",
       "Microsoft.EntityFrameworkCore.Tools >= 10.0.13",
-      "Repository >= 1.0.0",
       "System.Security.Cryptography.Pkcs >= 10.0.13",
       "ViewModels >= 1.0.0"
     ]
@@ -3540,17 +3538,8 @@
             "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\Application\\Application.csproj": {
               "projectPath": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\Application\\Application.csproj"
             },
-            "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\EntityContext\\EntityContext.csproj": {
-              "projectPath": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\EntityContext\\EntityContext.csproj"
-            },
-            "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\EntityModels\\EntityModels.csproj": {
-              "projectPath": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\EntityModels\\EntityModels.csproj"
-            },
             "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\Identity\\Identity.csproj": {
               "projectPath": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\Identity\\Identity.csproj"
-            },
-            "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\Repository\\Repository.csproj": {
-              "projectPath": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\Repository\\Repository.csproj"
             },
             "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\ViewModels\\ViewModels.csproj": {
               "projectPath": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\ViewModels\\ViewModels.csproj"

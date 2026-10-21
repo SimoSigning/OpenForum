@@ -9,14 +9,11 @@
       "OpenForum/1.0.0": {
         "dependencies": {
           "Application": "1.0.0",
-          "EntityContext": "1.0.0",
-          "EntityModels": "1.0.0",
           "Identity": "1.0.0",
           "Microsoft.AspNetCore.Identity.EntityFrameworkCore": "10.0.13",
           "Microsoft.AspNetCore.Identity.UI": "10.0.13",
           "Microsoft.EntityFrameworkCore.Design": "10.0.13",
           "Microsoft.EntityFrameworkCore.SqlServer": "10.0.13",
-          "Repository": "1.0.0",
           "System.Security.Cryptography.Pkcs": "10.0.13",
           "ViewModels": "1.0.0"
         },
@@ -891,6 +888,7 @@
       },
       "Identity/1.0.0": {
         "dependencies": {
+          "Application": "1.0.0",
           "Microsoft.AspNetCore.Identity.EntityFrameworkCore": "10.0.13",
           "Microsoft.AspNetCore.Identity.UI": "10.0.13",
           "Microsoft.EntityFrameworkCore.SqlServer": "10.0.13",

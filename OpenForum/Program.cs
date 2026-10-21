@@ -76,6 +76,7 @@ builder.Services.AddScoped<ICommentMapper, CommentMapper>();
 builder.Services.AddScoped<ITopicService, TopicService>();
 builder.Services.AddScoped<IPostService, PostService>();
 builder.Services.AddScoped<ICommentService, CommentService>();
+builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 
 
 var app = builder.Build();
@@ -90,7 +91,6 @@ app.UseHttpsRedirection();
 
 // Static files (wwwroot)
 app.UseStaticFiles();
-
 
 // Routing
 app.UseRouting();

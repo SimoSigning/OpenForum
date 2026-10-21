@@ -11,16 +11,17 @@ namespace Application.Services
     {
         private readonly ITopicRepository topicRepository;
         private readonly ITopicMapper topicMapper;
-        private readonly IUserContext userContext;
+        private readonly ICurrentUserService currentUser;
+        private readonly IUserService userService;
 
         public TopicService(
             ITopicRepository topicRepository,
             ITopicMapper topicMapper,
-            IUserContext userContext)
+            ICurrentUserService currentUser)
         {
             this.topicRepository = topicRepository;
             this.topicMapper = topicMapper;
-            this.userContext = userContext;
+            this.currentUser = currentUser;
         }
 
         public async Task<TopicIndexView> GetTopicIndexViewAsync()
@@ -43,7 +44,7 @@ namespace Application.Services
             if (topic == null)
                 return null;
 
-            string userId = GetRequiredUserId();
+            string userId = currentUser.GetRequiredUserId();
 
             if (topic.CreatedByUserId != userId)
                 throw new UnauthorizedAccessException("You are not allowed to edit this topic.");
@@ -58,7 +59,7 @@ namespace Application.Services
 
         public async Task CreateAsync(TopicCreateView model)
         {
-            string userId = GetRequiredUserId();
+            string userId = currentUser.GetRequiredUserId();
             Topic topic = topicMapper.ToEntity(model);
             topic.CreatedByUserId = userId;
 
@@ -67,7 +68,7 @@ namespace Application.Services
 
         public async Task UpdateAsync(TopicEditView model)
         {
-            string userId = GetRequiredUserId();
+            string userId = currentUser.GetRequiredUserId();
             Topic? topic = await topicRepository.GetByIdAsync(model.Id);
 
             if (topic == null)
@@ -83,7 +84,7 @@ namespace Application.Services
 
         public async Task DeleteAsync(int id)
         {
-            string userId = GetRequiredUserId();
+            string userId = currentUser.GetRequiredUserId();
             Topic? topic = await topicRepository.GetByIdAsync(id);
 
             if (topic == null)
@@ -95,14 +96,5 @@ namespace Application.Services
             await topicRepository.DeleteAsync(id);
         }
 
-        private string GetRequiredUserId()
-        {
-            if (!userContext.IsAuthenticated || string.IsNullOrWhiteSpace(userContext.UserId))
-            {
-                throw new UnauthorizedAccessException("An authenticated user is required.");
-            }
-
-            return userContext.UserId;
-        }
     }
 }

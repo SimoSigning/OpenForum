@@ -1,17 +1,9 @@
-1. Need to upgrade packages to newest version to ensure vulnerabilities are solves.
-
-2. Viewmodels:TopicDetailsView consists of Postviewmodel objects. It might aswell be a PostIndexView just like there is a TopicIndexView. And the same goes for PostDetailsView can be a CommentIndexView. 
-
-3. Give datatypes. Replace var.
-
-4. Currently the same GetRequiredUserId method is within the topic/post/comment services.
+1. Currently the same GetRequiredUserId method is within the topic/post/comment services.
 This should probably be centralized somewhere that can be called within each service, in order to avoid duplication
 
-5. Services: Postservice uses the topic repository and commentservice uses the postrepository. It might not be an issue. But you need to check if what is happening can be done without such. Perhaps it should be the way it is, in order to keep the logic they are using out of the controllers.
-
-6. The application layer correctly associates users now. But it would be good if a username is visible
+1. The application layer correctly associates users now. But it would be good if a username is visible
 in the ui as the author on topics/posts/comments. This should be implemented. If a topic/post/comment is owned by oneself, it should say that instead of the username. 
 
-7. Errorhandling/showing business logic. That should be made cleaner. So that it is more visible why an error occurs to the user.
+2. Errorhandling/showing business logic. That should be made cleaner. So that it is more visible why an error occurs to the user.
 
-8. Pagination considering everything is being rebuild on submit.. Ease up on memory/cpu usage
+3. Pagination considering everything is being rebuild on submit.. Ease up on memory/cpu usage
