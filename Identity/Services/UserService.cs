@@ -13,10 +13,17 @@ namespace Identity.Services
             this.userManager = userManager;
         }
 
-        public async Task<string?> GetUsernameByIdAsync(string userId)
+        public async Task<string> GetUsernameByIdAsync(string userId)
         {
-            var user = await userManager.FindByIdAsync(userId);
-            return user?.UserName;
+            ApplicationUser? user = await userManager.FindByIdAsync(userId);
+
+            if (user?.UserName is not string username)
+            {
+                throw new InvalidOperationException(
+                    $"Could not find a valid username for user '{userId}'.");
+            }
+
+            return username;
         }
     }
 }

@@ -6,6 +6,6 @@ namespace Application.Interfaces.Services
 {
     public interface IUserService
     {
-        Task<string?> GetUsernameByIdAsync(string userId);
+        Task<string> GetUsernameByIdAsync(string userId);
     }
 }

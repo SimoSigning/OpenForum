@@ -15,6 +15,7 @@ namespace Application.Mappers
             {
                 Id = comment.Id,
                 Content = comment.Content,
+                Creator = comment.CreatedByUserName,
                 CreatedAt = comment.CreatedAt
             };
         }

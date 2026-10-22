@@ -12,6 +12,11 @@
             @Model.Title
         </h1>
 
+        <p class="text-muted">
+            Created by:
+            @Model.Creator
+        </p>
+
         <div class="card shadow-sm mb-4">
 
             <div class="card-header">
@@ -52,6 +57,11 @@
 
                         <p class="text-muted small">
                             Created: @post.CreatedAt
+                        </p>
+
+                        <p class="text-muted">
+                            Created by:
+                            @post.Creator
                         </p>
 
                         <div class="d-flex gap-2">

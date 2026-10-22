@@ -13,17 +13,19 @@ namespace Application.Services
         private readonly IPostRepository postRepository;
         private readonly ICommentMapper commentMapper;
         private readonly ICurrentUserService currentUser;
-
+        private readonly IUserService userService;
         public CommentService(
             ICommentRepository commentRepository,
             IPostRepository postRepository,
             ICommentMapper commentMapper,
-            ICurrentUserService currentUser)
+            ICurrentUserService currentUser,
+            IUserService userService)
         {
             this.commentRepository = commentRepository;
             this.postRepository = postRepository;
             this.commentMapper = commentMapper;
             this.currentUser = currentUser;
+            this.userService = userService;
         }
 
         public async Task<CommentIndexView?> GetCommentIndexViewAsync(int postId)
@@ -40,6 +42,7 @@ namespace Application.Services
                 Id = post.Id,
                 TopicId = post.TopicId,
                 Content = post.Content,
+                Creator = post.CreatedByUserName,
                 CreatedAt = post.CreatedAt,
                 Comments = comments.Select(commentMapper.ToListItemView),
                 CreateComment = new CommentCreateView
@@ -89,6 +92,7 @@ namespace Application.Services
 
             Comment comment = commentMapper.ToEntity(model);
             comment.CreatedByUserId = userId;
+            comment.CreatedByUserName = await userService.GetUsernameByIdAsync(userId);
 
             await commentRepository.AddAsync(comment);
         }

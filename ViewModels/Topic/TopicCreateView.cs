@@ -10,5 +10,6 @@ namespace ViewModels.Topic
         [Required]
         [StringLength(100)]
         public string Title { get; set; } = string.Empty;
+
     }
 }

@@ -15,6 +15,7 @@ namespace Application.Mappers
             {
                 Id = topic.Id,
                 Title = topic.Title,
+                Creator = topic.CreatedByUserName,
                 CreatedAt = topic.CreatedAt
             };
         }

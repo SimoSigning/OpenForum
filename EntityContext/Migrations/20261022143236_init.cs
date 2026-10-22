@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace EntityContext.Migrations
 {
     /// <inheritdoc />
-    public partial class Init : Migration
+    public partial class init : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -18,6 +18,7 @@ namespace EntityContext.Migrations
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Title = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    CreatedByUserName = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     CreatedByUserId = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
@@ -33,6 +34,7 @@ namespace EntityContext.Migrations
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Content = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    CreatedByUserName = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     CreatedByUserId = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     TopicId = table.Column<int>(type: "int", nullable: false)
@@ -55,6 +57,7 @@ namespace EntityContext.Migrations
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Content = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    CreatedByUserName = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     CreatedByUserId = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     PostId = table.Column<int>(type: "int", nullable: false)
@@ -72,18 +75,18 @@ namespace EntityContext.Migrations
 
             migrationBuilder.InsertData(
                 table: "Topics",
-                columns: new[] { "Id", "CreatedAt", "CreatedByUserId", "Title" },
-                values: new object[] { 1, new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "seed-user", "Welcome to the forum" });
+                columns: new[] { "Id", "CreatedAt", "CreatedByUserId", "CreatedByUserName", "Title" },
+                values: new object[] { 1, new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "seed-user", "", "Welcome to the forum" });
 
             migrationBuilder.InsertData(
                 table: "Posts",
-                columns: new[] { "Id", "Content", "CreatedAt", "CreatedByUserId", "TopicId" },
-                values: new object[] { 1, "This is the first post", new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "seed-user", 1 });
+                columns: new[] { "Id", "Content", "CreatedAt", "CreatedByUserId", "CreatedByUserName", "TopicId" },
+                values: new object[] { 1, "This is the first post", new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "seed-user", "", 1 });
 
             migrationBuilder.InsertData(
                 table: "Comments",
-                columns: new[] { "Id", "Content", "CreatedAt", "CreatedByUserId", "PostId" },
-                values: new object[] { 1, "First comment!", new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "seed-user", 1 });
+                columns: new[] { "Id", "Content", "CreatedAt", "CreatedByUserId", "CreatedByUserName", "PostId" },
+                values: new object[] { 1, "First comment!", new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "seed-user", "", 1 });
 
             migrationBuilder.CreateIndex(
                 name: "IX_Comments_PostId",

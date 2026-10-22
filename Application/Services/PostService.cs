@@ -13,17 +13,20 @@ namespace Application.Services
         private readonly ITopicRepository topicRepository;
         private readonly IPostMapper postMapper;
         private readonly ICurrentUserService currentUser;
+        private readonly IUserService userService;
 
         public PostService(
             IPostRepository postRepository,
             ITopicRepository topicRepository,
             IPostMapper postMapper,
-            ICurrentUserService currentUser)
+            ICurrentUserService currentUser,
+            IUserService userService)
         {
             this.postRepository = postRepository;
             this.topicRepository = topicRepository;
             this.postMapper = postMapper;
             this.currentUser = currentUser;
+            this.userService = userService;
         }
 
         public async Task<PostIndexView?> GetPostIndexViewAsync(int topicId)
@@ -39,6 +42,7 @@ namespace Application.Services
             {
                 Id = topic.Id,
                 Title = topic.Title,
+                Creator = topic.CreatedByUserName,
                 Posts = posts.Select(postMapper.ToListItemView),
                 CreatePost = new PostCreateView
                 {
@@ -86,6 +90,7 @@ namespace Application.Services
 
             Post post = postMapper.ToEntity(model);
             post.CreatedByUserId = userId;
+            post.CreatedByUserName = await userService.GetUsernameByIdAsync(userId);
 
             await postRepository.AddAsync(post);
         }

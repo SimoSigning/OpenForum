@@ -6,6 +6,8 @@
 
         public string Title { get; set; } = string.Empty;
 
+        public string CreatedByUserName { get; set; } = string.Empty;
+
         public string CreatedByUserId { get; set; } = string.Empty;
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

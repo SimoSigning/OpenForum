@@ -15,6 +15,7 @@ namespace Application.Mappers
             {
                 Id = post.Id,
                 Content = post.Content,
+                Creator = post.CreatedByUserName,
                 CreatedAt = post.CreatedAt
             };
         }

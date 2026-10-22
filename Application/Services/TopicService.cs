@@ -62,8 +62,10 @@ namespace Application.Services
         public async Task CreateAsync(TopicCreateView model)
         {
             string userId = currentUser.GetRequiredUserId();
+
             Topic topic = topicMapper.ToEntity(model);
             topic.CreatedByUserId = userId;
+            topic.CreatedByUserName = await userService.GetUsernameByIdAsync(userId);
 
             await topicRepository.AddAsync(topic);
         }
