@@ -7,9 +7,9 @@ namespace Application.Interfaces.Services
 {
     public interface ITopicService
     {
-        Task<TopicIndexView> GetTopicIndexViewAsync();
+        Task<TopicIndexView> GetTopicIndexViewAsync(int page = 1);
 
-        Task<TopicIndexView?> GetEditViewAsync(int id);
+        Task<TopicIndexView?> GetEditViewAsync(int id, int page = 1);
 
         Task CreateAsync(TopicCreateView model);
 

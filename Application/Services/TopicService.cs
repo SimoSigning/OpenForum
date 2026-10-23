@@ -14,6 +14,8 @@ namespace Application.Services
         private readonly ICurrentUserService currentUser;
         private readonly IUserService userService;
 
+        private const int PageSize = 5;
+
         public TopicService(
             ITopicRepository topicRepository,
             ITopicMapper topicMapper,
@@ -26,21 +28,38 @@ namespace Application.Services
             this.userService = userService;
         }
 
-        public async Task<TopicIndexView> GetTopicIndexViewAsync()
+        public async Task<TopicIndexView> GetTopicIndexViewAsync(int page = 1)
         {
-            IEnumerable<Topic> topics = await topicRepository.GetAllAsync();
+            page = Math.Max(1, page);
+
+            var result = await topicRepository.GetPageAsync(page, PageSize);
+
+            int totalPages = Math.Max(
+                1,
+                (int)Math.Ceiling(result.TotalCount / (double)PageSize));
+
+            // If the requested page is beyond the last page,
+            // use the last valid page instead.
+            if (page > totalPages)
+            {
+                page = totalPages;
+                result = await topicRepository.GetPageAsync(page, PageSize);
+            }
 
             return new TopicIndexView
             {
-                Topics = topics.Select(topicMapper.ToListItemView),
+                Topics = result.Items.Select(topicMapper.ToListItemView),
                 CreateTopic = new TopicCreateView(),
-                EditTopic = null
+                EditTopic = null,
+                CurrentPage = page,
+                TotalPages = totalPages
             };
         }
 
-        public async Task<TopicIndexView?> GetEditViewAsync(int id)
+        public async Task<TopicIndexView?> GetEditViewAsync(
+            int id,
+            int page = 1)
         {
-            IEnumerable<Topic> topics = await topicRepository.GetAllAsync();
             Topic? topic = await topicRepository.GetByIdAsync(id);
 
             if (topic == null)
@@ -49,14 +68,14 @@ namespace Application.Services
             string userId = currentUser.GetRequiredUserId();
 
             if (topic.CreatedByUserId != userId)
-                throw new UnauthorizedAccessException("You are not allowed to edit this topic.");
+                throw new UnauthorizedAccessException(
+                    "You are not allowed to edit this topic.");
 
-            return new TopicIndexView
-            {
-                Topics = topics.Select(topicMapper.ToListItemView),
-                CreateTopic = new TopicCreateView(),
-                EditTopic = topicMapper.ToEditView(topic)
-            };
+            TopicIndexView viewModel = await GetTopicIndexViewAsync(page);
+
+            viewModel.EditTopic = topicMapper.ToEditView(topic);
+
+            return viewModel;
         }
 
         public async Task CreateAsync(TopicCreateView model)

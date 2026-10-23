@@ -11,5 +11,9 @@ namespace ViewModels.Topic
         public TopicCreateView CreateTopic { get; set; } = new();
 
         public TopicEditView? EditTopic { get; set; } = null;
+
+        public int CurrentPage { get; set; } = 1;
+
+        public int TotalPages { get; set; } = 1;
     }
 }

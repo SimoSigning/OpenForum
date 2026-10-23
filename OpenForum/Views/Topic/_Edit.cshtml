@@ -4,6 +4,10 @@
 
     <input asp-for="Id" type="hidden" />
 
+    <input type="hidden"
+           name="page"
+           value="@(ViewData["CurrentPage"] ?? 1)" />
+
     <div class="mb-3">
 
         <label asp-for="Title" class="form-label">

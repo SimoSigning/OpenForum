@@ -21,6 +21,26 @@ namespace Repository
                 .ToListAsync();
         }
 
+        public async Task<(IEnumerable<Topic> Items, int TotalCount)> GetPageAsync(int page, int pageSize)
+        {
+            if (page < 1)
+                throw new ArgumentOutOfRangeException(nameof(page));
+
+            if (pageSize < 1)
+                throw new ArgumentOutOfRangeException(nameof(pageSize));
+
+            int totalCount = await context.Topics.CountAsync();
+
+            List<Topic> items = await context.Topics
+                .OrderByDescending(t => t.CreatedAt)
+                .ThenByDescending(t => t.Id)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return (items, totalCount);
+        }
+
         public async Task<Topic?> GetByIdAsync(int id)
         {
             return await context.Topics
