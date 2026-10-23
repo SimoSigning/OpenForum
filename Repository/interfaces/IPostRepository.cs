@@ -4,7 +4,8 @@ namespace Repository.interfaces
 {
     public interface IPostRepository
     {
-        Task<IEnumerable<Post>> GetAllAsync();
+
+        Task<(IEnumerable<Post> Items, int TotalCount)> GetPageByTopicIdAsync(int topicId, int page, int pageSize);
 
         Task<Post?> GetByIdAsync(int id);
 

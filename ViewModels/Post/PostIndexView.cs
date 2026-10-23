@@ -17,5 +17,9 @@ namespace ViewModels.Post
         public PostCreateView CreatePost { get; set; } = new();
 
         public PostEditView? EditPost { get; set; } = null;
+
+        public int CurrentPage { get; set; } = 1;
+
+        public int TotalPages { get; set; } = 1;
     }
 }

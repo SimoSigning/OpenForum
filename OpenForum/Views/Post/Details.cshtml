@@ -13,29 +13,22 @@
         </h1>
 
         <p class="text-muted">
-            Created by:
-            @Model.Creator
+            Created by: @Model.Creator
         </p>
 
         <div class="card shadow-sm mb-4">
 
             <div class="card-header">
-                <h2 class="h5 mb-0">
-                    Create Post
-                </h2>
+                <h2 class="h5 mb-0">Create Post</h2>
             </div>
 
             <div class="card-body">
-
                 @await Html.PartialAsync("_Create", Model.CreatePost)
-
             </div>
 
         </div>
 
-        <h2 class="h4 mb-3">
-            Posts
-        </h2>
+        <h2 class="h4 mb-3">Posts</h2>
 
         @if (!Model.Posts.Any())
         {
@@ -45,7 +38,7 @@
         }
         else
         {
-            @foreach (ViewModels.Post.PostListItemView post in Model.Posts)
+            foreach (ViewModels.Post.PostListItemView post in Model.Posts)
             {
                 <div class="card shadow-sm mb-3">
 
@@ -60,8 +53,7 @@
                         </p>
 
                         <p class="text-muted">
-                            Created by:
-                            @post.Creator
+                            Created by: @post.Creator
                         </p>
 
                         <div class="d-flex gap-2">
@@ -75,12 +67,12 @@
 
                             <a asp-action="Edit"
                                asp-route-id="@post.Id"
+                               asp-route-page="@Model.CurrentPage"
                                class="btn btn-outline-secondary btn-sm">
                                 Edit
                             </a>
 
-                            <form asp-action="Delete"
-                                  method="post">
+                            <form asp-action="Delete" method="post">
 
                                 <input type="hidden"
                                        name="id"
@@ -89,6 +81,10 @@
                                 <input type="hidden"
                                        name="topicId"
                                        value="@Model.Id" />
+
+                                <input type="hidden"
+                                       name="page"
+                                       value="@Model.CurrentPage" />
 
                                 <button type="submit"
                                         class="btn btn-outline-danger btn-sm">
@@ -105,22 +101,82 @@
             }
         }
 
+        @* Pagination *@
+        @if (Model.TotalPages > 1)
+        {
+            <nav aria-label="Post pagination" class="mt-4">
+
+                <ul class="pagination justify-content-center">
+
+                    <li class="page-item @(Model.CurrentPage <= 1 ? "disabled" : "")">
+
+                        @if (Model.CurrentPage > 1)
+                        {
+                            <a class="page-link"
+                               asp-action="Details"
+                               asp-route-id="@Model.Id"
+                               asp-route-page="@(Model.CurrentPage - 1)">
+                                Previous
+                            </a>
+                        }
+                        else
+                        {
+                            <span class="page-link">Previous</span>
+                        }
+
+                    </li>
+
+                    @for (int pageNumber = 1;
+                          pageNumber <= Model.TotalPages;
+                          pageNumber++)
+                    {
+                        <li class="page-item @(pageNumber == Model.CurrentPage ? "active" : "")">
+
+                            <a class="page-link"
+                               asp-action="Details"
+                               asp-route-id="@Model.Id"
+                               asp-route-page="@pageNumber"
+                               aria-current="@(pageNumber == Model.CurrentPage ? "page" : null)">
+                                @pageNumber
+                            </a>
+
+                        </li>
+                    }
+
+                    <li class="page-item @(Model.CurrentPage >= Model.TotalPages ? "disabled" : "")">
+
+                        @if (Model.CurrentPage < Model.TotalPages)
+                        {
+                            <a class="page-link"
+                               asp-action="Details"
+                               asp-route-id="@Model.Id"
+                               asp-route-page="@(Model.CurrentPage + 1)">
+                                Next
+                            </a>
+                        }
+                        else
+                        {
+                            <span class="page-link">Next</span>
+                        }
+
+                    </li>
+
+                </ul>
+
+            </nav>
+        }
+
+        @* Edit form *@
         @if (Model.EditPost != null)
         {
             <div class="card shadow-sm mt-4">
 
                 <div class="card-header">
-
-                    <h2 class="h5 mb-0">
-                        Edit Post
-                    </h2>
-
+                    <h2 class="h5 mb-0">Edit Post</h2>
                 </div>
 
                 <div class="card-body">
-
                     @await Html.PartialAsync("_Edit", Model.EditPost)
-
                 </div>
 
             </div>

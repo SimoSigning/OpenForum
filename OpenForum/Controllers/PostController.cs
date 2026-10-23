@@ -16,26 +16,34 @@ namespace OpenForum.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Details(int id)
+        public async Task<IActionResult> Details(int id, int page = 1)
         {
-            PostIndexView? model = await postService.GetPostIndexViewAsync(id);
+            // id is the topic ID, not the post ID.
+            PostIndexView? model =
+                await postService.GetPostIndexViewAsync(id, page);
 
             if (model == null)
                 return NotFound();
+
+            ViewData["CurrentPage"] = model.CurrentPage;
 
             return View(model);
         }
 
         [Authorize]
         [HttpGet]
-        public async Task<IActionResult> Edit(int id)
+        public async Task<IActionResult> Edit(int id, int page = 1)
         {
             try
             {
-                PostIndexView? model = await postService.GetEditViewAsync(id);
+                // id is the post ID.
+                PostIndexView? model =
+                    await postService.GetEditViewAsync(id, page);
 
                 if (model == null)
                     return NotFound();
+
+                ViewData["CurrentPage"] = model.CurrentPage;
 
                 return View("Details", model);
             }
@@ -48,16 +56,22 @@ namespace OpenForum.Controllers
         [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(PostCreateView model)
+        public async Task<IActionResult> Create(
+            PostCreateView model,
+            int page = 1)
         {
             if (!ModelState.IsValid)
             {
-                PostIndexView? viewModel = await postService.GetPostIndexViewAsync(model.TopicId);
+                PostIndexView? viewModel =
+                    await postService.GetPostIndexViewAsync(
+                        model.TopicId, page);
 
                 if (viewModel == null)
                     return NotFound();
 
                 viewModel.CreatePost = model;
+
+                ViewData["CurrentPage"] = viewModel.CurrentPage;
 
                 return View("Details", viewModel);
             }
@@ -68,7 +82,7 @@ namespace OpenForum.Controllers
 
                 return RedirectToAction(
                     nameof(Details),
-                    new { id = model.TopicId });
+                    new { id = model.TopicId, page });
             }
             catch (UnauthorizedAccessException)
             {
@@ -79,18 +93,24 @@ namespace OpenForum.Controllers
         [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Update(PostEditView model)
+        public async Task<IActionResult> Update(
+            PostEditView model,
+            int page = 1)
         {
             if (!ModelState.IsValid)
             {
                 try
                 {
-                    PostIndexView? viewModel = await postService.GetEditViewAsync(model.Id);
+                    PostIndexView? viewModel =
+                        await postService.GetEditViewAsync(
+                            model.Id, page);
 
                     if (viewModel == null)
                         return NotFound();
 
                     viewModel.EditPost = model;
+
+                    ViewData["CurrentPage"] = viewModel.CurrentPage;
 
                     return View("Details", viewModel);
                 }
@@ -106,7 +126,7 @@ namespace OpenForum.Controllers
 
                 return RedirectToAction(
                     nameof(Details),
-                    new { id = model.TopicId });
+                    new { id = model.TopicId, page });
             }
             catch (UnauthorizedAccessException)
             {
@@ -117,7 +137,10 @@ namespace OpenForum.Controllers
         [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Delete(int id, int topicId)
+        public async Task<IActionResult> Delete(
+            int id,
+            int topicId,
+            int page = 1)
         {
             try
             {
@@ -125,7 +148,7 @@ namespace OpenForum.Controllers
 
                 return RedirectToAction(
                     nameof(Details),
-                    new { id = topicId });
+                    new { id = topicId, page });
             }
             catch (UnauthorizedAccessException)
             {

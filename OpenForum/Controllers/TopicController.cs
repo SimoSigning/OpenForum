@@ -18,8 +18,7 @@ namespace OpenForum.Controllers
         [HttpGet]
         public async Task<IActionResult> Index(int page = 1)
         {
-            TopicIndexView model =
-                await topicService.GetTopicIndexViewAsync(page);
+            TopicIndexView model = await topicService.GetTopicIndexViewAsync(page);
 
             ViewData["CurrentPage"] = model.CurrentPage;
 
@@ -32,8 +31,7 @@ namespace OpenForum.Controllers
         {
             try
             {
-                TopicIndexView? model =
-                    await topicService.GetEditViewAsync(id, page);
+                TopicIndexView? model = await topicService.GetEditViewAsync(id, page);
 
                 if (model == null)
                     return NotFound();
@@ -51,14 +49,11 @@ namespace OpenForum.Controllers
         [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(
-        TopicCreateView model,
-        int page = 1)
+        public async Task<IActionResult> Create(TopicCreateView model, int page = 1)
         {
             if (!ModelState.IsValid)
             {
-                TopicIndexView viewModel =
-                    await topicService.GetTopicIndexViewAsync(page);
+                TopicIndexView viewModel = await topicService.GetTopicIndexViewAsync(page);
 
                 viewModel.CreateTopic = model;
 
@@ -82,16 +77,13 @@ namespace OpenForum.Controllers
         [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Update(
-    TopicEditView model,
-    int page = 1)
+        public async Task<IActionResult> Update(TopicEditView model, int page = 1)
         {
             if (!ModelState.IsValid)
             {
                 try
                 {
-                    TopicIndexView? viewModel =
-                        await topicService.GetEditViewAsync(model.Id, page);
+                    TopicIndexView? viewModel = await topicService.GetEditViewAsync(model.Id, page);
 
                     if (viewModel == null)
                         return NotFound();

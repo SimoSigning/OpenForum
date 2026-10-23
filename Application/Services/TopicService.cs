@@ -32,11 +32,9 @@ namespace Application.Services
         {
             page = Math.Max(1, page);
 
-            var result = await topicRepository.GetPageAsync(page, PageSize);
+            (IEnumerable<Topic> Items, int TotalCount) result = await topicRepository.GetPageAsync(page, PageSize);
 
-            int totalPages = Math.Max(
-                1,
-                (int)Math.Ceiling(result.TotalCount / (double)PageSize));
+            int totalPages = Math.Max(1, (int)Math.Ceiling(result.TotalCount / (double)PageSize));
 
             // If the requested page is beyond the last page,
             // use the last valid page instead.
@@ -56,9 +54,7 @@ namespace Application.Services
             };
         }
 
-        public async Task<TopicIndexView?> GetEditViewAsync(
-            int id,
-            int page = 1)
+        public async Task<TopicIndexView?> GetEditViewAsync(int id, int page = 1)
         {
             Topic? topic = await topicRepository.GetByIdAsync(id);
 
@@ -68,8 +64,7 @@ namespace Application.Services
             string userId = currentUser.GetRequiredUserId();
 
             if (topic.CreatedByUserId != userId)
-                throw new UnauthorizedAccessException(
-                    "You are not allowed to edit this topic.");
+                throw new UnauthorizedAccessException("You are not allowed to edit this topic.");
 
             TopicIndexView viewModel = await GetTopicIndexViewAsync(page);
 
@@ -108,6 +103,7 @@ namespace Application.Services
         public async Task DeleteAsync(int id)
         {
             string userId = currentUser.GetRequiredUserId();
+
             Topic? topic = await topicRepository.GetByIdAsync(id);
 
             if (topic == null)

@@ -14,11 +14,27 @@ namespace Repository
             context = forumContext;
         }
 
-        public async Task<IEnumerable<Post>> GetAllAsync()
+        public async Task<(IEnumerable<Post> Items, int TotalCount)> GetPageByTopicIdAsync(int topicId, int page, int pageSize)
         {
-            return await context.Posts
+            if (page < 1)
+                throw new ArgumentOutOfRangeException(nameof(page));
+
+            if (pageSize < 1)
+                throw new ArgumentOutOfRangeException(nameof(pageSize));
+
+            int totalCount = await context.Posts
+                .Where(p => p.TopicId == topicId)
+                .CountAsync();
+
+            List<Post> items = await context.Posts
+                .Where(p => p.TopicId == topicId)
                 .OrderByDescending(p => p.CreatedAt)
+                .ThenByDescending(p => p.Id)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .ToListAsync();
+
+            return (items, totalCount);
         }
 
         public async Task<Post?> GetByIdAsync(int id)

@@ -29,30 +29,51 @@ namespace Application.Services
             this.userService = userService;
         }
 
-        public async Task<PostIndexView?> GetPostIndexViewAsync(int topicId)
+        private const int PageSize = 5;
+
+        public async Task<PostIndexView?> GetPostIndexViewAsync(int topicId, int page = 1)
         {
             Topic? topic = await topicRepository.GetByIdAsync(topicId);
 
             if (topic == null)
                 return null;
 
-            IEnumerable<Post> posts = await postRepository.GetByTopicIdAsync(topicId);
+            page = Math.Max(1, page);
+
+            var result = await postRepository.GetPageByTopicIdAsync(topicId, page, PageSize);
+
+            int totalPages = Math.Max(1, (int)Math.Ceiling(result.TotalCount / (double)PageSize));
+
+            // If the requested page is beyond the last page,
+            // use the last valid page instead.
+            if (page > totalPages)
+            {
+                page = totalPages;
+
+                result = await postRepository.GetPageByTopicIdAsync(topicId, page, PageSize);
+            }
 
             return new PostIndexView
             {
                 Id = topic.Id,
                 Title = topic.Title,
                 Creator = topic.CreatedByUserName,
-                Posts = posts.Select(postMapper.ToListItemView),
+
+                Posts = result.Items.Select(postMapper.ToListItemView),
+
                 CreatePost = new PostCreateView
                 {
                     TopicId = topicId
                 },
-                EditPost = null
+
+                EditPost = null,
+
+                CurrentPage = page,
+                TotalPages = totalPages
             };
         }
 
-        public async Task<PostIndexView?> GetEditViewAsync(int postId)
+        public async Task<PostIndexView?> GetEditViewAsync(int postId, int page = 1)
         {
             Post? post = await postRepository.GetByIdAsync(postId);
 
@@ -69,19 +90,14 @@ namespace Application.Services
             if (topic == null)
                 return null;
 
-            IEnumerable<Post> posts = await postRepository.GetByTopicIdAsync(post.TopicId);
+            PostIndexView? viewModel = await GetPostIndexViewAsync(topic.Id, page);
 
-            return new PostIndexView
-            {
-                Id = topic.Id,
-                Title = topic.Title,
-                Posts = posts.Select(postMapper.ToListItemView),
-                CreatePost = new PostCreateView
-                {
-                    TopicId = topic.Id
-                },
-                EditPost = postMapper.ToEditView(post)
-            };
+            if (viewModel == null)
+                return null;
+
+            viewModel.EditPost = postMapper.ToEditView(post);
+
+            return viewModel;
         }
 
         public async Task CreateAsync(PostCreateView model)

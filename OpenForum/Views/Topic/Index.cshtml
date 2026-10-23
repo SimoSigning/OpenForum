@@ -120,9 +120,7 @@
                         }
                     </li>
 
-                    @for (int pageNumber = 1;
-                          pageNumber <= Model.TotalPages;
-                          pageNumber++)
+                    @for (int pageNumber = 1; pageNumber <= Model.TotalPages; pageNumber++)
                     {
                         <li class="page-item @(pageNumber == Model.CurrentPage ? "active" : "")">
                             <a class="page-link"

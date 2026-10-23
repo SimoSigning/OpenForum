@@ -7,9 +7,9 @@ namespace Application.Interfaces.Services
 {
     public interface IPostService
     {
-        Task<PostIndexView?> GetPostIndexViewAsync(int topicId);
+        Task<PostIndexView?> GetPostIndexViewAsync(int topicId, int page = 1);
 
-        Task<PostIndexView?> GetEditViewAsync(int postId);
+        Task<PostIndexView?> GetEditViewAsync(int postId, int page = 1);
 
         Task CreateAsync(PostCreateView model);
 
