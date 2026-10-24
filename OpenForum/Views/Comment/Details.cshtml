@@ -2,6 +2,7 @@
 
 @{
     ViewData["Title"] = "Post Details";
+    ViewData["CurrentPage"] = Model.CurrentPage;
 }
 
 <div class="row">
@@ -11,23 +12,19 @@
         <div class="card shadow-sm mb-4">
 
             <div class="card-header">
-
                 <h1 class="h5 mb-0">
                     Post
                 </h1>
-
             </div>
 
             <div class="card-body">
-
 
                 <h2 class="h6 text-muted">
                     Post Content
                 </h2>
 
                 <p class="text-muted">
-                    Created by:
-                    @Model.Creator
+                    Created by: @Model.Creator
                 </p>
 
                 <p class="mb-3">
@@ -35,19 +32,14 @@
                 </p>
 
                 <p class="text-muted small">
-
-                    Created:
-                    @Model.CreatedAt
-
+                    Created: @Model.CreatedAt
                 </p>
 
                 <a asp-controller="Post"
                    asp-action="Details"
                    asp-route-id="@Model.TopicId"
                    class="btn btn-outline-secondary btn-sm">
-
                     Back to Topic
-
                 </a>
 
             </div>
@@ -57,17 +49,13 @@
         <div class="card shadow-sm mb-4">
 
             <div class="card-header">
-
                 <h2 class="h5 mb-0">
                     Create Comment
                 </h2>
-
             </div>
 
             <div class="card-body">
-
                 @await Html.PartialAsync("_Create", Model.CreateComment)
-
             </div>
 
         </div>
@@ -79,17 +67,13 @@
         @if (!Model.Comments.Any())
         {
             <div class="alert alert-info">
-
                 No comments exist yet.
-
             </div>
         }
         else
         {
-
             foreach (ViewModels.Comment.CommentListItemView comment in Model.Comments)
             {
-
                 <div class="card shadow-sm mb-3">
 
                     <div class="card-body">
@@ -99,21 +83,18 @@
                         </p>
 
                         <p class="text-muted">
-                            Created by:
-                            @comment.Creator
+                            Created by: @comment.Creator
                         </p>
 
                         <p class="text-muted small">
-
-                            Created:
-                            @comment.CreatedAt
-
+                            Created: @comment.CreatedAt
                         </p>
 
                         <div class="d-flex gap-2">
 
                             <a asp-action="Edit"
                                asp-route-id="@comment.Id"
+                               asp-route-page="@Model.CurrentPage"
                                class="btn btn-outline-secondary btn-sm">
                                 Edit
                             </a>
@@ -128,11 +109,13 @@
                                        name="postId"
                                        value="@Model.Id" />
 
+                                <input type="hidden"
+                                       name="page"
+                                       value="@Model.CurrentPage" />
+
                                 <button type="submit"
                                         class="btn btn-outline-danger btn-sm">
-
                                     Delete
-
                                 </button>
 
                             </form>
@@ -142,28 +125,91 @@
                     </div>
 
                 </div>
-
             }
-
         }
 
+        @* Comment pagination *@
+        @if (Model.TotalPages > 1)
+        {
+            <nav aria-label="Comment pagination" class="mt-4">
+
+                <ul class="pagination justify-content-center">
+
+                    <li class="page-item @(Model.CurrentPage <= 1 ? "disabled" : "")">
+
+                        @if (Model.CurrentPage > 1)
+                        {
+                            <a class="page-link"
+                               asp-action="Details"
+                               asp-route-id="@Model.Id"
+                               asp-route-page="@(Model.CurrentPage - 1)">
+                                Previous
+                            </a>
+                        }
+                        else
+                        {
+                            <span class="page-link">
+                                Previous
+                            </span>
+                        }
+
+                    </li>
+
+                    @for (int pageNumber = 1;
+                          pageNumber <= Model.TotalPages;
+                          pageNumber++)
+                    {
+                        <li class="page-item @(pageNumber == Model.CurrentPage ? "active" : "")">
+
+                            <a class="page-link"
+                               asp-action="Details"
+                               asp-route-id="@Model.Id"
+                               asp-route-page="@pageNumber"
+                               aria-current="@(pageNumber == Model.CurrentPage ? "page" : null)">
+                                @pageNumber
+                            </a>
+
+                        </li>
+                    }
+
+                    <li class="page-item @(Model.CurrentPage >= Model.TotalPages ? "disabled" : "")">
+
+                        @if (Model.CurrentPage < Model.TotalPages)
+                        {
+                            <a class="page-link"
+                               asp-action="Details"
+                               asp-route-id="@Model.Id"
+                               asp-route-page="@(Model.CurrentPage + 1)">
+                                Next
+                            </a>
+                        }
+                        else
+                        {
+                            <span class="page-link">
+                                Next
+                            </span>
+                        }
+
+                    </li>
+
+                </ul>
+
+            </nav>
+        }
+
+        @* Edit comment form *@
         @if (Model.EditComment != null)
         {
-
             <div class="card shadow-sm mt-4">
 
                 <div class="card-header">
-
                     <h2 class="h5 mb-0">
                         Edit Comment
                     </h2>
-
                 </div>
 
                 <div class="card-body">
-
                     @await Html.PartialAsync("_Edit", Model.EditComment)
-
                 </div>
 
             </div>

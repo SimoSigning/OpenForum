@@ -7,9 +7,13 @@ namespace Application.Interfaces.Services
 {
     public interface ICommentService
     {
-        Task<CommentIndexView?> GetCommentIndexViewAsync(int postId);
+        Task<CommentIndexView?> GetCommentIndexViewAsync(
+            int postId,
+            int page = 1);
 
-        Task<CommentIndexView?> GetEditViewAsync(int commentId);
+        Task<CommentIndexView?> GetEditViewAsync(
+            int commentId,
+            int page = 1);
 
         Task CreateAsync(CommentCreateView model);
 

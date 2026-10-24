@@ -22,5 +22,9 @@ namespace ViewModels.Comment
 
         public CommentEditView? EditComment { get; set; } = null;
 
+        public int CurrentPage { get; set; } = 1;
+
+        public int TotalPages { get; set; } = 1;
+
     }
 }

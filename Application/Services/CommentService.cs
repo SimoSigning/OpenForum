@@ -1,4 +1,5 @@
-﻿using Application.Interfaces.Contexts;
+﻿
+using Application.Interfaces.Contexts;
 using Application.Interfaces.Mappers;
 using Application.Interfaces.Services;
 using EntityModels;
@@ -14,6 +15,9 @@ namespace Application.Services
         private readonly ICommentMapper commentMapper;
         private readonly ICurrentUserService currentUser;
         private readonly IUserService userService;
+
+        private const int PageSize = 5;
+
         public CommentService(
             ICommentRepository commentRepository,
             IPostRepository postRepository,
@@ -28,14 +32,34 @@ namespace Application.Services
             this.userService = userService;
         }
 
-        public async Task<CommentIndexView?> GetCommentIndexViewAsync(int postId)
+        public async Task<CommentIndexView?> GetCommentIndexViewAsync(
+            int postId,
+            int page = 1)
         {
             Post? post = await postRepository.GetByIdAsync(postId);
 
             if (post == null)
                 return null;
 
-            IEnumerable<Comment> comments = await commentRepository.GetByPostIdAsync(postId);
+            page = Math.Max(1, page);
+
+            var result = await commentRepository.GetPageByPostIdAsync(
+                postId, page, PageSize);
+
+            int totalPages = Math.Max(
+                1,
+                (int)Math.Ceiling(
+                    result.TotalCount / (double)PageSize));
+
+            // If the requested page exceeds the last page,
+            // use the last valid page.
+            if (page > totalPages)
+            {
+                page = totalPages;
+
+                result = await commentRepository.GetPageByPostIdAsync(
+                    postId, page, PageSize);
+            }
 
             return new CommentIndexView
             {
@@ -44,46 +68,56 @@ namespace Application.Services
                 Content = post.Content,
                 Creator = post.CreatedByUserName,
                 CreatedAt = post.CreatedAt,
-                Comments = comments.Select(commentMapper.ToListItemView),
+
+                Comments = result.Items.Select(
+                    commentMapper.ToListItemView),
+
                 CreateComment = new CommentCreateView
                 {
                     PostId = postId
                 },
-                EditComment = null
+
+                EditComment = null,
+
+                CurrentPage = page,
+                TotalPages = totalPages
             };
         }
 
-        public async Task<CommentIndexView?> GetEditViewAsync(int commentId)
+        public async Task<CommentIndexView?> GetEditViewAsync(
+            int commentId,
+            int page = 1)
         {
-            Comment? comment = await commentRepository.GetByIdAsync(commentId);
+            Comment? comment =
+                await commentRepository.GetByIdAsync(commentId);
 
             if (comment == null)
                 return null;
 
             string userId = currentUser.GetRequiredUserId();
 
-            if (comment.CreatedByUserId != userId) throw new UnauthorizedAccessException("You are not allowed to edit this comment.");
+            if (comment.CreatedByUserId != userId)
+            {
+                throw new UnauthorizedAccessException(
+                    "You are not allowed to edit this comment.");
+            }
 
-            Post? post = await postRepository.GetByIdAsync(comment.PostId);
+            Post? post =
+                await postRepository.GetByIdAsync(comment.PostId);
 
             if (post == null)
                 return null;
 
-            IEnumerable<Comment> comments = await commentRepository.GetByPostIdAsync(post.Id);
+            CommentIndexView? viewModel =
+                await GetCommentIndexViewAsync(post.Id, page);
 
-            return new CommentIndexView
-            {
-                Id = post.Id,
-                TopicId = post.TopicId,
-                Content = post.Content,
-                CreatedAt = post.CreatedAt,
-                Comments = comments.Select(commentMapper.ToListItemView),
-                CreateComment = new CommentCreateView
-                {
-                    PostId = post.Id
-                },
-                EditComment = commentMapper.ToEditView(comment)
-            };
+            if (viewModel == null)
+                return null;
+
+            viewModel.EditComment =
+                commentMapper.ToEditView(comment);
+
+            return viewModel;
         }
 
         public async Task CreateAsync(CommentCreateView model)
@@ -92,7 +126,8 @@ namespace Application.Services
 
             Comment comment = commentMapper.ToEntity(model);
             comment.CreatedByUserId = userId;
-            comment.CreatedByUserName = await userService.GetUsernameByIdAsync(userId);
+            comment.CreatedByUserName =
+                await userService.GetUsernameByIdAsync(userId);
 
             await commentRepository.AddAsync(comment);
         }
@@ -100,14 +135,18 @@ namespace Application.Services
         public async Task UpdateAsync(CommentEditView model)
         {
             string userId = currentUser.GetRequiredUserId();
-            Comment? comment = await commentRepository.GetByIdAsync(model.Id);
+
+            Comment? comment =
+                await commentRepository.GetByIdAsync(model.Id);
 
             if (comment == null)
                 return;
 
             if (comment.CreatedByUserId != userId)
+            {
                 throw new UnauthorizedAccessException(
                     "You are not allowed to edit this comment.");
+            }
 
             comment.Content = model.Content;
 
@@ -117,17 +156,20 @@ namespace Application.Services
         public async Task DeleteAsync(int id)
         {
             string userId = currentUser.GetRequiredUserId();
-            Comment? comment = await commentRepository.GetByIdAsync(id);
+
+            Comment? comment =
+                await commentRepository.GetByIdAsync(id);
 
             if (comment == null)
                 return;
 
             if (comment.CreatedByUserId != userId)
+            {
                 throw new UnauthorizedAccessException(
                     "You are not allowed to delete this comment.");
+            }
 
             await commentRepository.DeleteAsync(id);
         }
-
     }
 }
