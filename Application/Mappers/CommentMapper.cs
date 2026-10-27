@@ -1,6 +1,8 @@
-﻿
-using Application.Interfaces.Mappers;
+﻿using Application.Interfaces.Mappers;
 using EntityModels;
+using System;
+using System.Collections.Generic;
+using System.Text;
 using ViewModels.Comment;
 
 namespace Application.Mappers
@@ -12,9 +14,7 @@ namespace Application.Mappers
             return new CommentListItemView
             {
                 Id = comment.Id,
-                Title = string.IsNullOrWhiteSpace(comment.Title)
-                    ? null
-                    : comment.Title,
+                Title = comment.Title,
                 Content = comment.Content,
                 Creator = comment.CreatedByUserName,
                 CreatedAt = comment.CreatedAt
@@ -27,9 +27,7 @@ namespace Application.Mappers
             {
                 Id = comment.Id,
                 PostId = comment.PostId,
-                Title = comment.ParentCommentId.HasValue
-                    ? null
-                    : comment.Title,
+                Title = comment.Title,
                 Content = comment.Content
             };
         }
@@ -39,22 +37,18 @@ namespace Application.Mappers
             return new Comment
             {
                 PostId = model.PostId,
-                ParentCommentId = model.ParentCommentId,
-                Title = model.ParentCommentId.HasValue
-                    ? string.Empty
-                    : model.Title ?? string.Empty,
+                Title = model.Title,
                 Content = model.Content,
                 CreatedAt = DateTime.UtcNow
             };
         }
-
         public Comment ToEntity(CommentEditView model)
         {
             return new Comment
             {
                 Id = model.Id,
                 PostId = model.PostId,
-                Title = model.Title ?? string.Empty,
+                Title = model.Title,
                 Content = model.Content
             };
         }

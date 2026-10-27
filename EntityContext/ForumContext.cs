@@ -5,7 +5,7 @@ namespace EntityContext
 {
     public class ForumContext : DbContext
     {
-        public ForumContext(DbContextOptions<ForumContext> options) : base(options) { }
+        public ForumContext(DbContextOptions<ForumContext> options) : base(options){}
 
         public DbSet<Topic> Topics => Set<Topic>();
         public DbSet<Post> Posts => Set<Post>();
@@ -27,21 +27,15 @@ namespace EntityContext
                 .HasForeignKey(c => c.PostId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // Configure the self-referencing relationship for comment replies.
-            modelBuilder.Entity<Comment>()
-                .HasOne(c => c.ParentComment)
-                .WithMany(c => c.Replies)
-                .HasForeignKey(c => c.ParentCommentId)
-                .OnDelete(DeleteBehavior.Restrict);
 
             SeedData(modelBuilder);
         }
-
         private static void SeedData(ModelBuilder modelBuilder)
         {
             int topicId = 1;
             int postId = 1;
             int commentId = 1;
+
 
             modelBuilder.Entity<Topic>().HasData(
                 new Topic
@@ -53,6 +47,7 @@ namespace EntityContext
                 }
             );
 
+
             modelBuilder.Entity<Post>().HasData(
                 new Post
                 {
@@ -63,6 +58,7 @@ namespace EntityContext
                     CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc)
                 }
             );
+
 
             modelBuilder.Entity<Comment>().HasData(
                 new Comment

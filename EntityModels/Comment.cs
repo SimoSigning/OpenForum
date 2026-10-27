@@ -22,11 +22,5 @@ namespace EntityModels
 
         public Post Post { get; set; } = null!;
 
-        public int? ParentCommentId { get; set; }
-
-        public Comment? ParentComment { get; set; }
-
-        public ICollection<Comment> Replies { get; set; } = new List<Comment>();
-
     }
 }

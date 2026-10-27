@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿
+using Microsoft.EntityFrameworkCore;
 using EntityContext;
 using EntityModels;
 using Repository.interfaces;
@@ -14,8 +15,7 @@ namespace Repository
             context = forumContext;
         }
 
-        public async Task<(IEnumerable<Comment> Items, int TotalCount)>
-            GetPageByPostIdAsync(int postId, int page, int pageSize)
+        public async Task<(IEnumerable<Comment> Items, int TotalCount)> GetPageByPostIdAsync(int postId, int page, int pageSize)
         {
             if (page < 1)
                 throw new ArgumentOutOfRangeException(nameof(page));
@@ -24,20 +24,15 @@ namespace Repository
                 throw new ArgumentOutOfRangeException(nameof(pageSize));
 
             int totalCount = await context.Comments
-                .Where(c => c.PostId == postId &&
-                            c.ParentCommentId == null)
+                .Where(c => c.PostId == postId)
                 .CountAsync();
 
             List<Comment> items = await context.Comments
-                .Where(c => c.PostId == postId &&
-                            c.ParentCommentId == null)
+                .Where(c => c.PostId == postId)
                 .OrderByDescending(c => c.CreatedAt)
                 .ThenByDescending(c => c.Id)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
-                .Include(c => c.Replies
-                    .OrderBy(r => r.CreatedAt)
-                    .ThenBy(r => r.Id))
                 .ToListAsync();
 
             return (items, totalCount);
@@ -46,12 +41,8 @@ namespace Repository
         public async Task<IEnumerable<Comment>> GetAllAsync()
         {
             return await context.Comments
-                .Where(c => c.ParentCommentId == null)
                 .OrderBy(c => c.CreatedAt)
                 .ThenBy(c => c.Id)
-                .Include(c => c.Replies
-                    .OrderBy(r => r.CreatedAt)
-                    .ThenBy(r => r.Id))
                 .ToListAsync();
         }
 
@@ -64,13 +55,9 @@ namespace Repository
         public async Task<IEnumerable<Comment>> GetByPostIdAsync(int postId)
         {
             return await context.Comments
-                .Where(c => c.PostId == postId &&
-                            c.ParentCommentId == null)
+                .Where(c => c.PostId == postId)
                 .OrderBy(c => c.CreatedAt)
                 .ThenBy(c => c.Id)
-                .Include(c => c.Replies
-                    .OrderBy(r => r.CreatedAt)
-                    .ThenBy(r => r.Id))
                 .ToListAsync();
         }
 
