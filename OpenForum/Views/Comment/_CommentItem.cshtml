@@ -1,0 +1,92 @@
+﻿@model ViewModels.Comment.CommentListItemView
+
+<div id="comment-@Model.Id" class="card mb-3">
+    <div class="card-body">
+        @if (Model.ParentCommentId.HasValue)
+        {
+            <div class="text-muted small mb-2">
+                Replying to <strong>@Model.ParentCreator</strong>:
+                @Model.ParentTitle
+            </div>
+        }
+
+        @if (!Model.ParentCommentId.HasValue)
+        {
+            <h5 class="card-title">@Model.Title</h5>
+        }
+
+        <div class="card-text">
+            @Model.Content
+        </div>
+
+        <div class="text-muted small mt-2">
+            By @Model.Creator · @Model.CreatedAt.ToLocalTime().ToString("g")
+        </div>
+
+        @if (ViewData["CanCreate"] is bool canCreate && canCreate)
+        {
+            <button type="button"
+                    class="btn btn-outline-primary btn-sm mt-2"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#reply-form-@Model.Id">
+                Reply
+            </button>
+
+            <div class="collapse mt-2" id="reply-form-@Model.Id">
+                @{
+                    var replyViewData =
+                        new ViewDataDictionary(ViewData)
+                        {
+                            ["CurrentPage"] = ViewData["CurrentPage"]
+                        };
+                }
+
+                @await Html.PartialAsync(
+                    "_Reply",
+                    new ViewModels.Comment.CommentCreateView
+                    {
+                        PostId = (int)ViewData["PostId"]!,
+                        ParentCommentId = Model.Id
+                    },
+                    replyViewData)
+            </div>
+        }
+
+        @if (Model.CanManage)
+        {
+            <div class="mt-2">
+                <a asp-controller="Comment"
+                   asp-action="Edit"
+                   asp-route-id="@Model.Id"
+                   asp-route-postId="@ViewData["PostId"]"
+                   asp-route-page="@ViewData["CurrentPage"]"
+                   class="btn btn-outline-secondary btn-sm">
+                    Edit
+                </a>
+
+                <form asp-controller="Comment"
+                      asp-action="Delete"
+                      method="post"
+                      class="d-inline">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" value="@Model.Id" />
+                    <input type="hidden" name="postId" value="@ViewData["PostId"]" />
+                    <input type="hidden" name="page" value="@ViewData["CurrentPage"]" />
+                    <button type="submit" class="btn btn-outline-danger btn-sm">
+                        Delete
+                    </button>
+                </form>
+            </div>
+        }
+    </div>
+</div>
+
+@if (Model.Replies.Count > 0)
+{
+    <div class="ms-4 ps-3 border-start">
+        @foreach (var reply in Model.Replies)
+        {
+            @await Html.PartialAsync("_CommentItem", reply, ViewData)
+        }
+    </div>
+}

@@ -14,6 +14,6 @@ namespace Application.Interfaces.Mappers
 
         Comment ToEntity(CommentCreateView model);
 
-        Comment ToEntity(CommentEditView model);
+        //Comment ToEntity(CommentEditView model);
     }
 }

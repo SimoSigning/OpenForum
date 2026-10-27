@@ -54,29 +54,69 @@ namespace OpenForum.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(CommentCreateView model, int page = 1)
         {
+            page = Math.Max(1, page);
+
+            // Only top-level comments need a title.
+            if (!model.ParentCommentId.HasValue &&
+                string.IsNullOrWhiteSpace(model.Title))
+            {
+                ModelState.AddModelError(
+                    nameof(model.Title),
+                    "A title is required for a comment.");
+            }
+
             if (!ModelState.IsValid)
             {
-                CommentIndexView? viewModel = await commentService.GetCommentIndexViewAsync(model.PostId, page);
+                CommentIndexView? invalidView =
+                    await commentService.GetCommentIndexViewAsync(model.PostId, page);
 
-                if (viewModel == null)
+                if (invalidView == null)
                     return NotFound();
 
-                viewModel.CreateComment = model;
+                invalidView.CreateComment = model;
+                ViewData["CurrentPage"] = page;
+                ViewData["PostId"] = model.PostId;
 
-                ViewData["CurrentPage"] = viewModel.CurrentPage;
-
-                return View("Details", viewModel);
+                return View("Details", invalidView);
             }
 
             try
             {
                 await commentService.CreateAsync(model);
 
-                return RedirectToAction(nameof(Details), new { id = model.PostId, page });
+                if (model.ParentCommentId.HasValue)
+                {
+                    return Redirect(
+                        Url.Action(
+                            nameof(Details),
+                            "Comment",
+                            new { id = model.PostId, page })
+                        + $"#comment-{model.ParentCommentId.Value}");
+                }
+
+                return RedirectToAction(
+                    nameof(Details),
+                    new { id = model.PostId, page });
             }
             catch (UnauthorizedAccessException)
             {
                 return Forbid();
+            }
+            catch (ArgumentException ex)
+            {
+                ModelState.AddModelError(string.Empty, ex.Message);
+
+                CommentIndexView? invalidView =
+                    await commentService.GetCommentIndexViewAsync(model.PostId, page);
+
+                if (invalidView == null)
+                    return NotFound();
+
+                invalidView.CreateComment = model;
+                ViewData["CurrentPage"] = page;
+                ViewData["PostId"] = model.PostId;
+
+                return View("Details", invalidView);
             }
         }
 
@@ -110,7 +150,19 @@ namespace OpenForum.Controllers
             {
                 await commentService.UpdateAsync(model);
 
-                return RedirectToAction(nameof(Details), new { id = model.PostId, page });
+                if (model.ParentCommentId.HasValue)
+                {
+                    return Redirect(
+                        Url.Action(
+                            nameof(Details),
+                            "Comment",
+                            new { id = model.PostId, page })
+                        + $"#comment-{model.ParentCommentId.Value}");
+                }
+
+                return RedirectToAction(
+                    nameof(Details),
+                    new { id = model.PostId, page });
             }
             catch (UnauthorizedAccessException)
             {

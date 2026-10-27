@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
+﻿
 namespace EntityModels
 {
     public class Comment
@@ -22,5 +19,12 @@ namespace EntityModels
 
         public Post Post { get; set; } = null!;
 
+        // Null for top-level comments; set for replies.
+        public int? ParentCommentId { get; set; }
+
+        public Comment? ParentComment { get; set; }
+
+        public ICollection<Comment> Replies { get; set; }
+            = new List<Comment>();
     }
 }

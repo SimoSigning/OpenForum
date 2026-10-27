@@ -11,9 +11,10 @@ namespace ViewModels.Comment
 
         public int PostId { get; set; }
 
-        [Required]
+        public int? ParentCommentId { get; set; }
+
         [StringLength(500)]
-        public string Title { get; set; } = string.Empty;
+        public string? Title { get; set; } = string.Empty;
 
         [Required]
         [StringLength(2000)]

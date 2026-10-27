@@ -31,7 +31,10 @@ namespace Application.Services
             this.userService = userService;
         }
 
-        public async Task<CommentIndexView?> GetCommentIndexViewAsync(int postId, int page = 1)
+
+        public async Task<CommentIndexView?> GetCommentIndexViewAsync(
+            int postId,
+            int page = 1)
         {
             Post? post = await postRepository.GetByIdAsync(postId);
 
@@ -40,28 +43,73 @@ namespace Application.Services
 
             page = Math.Max(1, page);
 
-            (IEnumerable<Comment> Items, int TotalCount) result = await commentRepository.GetPageByPostIdAsync(postId, page, PageSize);
+            var result = await commentRepository.GetPageByPostIdAsync(
+                postId, page, PageSize);
 
-            int totalPages = Math.Max(1, (int)Math.Ceiling(result.TotalCount / (double)PageSize));
+            int totalPages = Math.Max(
+                1,
+                (int)Math.Ceiling(result.TotalCount / (double)PageSize));
 
-            // If the requested page exceeds the last page,
-            // use the last valid page.
             if (page > totalPages)
             {
                 page = totalPages;
 
-                result = await commentRepository.GetPageByPostIdAsync(postId, page, PageSize);
+                result = await commentRepository.GetPageByPostIdAsync(
+                    postId, page, PageSize);
             }
 
             string? userId = currentUser.GetUserIdOrNull();
 
-            List<CommentListItemView> comments = result.Items.Select(comment => 
+            // Retrieve every comment, including replies and nested replies.
+            List<Comment> allComments =
+                (await commentRepository.GetByPostIdAsync(postId)).ToList();
+
+            // Map each comment once so we can build the tree by ID.
+            Dictionary<int, CommentListItemView> items = allComments
+                .ToDictionary(
+                    c => c.Id,
+                    c =>
+                    {
+                        CommentListItemView item =
+                            commentMapper.ToListItemView(c);
+
+                        item.CanManage =
+                            userId != null &&
+                            c.CreatedByUserId == userId;
+
+                        return item;
+                    });
+
+            // Attach each reply to its parent.
+            foreach (Comment comment in allComments)
             {
-                CommentListItemView item = commentMapper.ToListItemView(comment);
-                item.CanManage = userId != null && comment.CreatedByUserId == userId;
-                return item;
-            })
-            .ToList();
+                if (!comment.ParentCommentId.HasValue)
+                    continue;
+
+                if (!items.TryGetValue(
+                        comment.ParentCommentId.Value,
+                        out CommentListItemView? parent))
+                {
+                    continue;
+                }
+
+                CommentListItemView reply = items[comment.Id];
+
+                // Replies have no title, so use their content as the
+                // reference text when someone replies to them.
+                reply.ParentTitle = !string.IsNullOrWhiteSpace(parent.Title)
+                    ? parent.Title
+                    : parent.Content;
+
+                reply.ParentCreator = parent.Creator;
+
+                parent.Replies.Add(reply);
+            }
+
+            // Return only the paginated top-level comments.
+            List<CommentListItemView> topLevelComments = result.Items
+                .Select(c => items[c.Id])
+                .ToList();
 
             return new CommentIndexView
             {
@@ -71,17 +119,21 @@ namespace Application.Services
                 PostContent = post.Content,
                 PostCreator = post.CreatedByUserName,
                 PostCreatedAt = post.CreatedAt,
-                Comments = comments,
+
+                Comments = topLevelComments,
+
                 CreateComment = new CommentCreateView
                 {
                     PostId = postId
                 },
+
                 CanCreate = userId != null,
                 EditComment = null,
                 CurrentPage = page,
                 TotalPages = totalPages
             };
         }
+
 
         public async Task<CommentIndexView?> GetEditViewAsync(int commentId, int page = 1)
         {
@@ -112,16 +164,44 @@ namespace Application.Services
             return viewModel;
         }
 
+
         public async Task CreateAsync(CommentCreateView model)
         {
             string userId = currentUser.GetRequiredUserId();
 
+            if (string.IsNullOrWhiteSpace(model.Content))
+            {
+                throw new ArgumentException("Comment content is required.");
+            }
+
+            if (!model.ParentCommentId.HasValue &&
+                string.IsNullOrWhiteSpace(model.Title))
+            {
+                throw new ArgumentException(
+                    "A title is required for a top-level comment.");
+            }
+
+            if (model.ParentCommentId.HasValue)
+            {
+                Comment? parent = await commentRepository
+                    .GetByIdAsync(model.ParentCommentId.Value);
+
+                if (parent == null || parent.PostId != model.PostId)
+                {
+                    throw new ArgumentException(
+                        "The parent comment does not belong to this post.");
+                }
+            }
+
             Comment comment = commentMapper.ToEntity(model);
             comment.CreatedByUserId = userId;
-            comment.CreatedByUserName = await userService.GetUsernameByIdAsync(userId);
+            comment.CreatedByUserName =
+                await userService.GetUsernameByIdAsync(userId);
 
             await commentRepository.AddAsync(comment);
         }
+
+
 
         public async Task UpdateAsync(CommentEditView model)
         {
@@ -137,10 +217,15 @@ namespace Application.Services
                 throw new UnauthorizedAccessException("You are not allowed to edit this comment.");
             }
 
+
+            comment.Title = comment.ParentCommentId.HasValue ? string.Empty : model.Title?.Trim() ?? string.Empty;
+
             comment.Content = model.Content;
 
             await commentRepository.UpdateAsync(comment);
         }
+
+
 
         public async Task DeleteAsync(int id)
         {
@@ -153,10 +238,47 @@ namespace Application.Services
 
             if (comment.CreatedByUserId != userId)
             {
-                throw new UnauthorizedAccessException("You are not allowed to delete this comment.");
+                throw new UnauthorizedAccessException(
+                    "You are not allowed to delete this comment.");
             }
 
-            await commentRepository.DeleteAsync(id);
+            List<Comment> comments =
+                (await commentRepository.GetByPostIdAsync(comment.PostId)).ToList();
+
+            Dictionary<int, List<Comment>> repliesByParent = comments
+                .Where(c => c.ParentCommentId.HasValue)
+                .GroupBy(c => c.ParentCommentId!.Value)
+                .ToDictionary(g => g.Key, g => g.ToList());
+
+            List<Comment> deletionOrder = new();
+
+            void AddCommentAndReplies(int commentId)
+            {
+                Comment? current = comments.FirstOrDefault(c => c.Id == commentId);
+
+                if (current == null)
+                    return;
+
+                deletionOrder.Add(current);
+
+                if (repliesByParent.TryGetValue(commentId, out List<Comment>? replies))
+                {
+                    foreach (Comment reply in replies)
+                    {
+                        AddCommentAndReplies(reply.Id);
+                    }
+                }
+            }
+
+            AddCommentAndReplies(comment.Id);
+
+            // Delete children before their parents to satisfy the database relationship.
+            for (int i = deletionOrder.Count - 1; i >= 0; i--)
+            {
+                await commentRepository.DeleteAsync(deletionOrder[i].Id);
+            }
         }
+
+
     }
 }

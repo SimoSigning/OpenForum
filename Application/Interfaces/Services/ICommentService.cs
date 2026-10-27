@@ -20,5 +20,6 @@ namespace Application.Interfaces.Services
         Task UpdateAsync(CommentEditView model);
 
         Task DeleteAsync(int id);
+
     }
 }

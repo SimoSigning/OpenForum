@@ -1,7 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿
 using System.ComponentModel.DataAnnotations;
-using System.Text;
 
 namespace ViewModels.Comment
 {
@@ -9,13 +7,14 @@ namespace ViewModels.Comment
     {
         public int PostId { get; set; }
 
-        [Required]
+        public int? ParentCommentId { get; set; }
+
+        // Required for top-level comments; omitted for replies.
         [StringLength(500)]
-        public string Title { get; set; } = string.Empty;
+        public string? Title { get; set; }
 
         [Required]
         [StringLength(2000)]
         public string Content { get; set; } = string.Empty;
-
     }
 }

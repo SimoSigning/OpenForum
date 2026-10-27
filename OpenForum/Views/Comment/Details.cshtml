@@ -89,47 +89,15 @@
         else
         {
             <div class="d-flex flex-column gap-3">
+                @{
+                    ViewData["PostId"] = Model.PostId;
+                    ViewData["CurrentPage"] = Model.CurrentPage;
+                    ViewData["CanCreate"] = Model.CanCreate;
+                }
+
                 @foreach (ViewModels.Comment.CommentListItemView comment in Model.Comments)
                 {
-                    <div class="card shadow-sm">
-                        <div class="card-body">
-                            <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-start gap-3">
-                                <div class="flex-grow-1">
-                                    <h3 class="h5 mb-2">
-                                        @comment.Title
-                                    </h3>
-
-                                    <p class="mb-3">
-                                        @comment.Content
-                                    </p>
-
-                                    <div class="d-flex flex-wrap align-items-center gap-2 text-muted small">
-                                        <span>By <strong class="text-body">@comment.Creator</strong></span>
-                                        <span aria-hidden="true">&middot;</span>
-                                        <span>@comment.CreatedAt</span>
-                                    </div>
-                                </div>
-
-                                @if (comment.CanManage)
-                                {
-                                    <div class="d-flex flex-wrap gap-2 flex-shrink-0">
-                                        <a asp-action="Edit" asp-route-id="@comment.Id" asp-route-page="@Model.CurrentPage" class="btn btn-outline-secondary btn-sm">
-                                            Edit
-                                        </a>
-
-                                        <form asp-action="Delete" method="post" onsubmit="return confirm('Are you sure you want to delete this comment?');">
-                                            <input type="hidden" name="id" value="@comment.Id" />
-                                            <input type="hidden" name="postId" value="@Model.PostId" />
-                                            <input type="hidden" name="page" value="@Model.CurrentPage" />
-                                            <button type="submit" class="btn btn-outline-danger btn-sm">
-                                                Delete
-                                            </button>
-                                        </form>
-                                    </div>
-                                }
-                            </div>
-                        </div>
-                    </div>
+                    @await Html.PartialAsync("_CommentItem", comment, ViewData)
                 }
             </div>
         }

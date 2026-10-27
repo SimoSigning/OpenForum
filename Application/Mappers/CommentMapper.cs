@@ -17,9 +17,11 @@ namespace Application.Mappers
                 Title = comment.Title,
                 Content = comment.Content,
                 Creator = comment.CreatedByUserName,
-                CreatedAt = comment.CreatedAt
+                CreatedAt = comment.CreatedAt,
+                ParentCommentId = comment.ParentCommentId
             };
         }
+
 
         public CommentEditView ToEditView(Comment comment)
         {
@@ -28,21 +30,26 @@ namespace Application.Mappers
                 Id = comment.Id,
                 PostId = comment.PostId,
                 Title = comment.Title,
-                Content = comment.Content
+                Content = comment.Content,
+                ParentCommentId = comment.ParentCommentId,
             };
         }
 
         public Comment ToEntity(CommentCreateView model)
         {
+            bool isReply = model.ParentCommentId.HasValue;
+
             return new Comment
             {
                 PostId = model.PostId,
-                Title = model.Title,
+                ParentCommentId = model.ParentCommentId,
+                Title = isReply ? string.Empty : model.Title?.Trim() ?? string.Empty,
                 Content = model.Content,
                 CreatedAt = DateTime.UtcNow
             };
         }
-        public Comment ToEntity(CommentEditView model)
+
+        /*public Comment ToEntity(CommentEditView model)
         {
             return new Comment
             {
@@ -51,6 +58,6 @@ namespace Application.Mappers
                 Title = model.Title,
                 Content = model.Content
             };
-        }
+        }*/
     }
 }
