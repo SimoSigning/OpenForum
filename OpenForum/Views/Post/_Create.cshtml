@@ -1,29 +1,18 @@
-﻿@model ViewModels.Post.PostCreateView
+﻿ @model ViewModels.Post.PostCreateView
 
 <form asp-action="Create" method="post">
-
     <input asp-for="TopicId" type="hidden" />
+    <input type="hidden" name="page" value="@(ViewData["CurrentPage"] ?? 1)" />
 
-    <input type="hidden"
-           name="page"
-           value="@(ViewData["CurrentPage"] ?? 1)" />
-
-    <div class="mb-3">
-
-        <label asp-for="Content" class="form-label">
-        </label>
-
-        <textarea asp-for="Content"
-                  class="form-control"
-                  rows="5"></textarea>
-
-        <span asp-validation-for="Content"
-              class="text-danger"></span>
-
+    <div class="mb-2">
+        <input asp-for="Title" class="form-control" placeholder="Enter a title" />
+        <span asp-validation-for="Title" class="text-danger small"></span>
     </div>
 
-    <button type="submit" class="btn btn-success">
-        Create Post
-    </button>
+    <div class="mb-3">
+        <textarea asp-for="Content" class="form-control" rows="3" placeholder="Write your post..."></textarea>
+        <span asp-validation-for="Content" class="text-danger small"></span>
+    </div>
 
+    <button type="submit" class="btn btn-success btn-sm">Create Post</button>
 </form>

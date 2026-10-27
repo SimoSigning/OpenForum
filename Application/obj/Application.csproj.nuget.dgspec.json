@@ -1,23 +1,23 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\simon\\source\\repos\\OpenForum\\Application\\Application.csproj": {}
+    "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\Application\\Application.csproj": {}
   },
   "projects": {
-    "C:\\Users\\simon\\source\\repos\\OpenForum\\Application\\Application.csproj": {
+    "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\Application\\Application.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\simon\\source\\repos\\OpenForum\\Application\\Application.csproj",
+        "projectUniqueName": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\Application\\Application.csproj",
         "projectName": "Application",
-        "projectPath": "C:\\Users\\simon\\source\\repos\\OpenForum\\Application\\Application.csproj",
-        "packagesPath": "C:\\Users\\simon\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\simon\\source\\repos\\OpenForum\\Application\\obj\\",
+        "projectPath": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\Application\\Application.csproj",
+        "packagesPath": "C:\\Users\\MisterDerp\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\Application\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\simon\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\MisterDerp\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
@@ -34,14 +34,14 @@
             "framework": "net10.0",
             "targetAlias": "net10.0",
             "projectReferences": {
-              "C:\\Users\\simon\\source\\repos\\OpenForum\\EntityModels\\EntityModels.csproj": {
-                "projectPath": "C:\\Users\\simon\\source\\repos\\OpenForum\\EntityModels\\EntityModels.csproj"
+              "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\EntityModels\\EntityModels.csproj": {
+                "projectPath": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\EntityModels\\EntityModels.csproj"
               },
-              "C:\\Users\\simon\\source\\repos\\OpenForum\\Repository\\Repository.csproj": {
-                "projectPath": "C:\\Users\\simon\\source\\repos\\OpenForum\\Repository\\Repository.csproj"
+              "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\Repository\\Repository.csproj": {
+                "projectPath": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\Repository\\Repository.csproj"
               },
-              "C:\\Users\\simon\\source\\repos\\OpenForum\\ViewModels\\ViewModels.csproj": {
-                "projectPath": "C:\\Users\\simon\\source\\repos\\OpenForum\\ViewModels\\ViewModels.csproj"
+              "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\ViewModels\\ViewModels.csproj": {
+                "projectPath": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\ViewModels\\ViewModels.csproj"
               }
             }
           }
@@ -84,7 +84,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.402/PortableRuntimeIdentifierGraph.json",
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.401/PortableRuntimeIdentifierGraph.json",
           "packagesToPrune": {
             "Microsoft.CSharp": "(,4.7.32767]",
             "Microsoft.VisualBasic": "(,10.4.32767]",
@@ -362,20 +362,20 @@
         }
       }
     },
-    "C:\\Users\\simon\\source\\repos\\OpenForum\\EntityContext\\EntityContext.csproj": {
+    "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\EntityContext\\EntityContext.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\simon\\source\\repos\\OpenForum\\EntityContext\\EntityContext.csproj",
+        "projectUniqueName": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\EntityContext\\EntityContext.csproj",
         "projectName": "EntityContext",
-        "projectPath": "C:\\Users\\simon\\source\\repos\\OpenForum\\EntityContext\\EntityContext.csproj",
-        "packagesPath": "C:\\Users\\simon\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\simon\\source\\repos\\OpenForum\\EntityContext\\obj\\",
+        "projectPath": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\EntityContext\\EntityContext.csproj",
+        "packagesPath": "C:\\Users\\MisterDerp\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\EntityContext\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\simon\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\MisterDerp\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
@@ -392,8 +392,8 @@
             "framework": "net10.0",
             "targetAlias": "net10.0",
             "projectReferences": {
-              "C:\\Users\\simon\\source\\repos\\OpenForum\\EntityModels\\EntityModels.csproj": {
-                "projectPath": "C:\\Users\\simon\\source\\repos\\OpenForum\\EntityModels\\EntityModels.csproj"
+              "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\EntityModels\\EntityModels.csproj": {
+                "projectPath": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\EntityModels\\EntityModels.csproj"
               }
             }
           }
@@ -456,7 +456,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.402/PortableRuntimeIdentifierGraph.json",
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.401/PortableRuntimeIdentifierGraph.json",
           "packagesToPrune": {
             "Microsoft.CSharp": "(,4.7.32767]",
             "Microsoft.VisualBasic": "(,10.4.32767]",
@@ -734,20 +734,20 @@
         }
       }
     },
-    "C:\\Users\\simon\\source\\repos\\OpenForum\\EntityModels\\EntityModels.csproj": {
+    "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\EntityModels\\EntityModels.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\simon\\source\\repos\\OpenForum\\EntityModels\\EntityModels.csproj",
+        "projectUniqueName": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\EntityModels\\EntityModels.csproj",
         "projectName": "EntityModels",
-        "projectPath": "C:\\Users\\simon\\source\\repos\\OpenForum\\EntityModels\\EntityModels.csproj",
-        "packagesPath": "C:\\Users\\simon\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\simon\\source\\repos\\OpenForum\\EntityModels\\obj\\",
+        "projectPath": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\EntityModels\\EntityModels.csproj",
+        "packagesPath": "C:\\Users\\MisterDerp\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\EntityModels\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\simon\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\MisterDerp\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
@@ -824,7 +824,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.402/PortableRuntimeIdentifierGraph.json",
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.401/PortableRuntimeIdentifierGraph.json",
           "packagesToPrune": {
             "Microsoft.CSharp": "(,4.7.32767]",
             "Microsoft.VisualBasic": "(,10.4.32767]",
@@ -1102,20 +1102,20 @@
         }
       }
     },
-    "C:\\Users\\simon\\source\\repos\\OpenForum\\Repository\\Repository.csproj": {
+    "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\Repository\\Repository.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\simon\\source\\repos\\OpenForum\\Repository\\Repository.csproj",
+        "projectUniqueName": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\Repository\\Repository.csproj",
         "projectName": "Repository",
-        "projectPath": "C:\\Users\\simon\\source\\repos\\OpenForum\\Repository\\Repository.csproj",
-        "packagesPath": "C:\\Users\\simon\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\simon\\source\\repos\\OpenForum\\Repository\\obj\\",
+        "projectPath": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\Repository\\Repository.csproj",
+        "packagesPath": "C:\\Users\\MisterDerp\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\Repository\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\simon\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\MisterDerp\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
@@ -1132,11 +1132,11 @@
             "framework": "net10.0",
             "targetAlias": "net10.0",
             "projectReferences": {
-              "C:\\Users\\simon\\source\\repos\\OpenForum\\EntityContext\\EntityContext.csproj": {
-                "projectPath": "C:\\Users\\simon\\source\\repos\\OpenForum\\EntityContext\\EntityContext.csproj"
+              "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\EntityContext\\EntityContext.csproj": {
+                "projectPath": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\EntityContext\\EntityContext.csproj"
               },
-              "C:\\Users\\simon\\source\\repos\\OpenForum\\EntityModels\\EntityModels.csproj": {
-                "projectPath": "C:\\Users\\simon\\source\\repos\\OpenForum\\EntityModels\\EntityModels.csproj"
+              "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\EntityModels\\EntityModels.csproj": {
+                "projectPath": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\EntityModels\\EntityModels.csproj"
               }
             }
           }
@@ -1199,7 +1199,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.402/PortableRuntimeIdentifierGraph.json",
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.401/PortableRuntimeIdentifierGraph.json",
           "packagesToPrune": {
             "Microsoft.CSharp": "(,4.7.32767]",
             "Microsoft.VisualBasic": "(,10.4.32767]",
@@ -1477,20 +1477,20 @@
         }
       }
     },
-    "C:\\Users\\simon\\source\\repos\\OpenForum\\ViewModels\\ViewModels.csproj": {
+    "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\ViewModels\\ViewModels.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\simon\\source\\repos\\OpenForum\\ViewModels\\ViewModels.csproj",
+        "projectUniqueName": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\ViewModels\\ViewModels.csproj",
         "projectName": "ViewModels",
-        "projectPath": "C:\\Users\\simon\\source\\repos\\OpenForum\\ViewModels\\ViewModels.csproj",
-        "packagesPath": "C:\\Users\\simon\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\simon\\source\\repos\\OpenForum\\ViewModels\\obj\\",
+        "projectPath": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\ViewModels\\ViewModels.csproj",
+        "packagesPath": "C:\\Users\\MisterDerp\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\ViewModels\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\simon\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\MisterDerp\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
@@ -1547,7 +1547,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.402/PortableRuntimeIdentifierGraph.json",
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.401/PortableRuntimeIdentifierGraph.json",
           "packagesToPrune": {
             "Microsoft.CSharp": "(,4.7.32767]",
             "Microsoft.VisualBasic": "(,10.4.32767]",

@@ -14,6 +14,7 @@ namespace Application.Mappers
             return new PostListItemView
             {
                 Id = post.Id,
+                Title = post.Title,
                 Content = post.Content,
                 Creator = post.CreatedByUserName,
                 CreatedAt = post.CreatedAt
@@ -26,6 +27,7 @@ namespace Application.Mappers
             {
                 Id = post.Id,
                 TopicId = post.TopicId,
+                Title = post.Title,
                 Content = post.Content
             };
         }
@@ -34,6 +36,7 @@ namespace Application.Mappers
             return new Post
             {
                 TopicId = model.TopicId,
+                Title = model.Title,
                 Content = model.Content,
                 CreatedAt = DateTime.UtcNow
             };
@@ -45,6 +48,7 @@ namespace Application.Mappers
             {
                 Id = model.Id,
                 TopicId = model.TopicId,
+                Title = model.Title,
                 Content = model.Content
             };
         }

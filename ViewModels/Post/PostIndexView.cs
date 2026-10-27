@@ -6,11 +6,13 @@ namespace ViewModels.Post
 {
     public class PostIndexView
     {
-        public int Id { get; set; }
+        public int TopicId { get; set; }
 
-        public string Title { get; set; } = string.Empty;
+        public string TopicTitle { get; set; } = string.Empty;
 
-        public string Creator { get; set; } = string.Empty;
+        public string TopicCreator { get; set; } = string.Empty;
+
+        public DateTime TopicCreatedAt { get; set; } 
 
         public IEnumerable<PostListItemView> Posts { get; set; } = Enumerable.Empty<PostListItemView>();
 
@@ -21,5 +23,7 @@ namespace ViewModels.Post
         public int CurrentPage { get; set; } = 1;
 
         public int TotalPages { get; set; } = 1;
+
+        public bool CanCreate { get; set; }
     }
 }

@@ -15,8 +15,7 @@ namespace Repository
             context = forumContext;
         }
 
-        public async Task<(IEnumerable<Comment> Items, int TotalCount)>
-            GetPageByPostIdAsync(int postId, int page, int pageSize)
+        public async Task<(IEnumerable<Comment> Items, int TotalCount)> GetPageByPostIdAsync(int postId, int page, int pageSize)
         {
             if (page < 1)
                 throw new ArgumentOutOfRangeException(nameof(page));
@@ -30,8 +29,8 @@ namespace Repository
 
             List<Comment> items = await context.Comments
                 .Where(c => c.PostId == postId)
-                .OrderBy(c => c.CreatedAt)
-                .ThenBy(c => c.Id)
+                .OrderByDescending(c => c.CreatedAt)
+                .ThenByDescending(c => c.Id)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();

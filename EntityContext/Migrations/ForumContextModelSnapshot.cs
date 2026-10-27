@@ -48,6 +48,10 @@ namespace EntityContext.Migrations
                     b.Property<int>("PostId")
                         .HasColumnType("int");
 
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("PostId");
@@ -62,7 +66,8 @@ namespace EntityContext.Migrations
                             CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             CreatedByUserId = "seed-user",
                             CreatedByUserName = "",
-                            PostId = 1
+                            PostId = 1,
+                            Title = ""
                         });
                 });
 
@@ -89,6 +94,10 @@ namespace EntityContext.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int>("TopicId")
                         .HasColumnType("int");
 
@@ -106,6 +115,7 @@ namespace EntityContext.Migrations
                             CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             CreatedByUserId = "seed-user",
                             CreatedByUserName = "",
+                            Title = "",
                             TopicId = 1
                         });
                 });

@@ -18,9 +18,7 @@ namespace OpenForum.Controllers
         [HttpGet]
         public async Task<IActionResult> Details(int id, int page = 1)
         {
-            // id is the topic ID, not the post ID.
-            PostIndexView? model =
-                await postService.GetPostIndexViewAsync(id, page);
+            PostIndexView? model = await postService.GetPostIndexViewAsync(id, page);
 
             if (model == null)
                 return NotFound();
@@ -36,9 +34,7 @@ namespace OpenForum.Controllers
         {
             try
             {
-                // id is the post ID.
-                PostIndexView? model =
-                    await postService.GetEditViewAsync(id, page);
+                PostIndexView? model = await postService.GetEditViewAsync(id, page);
 
                 if (model == null)
                     return NotFound();
@@ -56,15 +52,11 @@ namespace OpenForum.Controllers
         [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(
-            PostCreateView model,
-            int page = 1)
+        public async Task<IActionResult> Create(PostCreateView model, int page = 1)
         {
             if (!ModelState.IsValid)
             {
-                PostIndexView? viewModel =
-                    await postService.GetPostIndexViewAsync(
-                        model.TopicId, page);
+                PostIndexView? viewModel = await postService.GetPostIndexViewAsync(model.TopicId, page);
 
                 if (viewModel == null)
                     return NotFound();
@@ -93,17 +85,13 @@ namespace OpenForum.Controllers
         [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Update(
-            PostEditView model,
-            int page = 1)
+        public async Task<IActionResult> Update(PostEditView model, int page = 1)
         {
             if (!ModelState.IsValid)
             {
                 try
                 {
-                    PostIndexView? viewModel =
-                        await postService.GetEditViewAsync(
-                            model.Id, page);
+                    PostIndexView? viewModel =await postService.GetEditViewAsync(model.Id, page);
 
                     if (viewModel == null)
                         return NotFound();
@@ -124,9 +112,7 @@ namespace OpenForum.Controllers
             {
                 await postService.UpdateAsync(model);
 
-                return RedirectToAction(
-                    nameof(Details),
-                    new { id = model.TopicId, page });
+                return RedirectToAction(nameof(Details), new { id = model.TopicId, page });
             }
             catch (UnauthorizedAccessException)
             {
@@ -137,18 +123,13 @@ namespace OpenForum.Controllers
         [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Delete(
-            int id,
-            int topicId,
-            int page = 1)
+        public async Task<IActionResult> Delete(int id, int topicId, int page = 1)
         {
             try
             {
                 await postService.DeleteAsync(id);
 
-                return RedirectToAction(
-                    nameof(Details),
-                    new { id = topicId, page });
+                return RedirectToAction(nameof(Details), new { id = topicId, page });
             }
             catch (UnauthorizedAccessException)
             {

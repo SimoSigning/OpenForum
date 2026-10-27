@@ -43,8 +43,7 @@ namespace Repository
 
         public async Task<Topic?> GetByIdAsync(int id)
         {
-            return await context.Topics
-                .FirstOrDefaultAsync(t => t.Id == id);
+            return await context.Topics.FirstOrDefaultAsync(t => t.Id == id);
         }
 
         public async Task AddAsync(Topic topic)

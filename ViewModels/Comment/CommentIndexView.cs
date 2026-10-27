@@ -6,15 +6,17 @@ namespace ViewModels.Comment
 {
     public class CommentIndexView
     {
-        public int Id { get; set; }
+        public int PostId { get; set; }
 
         public int TopicId { get; set; }
 
-        public string Content { get; set; } = string.Empty;
+        public string PostTitle { get; set; } = string.Empty;
 
-        public string Creator { get; set; } = string.Empty;
+        public string PostContent { get; set; } = string.Empty;
 
-        public DateTime CreatedAt { get; set; }
+        public string PostCreator { get; set; } = string.Empty;
+
+        public DateTime PostCreatedAt { get; set; }
 
         public IEnumerable<CommentListItemView> Comments { get; set; } = Enumerable.Empty<CommentListItemView>();
 
@@ -26,5 +28,6 @@ namespace ViewModels.Comment
 
         public int TotalPages { get; set; } = 1;
 
+        public bool CanCreate { get; set; }
     }
 }

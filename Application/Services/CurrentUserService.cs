@@ -26,5 +26,17 @@ namespace Application.Services
 
             return userId;
         }
+
+        public string? GetUserIdOrNull()
+        {
+            string? userId = userContext.UserId;
+
+            if (!userContext.IsAuthenticated || string.IsNullOrWhiteSpace(userId))
+            {
+                return null;
+            }
+
+            return userId;
+        }
     }
 }

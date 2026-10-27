@@ -1,4 +1,5 @@
-﻿@model ViewModels.Comment.CommentIndexView
+﻿
+@model ViewModels.Comment.CommentIndexView
 
 @{
     ViewData["Title"] = "Post Details";
@@ -6,215 +7,192 @@
 }
 
 <div class="row">
+    <div class="col-12 col-lg-9 mx-auto">
 
-    <div class="col-lg-10">
+        <div class="d-flex justify-content-between align-items-center gap-3 mb-4">
+            <h1 class="mb-0">Post Details</h1>
+            <a asp-controller="Post" asp-action="Details" asp-route-id="@Model.TopicId" class="btn btn-outline-secondary btn-sm flex-shrink-0">
+                Back to Topic
+            </a>
+        </div>
 
         <div class="card shadow-sm mb-4">
-
-            <div class="card-header">
-                <h1 class="h5 mb-0">
-                    Post
-                </h1>
+            <div class="card-header bg-body-tertiary">
+                <h2 class="h5 mb-0">Post Content</h2>
             </div>
 
             <div class="card-body">
-
-                <h2 class="h6 text-muted">
-                    Post Content
-                </h2>
-
-                <p class="text-muted">
-                    Created by: @Model.Creator
-                </p>
-
                 <p class="mb-3">
-                    @Model.Content
+                    @Model.PostContent
                 </p>
 
-                <p class="text-muted small">
-                    Created: @Model.CreatedAt
+                <div class="d-flex flex-wrap align-items-center gap-2 text-muted small">
+                    <span>By <strong class="text-body">@Model.PostCreator</strong></span>
+                    <span aria-hidden="true">&middot;</span>
+                    <span>@Model.PostCreatedAt</span>
+                </div>
+            </div>
+        </div>
+
+        @if (Model.CanCreate)
+        {
+            <div id="createCommentCard" class="card shadow-sm mb-4 @(Model.EditComment != null ? "d-none" : "")">
+                <div class="card-header">
+                    <h2 class="h5 mb-0">Create Comment</h2>
+                </div>
+                <div class="card-body">
+                    @await Html.PartialAsync("_Create", Model.CreateComment)
+                </div>
+            </div>
+        }
+
+        @if (Model.EditComment != null)
+        {
+            <div id="editCommentCard" class="card shadow-sm mb-4">
+                <div class="card-header bg-body-tertiary">
+                    <h2 class="h5 mb-0">Edit Comment</h2>
+                </div>
+                <div class="card-body">
+                    @await Html.PartialAsync("_Edit", Model.EditComment)
+                </div>
+            </div>
+        }
+
+        <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2 mb-3">
+            <div>
+                <h2 class="h4 mb-1">Comments</h2>
+                <p class="text-muted mb-0">
+                    Share your thoughts on this post.
                 </p>
-
-                <a asp-controller="Post"
-                   asp-action="Details"
-                   asp-route-id="@Model.TopicId"
-                   class="btn btn-outline-secondary btn-sm">
-                    Back to Topic
-                </a>
-
             </div>
 
+            <span class="badge bg-secondary rounded-pill align-self-start align-self-sm-center">
+                @Model.Comments.Count() @(Model.Comments.Count() == 1 ? "comment" : "comments")
+            </span>
         </div>
-
-        <div class="card shadow-sm mb-4">
-
-            <div class="card-header">
-                <h2 class="h5 mb-0">
-                    Create Comment
-                </h2>
-            </div>
-
-            <div class="card-body">
-                @await Html.PartialAsync("_Create", Model.CreateComment)
-            </div>
-
-        </div>
-
-        <h2 class="h4 mb-3">
-            Comments
-        </h2>
 
         @if (!Model.Comments.Any())
         {
-            <div class="alert alert-info">
-                No comments exist yet.
+            <div class="card shadow-sm">
+                <div class="card-body text-center py-5">
+                    <h3 class="h5 mb-2">No comments yet</h3>
+                    <p class="text-muted mb-0">
+                        There are no comments on this post yet.
+                        @if (Model.CanCreate)
+                        {
+                            <span>Be the first to share your thoughts.</span>
+                        }
+                    </p>
+                </div>
             </div>
         }
         else
         {
-            foreach (ViewModels.Comment.CommentListItemView comment in Model.Comments)
-            {
-                <div class="card shadow-sm mb-3">
+            <div class="d-flex flex-column gap-3">
+                @foreach (ViewModels.Comment.CommentListItemView comment in Model.Comments)
+                {
+                    <div class="card shadow-sm">
+                        <div class="card-body">
+                            <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-start gap-3">
+                                <div class="flex-grow-1">
+                                    <h3 class="h5 mb-2">
+                                        @comment.Title
+                                    </h3>
 
-                    <div class="card-body">
+                                    <p class="mb-3">
+                                        @comment.Content
+                                    </p>
 
-                        <p class="mb-3">
-                            @comment.Content
-                        </p>
+                                    <div class="d-flex flex-wrap align-items-center gap-2 text-muted small">
+                                        <span>By <strong class="text-body">@comment.Creator</strong></span>
+                                        <span aria-hidden="true">&middot;</span>
+                                        <span>@comment.CreatedAt</span>
+                                    </div>
+                                </div>
 
-                        <p class="text-muted">
-                            Created by: @comment.Creator
-                        </p>
+                                @if (comment.CanManage)
+                                {
+                                    <div class="d-flex flex-wrap gap-2 flex-shrink-0">
+                                        <a asp-action="Edit" asp-route-id="@comment.Id" asp-route-page="@Model.CurrentPage" class="btn btn-outline-secondary btn-sm">
+                                            Edit
+                                        </a>
 
-                        <p class="text-muted small">
-                            Created: @comment.CreatedAt
-                        </p>
-
-                        <div class="d-flex gap-2">
-
-                            <a asp-action="Edit"
-                               asp-route-id="@comment.Id"
-                               asp-route-page="@Model.CurrentPage"
-                               class="btn btn-outline-secondary btn-sm">
-                                Edit
-                            </a>
-
-                            <form asp-action="Delete" method="post">
-
-                                <input type="hidden"
-                                       name="id"
-                                       value="@comment.Id" />
-
-                                <input type="hidden"
-                                       name="postId"
-                                       value="@Model.Id" />
-
-                                <input type="hidden"
-                                       name="page"
-                                       value="@Model.CurrentPage" />
-
-                                <button type="submit"
-                                        class="btn btn-outline-danger btn-sm">
-                                    Delete
-                                </button>
-
-                            </form>
-
+                                        <form asp-action="Delete" method="post" onsubmit="return confirm('Are you sure you want to delete this comment?');">
+                                            <input type="hidden" name="id" value="@comment.Id" />
+                                            <input type="hidden" name="postId" value="@Model.PostId" />
+                                            <input type="hidden" name="page" value="@Model.CurrentPage" />
+                                            <button type="submit" class="btn btn-outline-danger btn-sm">
+                                                Delete
+                                            </button>
+                                        </form>
+                                    </div>
+                                }
+                            </div>
                         </div>
-
                     </div>
-
-                </div>
-            }
+                }
+            </div>
         }
 
-        @* Comment pagination *@
         @if (Model.TotalPages > 1)
         {
             <nav aria-label="Comment pagination" class="mt-4">
-
-                <ul class="pagination justify-content-center">
-
+                <ul class="pagination flex-wrap mb-0">
                     <li class="page-item @(Model.CurrentPage <= 1 ? "disabled" : "")">
-
                         @if (Model.CurrentPage > 1)
                         {
-                            <a class="page-link"
-                               asp-action="Details"
-                               asp-route-id="@Model.Id"
-                               asp-route-page="@(Model.CurrentPage - 1)">
+                            <a class="page-link" asp-action="Details" asp-route-id="@Model.PostId" asp-route-page="@(Model.CurrentPage - 1)">
                                 Previous
                             </a>
                         }
                         else
                         {
-                            <span class="page-link">
-                                Previous
-                            </span>
+                            <span class="page-link">Previous</span>
                         }
-
                     </li>
 
-                    @for (int pageNumber = 1;
-                          pageNumber <= Model.TotalPages;
-                          pageNumber++)
+                    @for (int pageNumber = 1; pageNumber <= Model.TotalPages; pageNumber++)
                     {
                         <li class="page-item @(pageNumber == Model.CurrentPage ? "active" : "")">
-
-                            <a class="page-link"
-                               asp-action="Details"
-                               asp-route-id="@Model.Id"
-                               asp-route-page="@pageNumber"
-                               aria-current="@(pageNumber == Model.CurrentPage ? "page" : null)">
+                            <a class="page-link" asp-action="Details" asp-route-id="@Model.PostId" asp-route-page="@pageNumber" aria-current="@(pageNumber == Model.CurrentPage ? "page" : null)">
                                 @pageNumber
                             </a>
-
                         </li>
                     }
 
                     <li class="page-item @(Model.CurrentPage >= Model.TotalPages ? "disabled" : "")">
-
                         @if (Model.CurrentPage < Model.TotalPages)
                         {
-                            <a class="page-link"
-                               asp-action="Details"
-                               asp-route-id="@Model.Id"
-                               asp-route-page="@(Model.CurrentPage + 1)">
+                            <a class="page-link" asp-action="Details" asp-route-id="@Model.PostId" asp-route-page="@(Model.CurrentPage + 1)">
                                 Next
                             </a>
                         }
                         else
                         {
-                            <span class="page-link">
-                                Next
-                            </span>
+                            <span class="page-link">Next</span>
                         }
-
                     </li>
-
                 </ul>
-
             </nav>
         }
-
-        @* Edit comment form *@
-        @if (Model.EditComment != null)
-        {
-            <div class="card shadow-sm mt-4">
-
-                <div class="card-header">
-                    <h2 class="h5 mb-0">
-                        Edit Comment
-                    </h2>
-                </div>
-
-                <div class="card-body">
-                    @await Html.PartialAsync("_Edit", Model.EditComment)
-                </div>
-
-            </div>
-        }
-
     </div>
-
 </div>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const createCommentCard = document.getElementById("createCommentCard");
+        const editCommentCard = document.getElementById("editCommentCard");
+        const cancelEditComment = document.getElementById("cancelEditComment");
+
+        if (cancelEditComment) {
+            cancelEditComment.addEventListener("click", function () {
+                if (editCommentCard) {
+                    editCommentCard.classList.add("d-none");
+                }
+
+                if (createCommentCard) {
+                    createCommentCard.classList.remove("d-none");
+                }
+            });
+        }
+    });
+</script>

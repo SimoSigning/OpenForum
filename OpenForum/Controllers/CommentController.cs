@@ -18,9 +18,7 @@ namespace OpenForum.Controllers
         [HttpGet]
         public async Task<IActionResult> Details(int id, int page = 1)
         {
-            // id is the post ID.
-            CommentIndexView? model =
-                await commentService.GetCommentIndexViewAsync(id, page);
+            CommentIndexView? model = await commentService.GetCommentIndexViewAsync(id, page);
 
             if (model == null)
                 return NotFound();
@@ -36,9 +34,7 @@ namespace OpenForum.Controllers
         {
             try
             {
-                // id is the comment ID.
-                CommentIndexView? model =
-                    await commentService.GetEditViewAsync(id, page);
+                CommentIndexView? model = await commentService.GetEditViewAsync(id, page);
 
                 if (model == null)
                     return NotFound();
@@ -56,15 +52,11 @@ namespace OpenForum.Controllers
         [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(
-            CommentCreateView model,
-            int page = 1)
+        public async Task<IActionResult> Create(CommentCreateView model, int page = 1)
         {
             if (!ModelState.IsValid)
             {
-                CommentIndexView? viewModel =
-                    await commentService.GetCommentIndexViewAsync(
-                        model.PostId, page);
+                CommentIndexView? viewModel = await commentService.GetCommentIndexViewAsync(model.PostId, page);
 
                 if (viewModel == null)
                     return NotFound();
@@ -80,9 +72,7 @@ namespace OpenForum.Controllers
             {
                 await commentService.CreateAsync(model);
 
-                return RedirectToAction(
-                    nameof(Details),
-                    new { id = model.PostId, page });
+                return RedirectToAction(nameof(Details), new { id = model.PostId, page });
             }
             catch (UnauthorizedAccessException)
             {
@@ -93,17 +83,13 @@ namespace OpenForum.Controllers
         [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Update(
-            CommentEditView model,
-            int page = 1)
+        public async Task<IActionResult> Update(CommentEditView model, int page = 1)
         {
             if (!ModelState.IsValid)
             {
                 try
                 {
-                    CommentIndexView? viewModel =
-                        await commentService.GetEditViewAsync(
-                            model.Id, page);
+                    CommentIndexView? viewModel = await commentService.GetEditViewAsync(model.Id, page);
 
                     if (viewModel == null)
                         return NotFound();
@@ -124,9 +110,7 @@ namespace OpenForum.Controllers
             {
                 await commentService.UpdateAsync(model);
 
-                return RedirectToAction(
-                    nameof(Details),
-                    new { id = model.PostId, page });
+                return RedirectToAction(nameof(Details), new { id = model.PostId, page });
             }
             catch (UnauthorizedAccessException)
             {
@@ -137,18 +121,13 @@ namespace OpenForum.Controllers
         [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Delete(
-            int id,
-            int postId,
-            int page = 1)
+        public async Task<IActionResult> Delete(int id, int postId, int page = 1)
         {
             try
             {
                 await commentService.DeleteAsync(id);
 
-                return RedirectToAction(
-                    nameof(Details),
-                    new { id = postId, page });
+                return RedirectToAction(nameof(Details), new { id = postId, page });
             }
             catch (UnauthorizedAccessException)
             {

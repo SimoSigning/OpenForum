@@ -13,7 +13,6 @@ namespace Application.Services
         private readonly ITopicMapper topicMapper;
         private readonly ICurrentUserService currentUser;
         private readonly IUserService userService;
-
         private const int PageSize = 5;
 
         public TopicService(
@@ -44,11 +43,23 @@ namespace Application.Services
                 result = await topicRepository.GetPageAsync(page, PageSize);
             }
 
+            string? userId = currentUser.GetUserIdOrNull();
+
+            List<TopicListItemView> topics = result.Items.Select(
+                topic => 
+                {
+                    TopicListItemView item = topicMapper.ToListItemView(topic);
+                    item.CanManage = userId != null && topic.CreatedByUserId == userId;
+                    return item;
+                })
+                .ToList();
+
             return new TopicIndexView
             {
-                Topics = result.Items.Select(topicMapper.ToListItemView),
+                Topics = topics,
                 CreateTopic = new TopicCreateView(),
                 EditTopic = null,
+                CanCreate = userId != null,
                 CurrentPage = page,
                 TotalPages = totalPages
             };

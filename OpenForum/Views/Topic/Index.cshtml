@@ -5,112 +5,130 @@
 }
 
 <div class="row">
+    <div class="col-12 col-lg-9 mx-auto">
+        <div class="mb-4">
+            <h1 class="mb-1">
+                Forum Topics
+            </h1>
 
-    <div class="col-lg-8">
-
-        <h1 class="mb-4">
-            Forum Topics
-        </h1>
-
-        <div class="card shadow-sm mb-4">
-
-            <div class="card-header">
-                <h2 class="h5 mb-0">
-                    Create Topic
-                </h2>
-            </div>
-
-            <div class="card-body">
-                @await Html.PartialAsync("_Create", Model.CreateTopic)
-            </div>
-
+            <p class="text-muted mb-0">
+                Browse discussions and find topics that interest you.
+            </p>
         </div>
 
-        <h2 class="h4 mb-3">
-            Existing Topics
-        </h2>
+        @if (Model.CanCreate)
+        {
+            <div id="createTopicCard" class="card shadow-sm mb-4 @(Model.EditTopic != null ? "d-none" : "")">
+                <div class="card-header bg-body-tertiary">
+                    <h2 class="h5 mb-0">Create Topic</h2>
+                </div>
+                <div class="card-body">
+                    @await Html.PartialAsync("_Create", Model.CreateTopic)
+                </div>
+            </div>
+        }
+
+        @if (Model.EditTopic != null)
+        {
+            <div id="editTopicCard" class="card shadow-sm mb-4">
+                <div class="card-header bg-body-tertiary">
+                    <h2 class="h5 mb-0">Edit Topic</h2>
+                </div>
+                <div class="card-body">
+                    @await Html.PartialAsync("_Edit", Model.EditTopic)
+                </div>
+            </div>
+        }
+
+        <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2 mb-3">
+            <div>
+                <h2 class="h4 mb-1">
+                    Existing Topics
+                </h2>
+
+                <p class="text-muted mb-0">
+                    Browse the community discussions.
+                </p>
+            </div>
+
+            <span class="badge bg-secondary rounded-pill align-self-start align-self-sm-center">
+                @Model.Topics.Count() @(Model.Topics.Count() == 1 ? "topic" : "topics")
+            </span>
+        </div>
 
         @if (!Model.Topics.Any())
         {
-            <div class="alert alert-info">
-                No topics exist yet.
+            <div class="card shadow-sm">
+                <div class="card-body text-center py-5">
+                    <h3 class="h5 mb-2">
+                        No topics yet
+                    </h3>
+
+                    <p class="text-muted mb-0">
+                        There are no topics to display right now.
+                        @if (Model.CanCreate)
+                        {
+                            <span>Use the form above to start a new discussion.</span>
+                        }
+                    </p>
+                </div>
             </div>
         }
         else
         {
-            foreach (ViewModels.Topic.TopicListItemView topic in Model.Topics)
-            {
-                <div class="card shadow-sm mb-3">
+            <div class="d-flex flex-column gap-3">
+                @foreach (ViewModels.Topic.TopicListItemView topic in Model.Topics)
+                {
+                    <div class="card shadow-sm">
+                        <div class="card-body">
+                            <div class="d-flex flex-column flex-md-row justify-content-between gap-3">
+                                <div class="flex-grow-1">
+                                    <h3 class="h5 mb-2">
+                                        @topic.Title
+                                    </h3>
 
-                    <div class="card-body">
+                                    <div class="d-flex flex-wrap align-items-center gap-2 text-muted small">
+                                        <span>By <strong class="text-body">@topic.Creator</strong></span>
+                                        <span aria-hidden="true">&middot;</span>
+                                        <span>@topic.CreatedAt</span>
+                                    </div>
+                                </div>
 
-                        <h3 class="h5">
-                            @topic.Title
-                        </h3>
+                                <div class="d-flex flex-wrap align-items-start gap-2">
+                                    <a asp-controller="Post" asp-action="Details" asp-route-id="@topic.Id" class="btn btn-primary btn-sm">
+                                        View Topic
+                                    </a>
 
-                        <p class="text-muted">
-                            Created:
-                            @topic.CreatedAt
-                        </p>
+                                    @if (topic.CanManage)
+                                    {
+                                        <a asp-action="Edit" asp-route-id="@topic.Id" asp-route-page="@Model.CurrentPage" class="btn btn-outline-secondary btn-sm">
+                                            Edit
+                                        </a>
 
-                        <p class="text-muted">
-                            Created by:
-                            @topic.Creator
-                        </p>
-
-                        <div class="d-flex gap-2">
-
-                            <a asp-controller="Post"
-                               asp-action="Details"
-                               asp-route-id="@topic.Id"
-                               class="btn btn-primary btn-sm">
-                                View Topic
-                            </a>
-
-                            <a asp-action="Edit"
-                               asp-route-id="@topic.Id"
-                               asp-route-page="@Model.CurrentPage"
-                               class="btn btn-outline-secondary btn-sm">
-                                Edit
-                            </a>
-
-                            <form asp-action="Delete" method="post">
-
-                                <input type="hidden"
-                                       name="id"
-                                       value="@topic.Id" />
-
-                                <input type="hidden"
-                                       name="page"
-                                       value="@Model.CurrentPage" />
-
-                                <button type="submit"
-                                        class="btn btn-outline-danger btn-sm">
-                                    Delete
-                                </button>
-
-                            </form>
-
+                                        <form asp-action="Delete" method="post" onsubmit="return confirm('Are you sure you want to delete this topic?');">
+                                            <input type="hidden" name="id" value="@topic.Id" />
+                                            <input type="hidden" name="page" value="@Model.CurrentPage" />
+                                            <button type="submit" class="btn btn-outline-danger btn-sm">
+                                                Delete
+                                            </button>
+                                        </form>
+                                    }
+                                </div>
+                            </div>
                         </div>
-
                     </div>
-
-                </div>
-            }
+                }
+            </div>
         }
 
         @if (Model.TotalPages > 1)
         {
             <nav aria-label="Topic pagination" class="mt-4">
-
-                <ul class="pagination justify-content-center">
-
+                <ul class="pagination justify-content-left flex-wrap">
                     <li class="page-item @(Model.CurrentPage <= 1 ? "disabled" : "")">
                         @if (Model.CurrentPage > 1)
                         {
-                            <a class="page-link"
-                               asp-action="Index"
-                               asp-route-page="@(Model.CurrentPage - 1)">
+                            <a class="page-link" asp-action="Index" asp-route-page="@(Model.CurrentPage - 1)">
                                 Previous
                             </a>
                         }
@@ -123,10 +141,7 @@
                     @for (int pageNumber = 1; pageNumber <= Model.TotalPages; pageNumber++)
                     {
                         <li class="page-item @(pageNumber == Model.CurrentPage ? "active" : "")">
-                            <a class="page-link"
-                               asp-action="Index"
-                               asp-route-page="@pageNumber"
-                               aria-current="@(pageNumber == Model.CurrentPage ? "page" : null)">
+                            <a class="page-link" asp-action="Index" asp-route-page="@pageNumber" aria-current="@(pageNumber == Model.CurrentPage ? "page" : null)">
                                 @pageNumber
                             </a>
                         </li>
@@ -135,9 +150,7 @@
                     <li class="page-item @(Model.CurrentPage >= Model.TotalPages ? "disabled" : "")">
                         @if (Model.CurrentPage < Model.TotalPages)
                         {
-                            <a class="page-link"
-                               asp-action="Index"
-                               asp-route-page="@(Model.CurrentPage + 1)">
+                            <a class="page-link" asp-action="Index" asp-route-page="@(Model.CurrentPage + 1)">
                                 Next
                             </a>
                         }
@@ -146,29 +159,27 @@
                             <span class="page-link">Next</span>
                         }
                     </li>
-
                 </ul>
-
             </nav>
         }
-
-        @if (Model.EditTopic != null)
-        {
-            <div class="card shadow-sm mt-4">
-
-                <div class="card-header">
-                    <h2 class="h5 mb-0">
-                        Edit Topic
-                    </h2>
-                </div>
-
-                <div class="card-body">
-                    @await Html.PartialAsync("_Edit", Model.EditTopic)
-                </div>
-
-            </div>
-        }
-
     </div>
-
 </div>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const createTopicCard = document.getElementById("createTopicCard");
+        const editTopicCard = document.getElementById("editTopicCard");
+        const cancelEditTopic = document.getElementById("cancelEditTopic");
+
+        if (cancelEditTopic) {
+            cancelEditTopic.addEventListener("click", function () {
+                if (editTopicCard) {
+                    editTopicCard.classList.add("d-none");
+                }
+
+                if (createTopicCard) {
+                    createTopicCard.classList.remove("d-none");
+                }
+            });
+        }
+    });
+</script>

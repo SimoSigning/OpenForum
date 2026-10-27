@@ -4161,23 +4161,23 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\simon\\.nuget\\packages\\": {},
+    "C:\\Users\\MisterDerp\\.nuget\\packages\\": {},
     "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\simon\\source\\repos\\OpenForum\\EntityModels\\EntityModels.csproj",
+      "projectUniqueName": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\EntityModels\\EntityModels.csproj",
       "projectName": "EntityModels",
-      "projectPath": "C:\\Users\\simon\\source\\repos\\OpenForum\\EntityModels\\EntityModels.csproj",
-      "packagesPath": "C:\\Users\\simon\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\simon\\source\\repos\\OpenForum\\EntityModels\\obj\\",
+      "projectPath": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\EntityModels\\EntityModels.csproj",
+      "packagesPath": "C:\\Users\\MisterDerp\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\EntityModels\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
       ],
       "configFilePaths": [
-        "C:\\Users\\simon\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Users\\MisterDerp\\AppData\\Roaming\\NuGet\\NuGet.Config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
@@ -4254,7 +4254,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.402/PortableRuntimeIdentifierGraph.json",
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.401/PortableRuntimeIdentifierGraph.json",
         "packagesToPrune": {
           "Microsoft.CSharp": "(,4.7.32767]",
           "Microsoft.VisualBasic": "(,10.4.32767]",

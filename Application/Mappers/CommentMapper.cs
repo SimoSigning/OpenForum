@@ -14,6 +14,7 @@ namespace Application.Mappers
             return new CommentListItemView
             {
                 Id = comment.Id,
+                Title = comment.Title,
                 Content = comment.Content,
                 Creator = comment.CreatedByUserName,
                 CreatedAt = comment.CreatedAt
@@ -26,6 +27,7 @@ namespace Application.Mappers
             {
                 Id = comment.Id,
                 PostId = comment.PostId,
+                Title = comment.Title,
                 Content = comment.Content
             };
         }
@@ -35,6 +37,7 @@ namespace Application.Mappers
             return new Comment
             {
                 PostId = model.PostId,
+                Title = model.Title,
                 Content = model.Content,
                 CreatedAt = DateTime.UtcNow
             };
@@ -45,6 +48,7 @@ namespace Application.Mappers
             {
                 Id = model.Id,
                 PostId = model.PostId,
+                Title = model.Title,
                 Content = model.Content
             };
         }

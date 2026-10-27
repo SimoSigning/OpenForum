@@ -15,5 +15,7 @@ namespace ViewModels.Topic
         public int CurrentPage { get; set; } = 1;
 
         public int TotalPages { get; set; } = 1;
+
+        public bool CanCreate {  get; set; }
     }
 }

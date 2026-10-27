@@ -1,12 +1,15 @@
 ﻿using Application.Interfaces.Contexts;
 using Application.Interfaces.Mappers;
 using Application.Interfaces.Services;
+using Application.Mappers;
 using EntityModels;
 using Repository.interfaces;
 using ViewModels.Post;
+using ViewModels.Topic;
 
 namespace Application.Services
 {
+
     public class PostService : IPostService
     {
         private readonly IPostRepository postRepository;
@@ -14,6 +17,7 @@ namespace Application.Services
         private readonly IPostMapper postMapper;
         private readonly ICurrentUserService currentUser;
         private readonly IUserService userService;
+        private const int PageSize = 5;
 
         public PostService(
             IPostRepository postRepository,
@@ -29,8 +33,6 @@ namespace Application.Services
             this.userService = userService;
         }
 
-        private const int PageSize = 5;
-
         public async Task<PostIndexView?> GetPostIndexViewAsync(int topicId, int page = 1)
         {
             Topic? topic = await topicRepository.GetByIdAsync(topicId);
@@ -40,7 +42,7 @@ namespace Application.Services
 
             page = Math.Max(1, page);
 
-            var result = await postRepository.GetPageByTopicIdAsync(topicId, page, PageSize);
+            (IEnumerable<Post> Items, int TotalCount) result = await postRepository.GetPageByTopicIdAsync(topicId, page, PageSize);
 
             int totalPages = Math.Max(1, (int)Math.Ceiling(result.TotalCount / (double)PageSize));
 
@@ -53,21 +55,30 @@ namespace Application.Services
                 result = await postRepository.GetPageByTopicIdAsync(topicId, page, PageSize);
             }
 
+            string? userId = currentUser.GetUserIdOrNull();
+
+            List<PostListItemView> posts = result.Items.Select(
+            post =>
+            {
+                PostListItemView item = postMapper.ToListItemView(post);
+                item.CanManage = userId != null && post.CreatedByUserId == userId;
+                return item;
+            })
+            .ToList();
+
             return new PostIndexView
             {
-                Id = topic.Id,
-                Title = topic.Title,
-                Creator = topic.CreatedByUserName,
-
-                Posts = result.Items.Select(postMapper.ToListItemView),
-
+                TopicId = topic.Id,
+                TopicTitle = topic.Title,
+                TopicCreator = topic.CreatedByUserName,
+                TopicCreatedAt = topic.CreatedAt,
+                Posts = posts,
                 CreatePost = new PostCreateView
                 {
                     TopicId = topicId
                 },
-
                 EditPost = null,
-
+                CanCreate = userId != null,
                 CurrentPage = page,
                 TotalPages = totalPages
             };

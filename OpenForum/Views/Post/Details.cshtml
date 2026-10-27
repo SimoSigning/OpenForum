@@ -1,121 +1,137 @@
 ﻿@model ViewModels.Post.PostIndexView
 
 @{
-    ViewData["Title"] = Model.Title;
+    ViewData["Title"] = Model.TopicTitle;
 }
 
 <div class="row">
+    <div class="col-12 col-lg-9 mx-auto">
 
-    <div class="col-lg-10">
+    <div class="d-flex justify-content-between align-items-start gap-3 mb-4">
+        <h1 class="mb-0">@Model.TopicTitle</h1>
+        <div class="text-muted small text-end flex-shrink-0">
+            Started by <strong class="text-body">@Model.TopicCreator</strong>
+        </div>
+    </div>
 
-        <h1 class="mb-4">
-            @Model.Title
-        </h1>
-
-        <p class="text-muted">
-            Created by: @Model.Creator
-        </p>
-
-        <div class="card shadow-sm mb-4">
-
+    @if (Model.CanCreate)
+    {
+        <div id="createPostCard" class="card shadow-sm mb-4 @(Model.EditPost != null ? "d-none" : "")">
             <div class="card-header">
                 <h2 class="h5 mb-0">Create Post</h2>
             </div>
-
             <div class="card-body">
                 @await Html.PartialAsync("_Create", Model.CreatePost)
             </div>
-
         </div>
+    }
 
-        <h2 class="h4 mb-3">Posts</h2>
+        @if (Model.EditPost != null)
+        {
+            <div id="editPostCard" class="card shadow-sm mb-4">
+                <div class="card-header bg-body-tertiary">
+                    <h2 class="h5 mb-0">Edit Post</h2>
+                </div>
+                <div class="card-body">
+                    @await Html.PartialAsync("_Edit", Model.EditPost)
+                </div>
+            </div>
+        }
+
+        <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2 mb-3">
+            <div>
+                <h2 class="h4 mb-1">
+                    Posts
+                </h2>
+
+                <p class="text-muted mb-0">
+                    Read and join the discussion.
+                </p>
+            </div>
+
+            <span class="badge bg-secondary rounded-pill align-self-start align-self-sm-center">
+                @Model.Posts.Count() @(Model.Posts.Count() == 1 ? "post" : "posts")
+            </span>
+        </div>
 
         @if (!Model.Posts.Any())
         {
-            <div class="alert alert-info">
-                No posts exist yet.
+            <div class="card shadow-sm">
+                <div class="card-body text-center py-5">
+                    <h3 class="h5 mb-2">
+                        No posts yet
+                    </h3>
+
+                    <p class="text-muted mb-0">
+                        There are no posts in this topic yet.
+                        @if (Model.CanCreate)
+                        {
+                            <span>Start the discussion by writing the first post.</span>
+                        }
+                    </p>
+                </div>
             </div>
         }
         else
         {
-            foreach (ViewModels.Post.PostListItemView post in Model.Posts)
-            {
-                <div class="card shadow-sm mb-3">
+            <div class="d-flex flex-column gap-3">
+                @foreach (ViewModels.Post.PostListItemView post in Model.Posts)
+                {
+                    <div class="card shadow-sm">
+                        <div class="card-body">
+                            <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-start gap-3">
+                                <div class="flex-grow-1">
+                                    <h3 class="h5 mb-2">
+                                        @post.Title
+                                    </h3>
 
-                    <div class="card-body">
+                                    <p class="mb-3">
+                                        @post.Content
+                                    </p>
 
-                        <p class="mb-3">
-                            @post.Content
-                        </p>
+                                    <div class="d-flex flex-wrap align-items-center gap-2 text-muted small">
+                                        <span>By <strong class="text-body">@post.Creator</strong></span>
+                                        <span aria-hidden="true">&middot;</span>
+                                        <span>@post.CreatedAt</span>
+                                    </div>
+                                </div>
 
-                        <p class="text-muted small">
-                            Created: @post.CreatedAt
-                        </p>
+                                <div class="d-flex flex-wrap gap-2 flex-shrink-0">
+                                    <a asp-controller="Comment" asp-action="Details" asp-route-id="@post.Id" class="btn btn-primary btn-sm">
+                                        View Post
+                                    </a>
 
-                        <p class="text-muted">
-                            Created by: @post.Creator
-                        </p>
+                                    @if (post.CanManage)
+                                    {
+                                        <a asp-action="Edit" asp-route-id="@post.Id" asp-route-page="@Model.CurrentPage" class="btn btn-outline-secondary btn-sm">
+                                            Edit
+                                        </a>
 
-                        <div class="d-flex gap-2">
-
-                            <a asp-controller="Comment"
-                               asp-action="Details"
-                               asp-route-id="@post.Id"
-                               class="btn btn-primary btn-sm">
-                                View Post
-                            </a>
-
-                            <a asp-action="Edit"
-                               asp-route-id="@post.Id"
-                               asp-route-page="@Model.CurrentPage"
-                               class="btn btn-outline-secondary btn-sm">
-                                Edit
-                            </a>
-
-                            <form asp-action="Delete" method="post">
-
-                                <input type="hidden"
-                                       name="id"
-                                       value="@post.Id" />
-
-                                <input type="hidden"
-                                       name="topicId"
-                                       value="@Model.Id" />
-
-                                <input type="hidden"
-                                       name="page"
-                                       value="@Model.CurrentPage" />
-
-                                <button type="submit"
-                                        class="btn btn-outline-danger btn-sm">
-                                    Delete
-                                </button>
-
-                            </form>
-
+                                        <form asp-action="Delete" method="post" onsubmit="return confirm('Are you sure you want to delete this post?');">
+                                            <input type="hidden" name="id" value="@post.Id" />
+                                            <input type="hidden" name="topicId" value="@Model.TopicId" />
+                                            <input type="hidden" name="page" value="@Model.CurrentPage" />
+                                            <button type="submit" class="btn btn-outline-danger btn-sm">
+                                                Delete
+                                            </button>
+                                        </form>
+                                    }
+                                </div>
+                            </div>
                         </div>
-
                     </div>
-
-                </div>
-            }
+                }
+            </div>
         }
 
-        @* Pagination *@
         @if (Model.TotalPages > 1)
         {
             <nav aria-label="Post pagination" class="mt-4">
-
-                <ul class="pagination justify-content-center">
-
+                <ul class="pagination flex-wrap mb-0">
                     <li class="page-item @(Model.CurrentPage <= 1 ? "disabled" : "")">
-
                         @if (Model.CurrentPage > 1)
                         {
-                            <a class="page-link"
-                               asp-action="Details"
-                               asp-route-id="@Model.Id"
-                               asp-route-page="@(Model.CurrentPage - 1)">
+                            <a class="page-link" asp-action="Details" asp-route-id="@Model.TopicId" asp-route-page="@(Model.CurrentPage - 1)">
                                 Previous
                             </a>
                         }
@@ -123,34 +139,21 @@
                         {
                             <span class="page-link">Previous</span>
                         }
-
                     </li>
 
-                    @for (int pageNumber = 1;
-                          pageNumber <= Model.TotalPages;
-                          pageNumber++)
+                    @for (int pageNumber = 1; pageNumber <= Model.TotalPages; pageNumber++)
                     {
                         <li class="page-item @(pageNumber == Model.CurrentPage ? "active" : "")">
-
-                            <a class="page-link"
-                               asp-action="Details"
-                               asp-route-id="@Model.Id"
-                               asp-route-page="@pageNumber"
-                               aria-current="@(pageNumber == Model.CurrentPage ? "page" : null)">
+                            <a class="page-link" asp-action="Details" asp-route-id="@Model.TopicId" asp-route-page="@pageNumber" aria-current="@(pageNumber == Model.CurrentPage ? "page" : null)">
                                 @pageNumber
                             </a>
-
                         </li>
                     }
 
                     <li class="page-item @(Model.CurrentPage >= Model.TotalPages ? "disabled" : "")">
-
                         @if (Model.CurrentPage < Model.TotalPages)
                         {
-                            <a class="page-link"
-                               asp-action="Details"
-                               asp-route-id="@Model.Id"
-                               asp-route-page="@(Model.CurrentPage + 1)">
+                            <a class="page-link" asp-action="Details" asp-route-id="@Model.TopicId" asp-route-page="@(Model.CurrentPage + 1)">
                                 Next
                             </a>
                         }
@@ -158,30 +161,28 @@
                         {
                             <span class="page-link">Next</span>
                         }
-
                     </li>
-
                 </ul>
-
             </nav>
         }
-
-        @* Edit form *@
-        @if (Model.EditPost != null)
-        {
-            <div class="card shadow-sm mt-4">
-
-                <div class="card-header">
-                    <h2 class="h5 mb-0">Edit Post</h2>
-                </div>
-
-                <div class="card-body">
-                    @await Html.PartialAsync("_Edit", Model.EditPost)
-                </div>
-
-            </div>
-        }
-
     </div>
-
 </div>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const createPostCard = document.getElementById("createPostCard");
+        const editPostCard = document.getElementById("editPostCard");
+        const cancelEditPost = document.getElementById("cancelEditPost");
+
+        if (cancelEditPost) {
+            cancelEditPost.addEventListener("click", function () {
+                if (editPostCard) {
+                    editPostCard.classList.add("d-none");
+                }
+
+                if (createPostCard) {
+                    createPostCard.classList.remove("d-none");
+                }
+            });
+        }
+    });
+</script>

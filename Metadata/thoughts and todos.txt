@@ -1,9 +1,5 @@
-1. Currently the same GetRequiredUserId method is within the topic/post/comment services.
-This should probably be centralized somewhere that can be called within each service, in order to avoid duplication
+1. Errorhandling/showing business logic. That should be made cleaner. So that it is more visible why an error occurs to the user.
 
-1. The application layer correctly associates users now. But it would be good if a username is visible
-in the ui as the author on topics/posts/comments. This should be implemented. If a topic/post/comment is owned by oneself, it should say that instead of the username. 
+2. Need an optimization session on everything made so far. Also need usernames displayed properly, can be done as part of that. 
 
-2. Errorhandling/showing business logic. That should be made cleaner. So that it is more visible why an error occurs to the user.
-
-3. Pagination considering everything is being rebuild on submit.. Ease up on memory/cpu usage
+3. Begin to think about extentions. Maybe expose an API?
