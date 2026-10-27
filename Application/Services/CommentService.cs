@@ -15,6 +15,7 @@ namespace Application.Services
         private readonly ICommentMapper commentMapper;
         private readonly ICurrentUserService currentUser;
         private readonly IUserService userService;
+
         private const int PageSize = 10;
 
         public CommentService(
@@ -31,7 +32,9 @@ namespace Application.Services
             this.userService = userService;
         }
 
-        public async Task<CommentIndexView?> GetCommentIndexViewAsync(int postId, int page = 1)
+        public async Task<CommentIndexView?> GetCommentIndexViewAsync(
+            int postId,
+            int page = 1)
         {
             Post? post = await postRepository.GetByIdAsync(postId);
 
@@ -40,9 +43,12 @@ namespace Application.Services
 
             page = Math.Max(1, page);
 
-            (IEnumerable<Comment> Items, int TotalCount) result = await commentRepository.GetPageByPostIdAsync(postId, page, PageSize);
+            var result = await commentRepository.GetPageByPostIdAsync(
+                postId, page, PageSize);
 
-            int totalPages = Math.Max(1, (int)Math.Ceiling(result.TotalCount / (double)PageSize));
+            int totalPages = Math.Max(
+                1,
+                (int)Math.Ceiling(result.TotalCount / (double)PageSize));
 
             // If the requested page exceeds the last page,
             // use the last valid page.
@@ -50,18 +56,15 @@ namespace Application.Services
             {
                 page = totalPages;
 
-                result = await commentRepository.GetPageByPostIdAsync(postId, page, PageSize);
+                result = await commentRepository.GetPageByPostIdAsync(
+                    postId, page, PageSize);
             }
 
             string? userId = currentUser.GetUserIdOrNull();
 
-            List<CommentListItemView> comments = result.Items.Select(comment => 
-            {
-                CommentListItemView item = commentMapper.ToListItemView(comment);
-                item.CanManage = userId != null && comment.CreatedByUserId == userId;
-                return item;
-            })
-            .ToList();
+            List<CommentListItemView> comments = result.Items
+                .Select(comment => MapCommentForList(comment, userId))
+                .ToList();
 
             return new CommentIndexView
             {
@@ -83,9 +86,53 @@ namespace Application.Services
             };
         }
 
-        public async Task<CommentIndexView?> GetEditViewAsync(int commentId, int page = 1)
+        private CommentListItemView MapCommentForList(
+            Comment comment,
+            string? userId)
         {
-            Comment? comment = await commentRepository.GetByIdAsync(commentId);
+            CommentListItemView item =
+                commentMapper.ToListItemView(comment);
+
+            item.CanManage =
+                userId != null &&
+                comment.CreatedByUserId == userId;
+
+            // Replies are limited to one level.
+            item.CanReply =
+                userId != null &&
+                comment.ParentCommentId == null;
+
+            item.Replies = comment.Replies
+                .OrderBy(reply => reply.CreatedAt)
+                .ThenBy(reply => reply.Id)
+                .Select(reply =>
+                {
+                    CommentListItemView replyItem =
+                        commentMapper.ToListItemView(reply);
+
+                    replyItem.CanManage =
+                        userId != null &&
+                        reply.CreatedByUserId == userId;
+
+                    // Do not allow replies to replies.
+                    replyItem.CanReply = false;
+
+                    // Enforce a single reply level in the view model.
+                    replyItem.Replies = new List<CommentListItemView>();
+
+                    return replyItem;
+                })
+                .ToList();
+
+            return item;
+        }
+
+        public async Task<CommentIndexView?> GetEditViewAsync(
+            int commentId,
+            int page = 1)
+        {
+            Comment? comment =
+                await commentRepository.GetByIdAsync(commentId);
 
             if (comment == null)
                 return null;
@@ -94,15 +141,18 @@ namespace Application.Services
 
             if (comment.CreatedByUserId != userId)
             {
-                throw new UnauthorizedAccessException("You are not allowed to edit this comment.");
+                throw new UnauthorizedAccessException(
+                    "You are not allowed to edit this comment.");
             }
 
-            Post? post = await postRepository.GetByIdAsync(comment.PostId);
+            Post? post =
+                await postRepository.GetByIdAsync(comment.PostId);
 
             if (post == null)
                 return null;
 
-            CommentIndexView? viewModel = await GetCommentIndexViewAsync(post.Id, page);
+            CommentIndexView? viewModel =
+                await GetCommentIndexViewAsync(post.Id, page);
 
             if (viewModel == null)
                 return null;
@@ -116,9 +166,52 @@ namespace Application.Services
         {
             string userId = currentUser.GetRequiredUserId();
 
+            // Ensure the target post exists.
+            Post? post = await postRepository.GetByIdAsync(model.PostId);
+
+            if (post == null)
+            {
+                throw new ArgumentException(
+                    "The post does not exist.",
+                    nameof(model.PostId));
+            }
+
+            if (model.ParentCommentId.HasValue)
+            {
+                Comment? parent = await commentRepository.GetByIdAsync(
+                    model.ParentCommentId.Value);
+
+                // The parent must exist and belong to this post.
+                if (parent == null || parent.PostId != model.PostId)
+                {
+                    throw new ArgumentException(
+                        "The selected parent comment is invalid.",
+                        nameof(model.ParentCommentId));
+                }
+
+                // Only top-level comments can have replies.
+                if (parent.ParentCommentId.HasValue)
+                {
+                    throw new ArgumentException(
+                        "Replies to replies are not allowed.",
+                        nameof(model.ParentCommentId));
+                }
+            }
+
             Comment comment = commentMapper.ToEntity(model);
+
+            // Set hierarchy and identity on the server.
+            comment.PostId = model.PostId;
+            comment.ParentCommentId = model.ParentCommentId;
             comment.CreatedByUserId = userId;
-            comment.CreatedByUserName = await userService.GetUsernameByIdAsync(userId);
+            comment.CreatedByUserName =
+                await userService.GetUsernameByIdAsync(userId);
+
+            // Replies do not have titles.
+            if (comment.ParentCommentId.HasValue)
+            {
+                comment.Title = string.Empty;
+            }
 
             await commentRepository.AddAsync(comment);
         }
@@ -127,17 +220,31 @@ namespace Application.Services
         {
             string userId = currentUser.GetRequiredUserId();
 
-            Comment? comment = await commentRepository.GetByIdAsync(model.Id);
+            Comment? comment =
+                await commentRepository.GetByIdAsync(model.Id);
 
             if (comment == null)
                 return;
 
             if (comment.CreatedByUserId != userId)
             {
-                throw new UnauthorizedAccessException("You are not allowed to edit this comment.");
+                throw new UnauthorizedAccessException(
+                    "You are not allowed to edit this comment.");
             }
 
             comment.Content = model.Content;
+
+            // Keep the title empty for replies.
+            // Top-level title validation should be handled by the
+            // view model/controller before this method is called.
+            if (comment.ParentCommentId == null)
+            {
+                comment.Title = model.Title ?? string.Empty;
+            }
+            else
+            {
+                comment.Title = string.Empty;
+            }
 
             await commentRepository.UpdateAsync(comment);
         }
@@ -146,14 +253,16 @@ namespace Application.Services
         {
             string userId = currentUser.GetRequiredUserId();
 
-            Comment? comment = await commentRepository.GetByIdAsync(id);
+            Comment? comment =
+                await commentRepository.GetByIdAsync(id);
 
             if (comment == null)
                 return;
 
             if (comment.CreatedByUserId != userId)
             {
-                throw new UnauthorizedAccessException("You are not allowed to delete this comment.");
+                throw new UnauthorizedAccessException(
+                    "You are not allowed to delete this comment.");
             }
 
             await commentRepository.DeleteAsync(id);

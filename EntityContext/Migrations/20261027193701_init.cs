@@ -62,11 +62,18 @@ namespace EntityContext.Migrations
                     CreatedByUserName = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     CreatedByUserId = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    PostId = table.Column<int>(type: "int", nullable: false)
+                    PostId = table.Column<int>(type: "int", nullable: false),
+                    ParentCommentId = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Comments", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Comments_Comments_ParentCommentId",
+                        column: x => x.ParentCommentId,
+                        principalTable: "Comments",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_Comments_Posts_PostId",
                         column: x => x.PostId,
@@ -87,8 +94,13 @@ namespace EntityContext.Migrations
 
             migrationBuilder.InsertData(
                 table: "Comments",
-                columns: new[] { "Id", "Content", "CreatedAt", "CreatedByUserId", "CreatedByUserName", "PostId", "Title" },
-                values: new object[] { 1, "First comment!", new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "seed-user", "", 1, "" });
+                columns: new[] { "Id", "Content", "CreatedAt", "CreatedByUserId", "CreatedByUserName", "ParentCommentId", "PostId", "Title" },
+                values: new object[] { 1, "First comment!", new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "seed-user", "", null, 1, "" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Comments_ParentCommentId",
+                table: "Comments",
+                column: "ParentCommentId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Comments_PostId",

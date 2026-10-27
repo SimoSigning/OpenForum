@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace ViewModels.Comment
 {
@@ -8,7 +7,7 @@ namespace ViewModels.Comment
     {
         public int Id { get; set; }
 
-        public string Title { get; set; } = string.Empty;
+        public string? Title { get; set; }
 
         public string Content { get; set; } = string.Empty;
 
@@ -17,5 +16,9 @@ namespace ViewModels.Comment
         public DateTime CreatedAt { get; set; }
 
         public bool CanManage { get; set; }
+
+        public bool CanReply { get; set; }
+
+        public List<CommentListItemView> Replies { get; set; } = new();
     }
 }

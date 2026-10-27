@@ -1,20 +1,46 @@
-﻿@model ViewModels.Comment.CommentCreateView
+﻿
+@model ViewModels.Comment.CommentCreateView
 
-<form asp-action="Create" method="post">
+@{
+    bool isReply = Model.ParentCommentId.HasValue;
+}
+
+<form asp-controller="Comment" asp-action="Create" method="post">
     <input asp-for="PostId" type="hidden" />
+    <input asp-for="ParentCommentId" type="hidden" />
     <input type="hidden" name="page" value="@(ViewData["CurrentPage"] ?? 1)" />
 
-    <div class="mb-2">
-        <input asp-for="Title" class="form-control" placeholder="Enter a comment title..." />
-        <span asp-validation-for="Title" class="text-danger small"></span>
-    </div>
+    @if (!isReply)
+    {
+        <div class="mb-2">
+            <label asp-for="Title" class="form-label">Title</label>
+            <input asp-for="Title"
+                   class="form-control"
+                   maxlength="500"
+                   placeholder="Enter a comment title..." />
+            <span asp-validation-for="Title" class="text-danger small"></span>
+        </div>
+    }
 
     <div class="mb-3">
-        <textarea asp-for="Content" class="form-control" rows="3" placeholder="Write your comment..."></textarea>
+        @if (!isReply)
+        {
+            <label asp-for="Content" class="form-label">Comment</label>
+        }
+        else
+        {
+            <label asp-for="Content" class="form-label">Your reply</label>
+        }
+
+        <textarea asp-for="Content"
+                  class="form-control"
+                  rows="3"
+                  maxlength="2000"
+                  placeholder="@(isReply ? "Write your reply..." : "Write your comment...")"></textarea>
         <span asp-validation-for="Content" class="text-danger small"></span>
     </div>
 
     <button type="submit" class="btn btn-success btn-sm">
-        Create Comment
+        @(isReply ? "Post Reply" : "Create Comment")
     </button>
 </form>
