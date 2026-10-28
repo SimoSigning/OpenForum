@@ -6,8 +6,12 @@ namespace Application.Interfaces.Services
 {
     public interface ILikeService
     {
-        Task TogglePostLikeAsync(int postId);
+        Task<LikeToggleResult> TogglePostLikeAsync(int postId);
 
-        Task ToggleCommentLikeAsync(int commentId);
+        Task<LikeToggleResult> ToggleCommentLikeAsync(int commentId);
+
+        Task<List<string>> GetPostLikerUsernamesAsync(int postId);
+
+        Task<List<string>> GetCommentLikerUsernamesAsync(int commentId);
     }
 }

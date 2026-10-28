@@ -1,6 +1,7 @@
 ﻿using Application.Interfaces.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Collections.Generic;
 
 namespace OpenForum.Controllers
 {
@@ -18,22 +19,58 @@ namespace OpenForum.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> TogglePostLike(
             int postId,
-            string returnUrl)
+            string? returnUrl)
         {
-            await likeService.TogglePostLikeAsync(postId);
+            var result = await likeService.TogglePostLikeAsync(postId);
 
-            return LocalRedirect(returnUrl);
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            {
+                return Ok(result);
+            }
+
+            return LocalRedirect(
+                Url.IsLocalUrl(returnUrl) ? returnUrl! : "/");
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ToggleCommentLike(
             int commentId,
-            string returnUrl)
+            string? returnUrl)
         {
-            await likeService.ToggleCommentLikeAsync(commentId);
+            var result = await likeService.ToggleCommentLikeAsync(commentId);
 
-            return LocalRedirect(returnUrl);
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            {
+                return Ok(result);
+            }
+
+            return LocalRedirect(
+                Url.IsLocalUrl(returnUrl) ? returnUrl! : "/");
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetPostLikers(int postId)
+        {
+            if (postId <= 0)
+                return BadRequest();
+
+            List<string> usernames =
+                await likeService.GetPostLikerUsernamesAsync(postId);
+
+            return Ok(usernames);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetCommentLikers(int commentId)
+        {
+            if (commentId <= 0)
+                return BadRequest();
+
+            List<string> usernames =
+                await likeService.GetCommentLikerUsernamesAsync(commentId);
+
+            return Ok(usernames);
         }
     }
 }

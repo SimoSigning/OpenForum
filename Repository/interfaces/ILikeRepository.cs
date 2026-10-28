@@ -20,6 +20,10 @@ namespace Repository.interfaces
 
         Task<List<int>> GetPostIdsLikedByUserAsync(List<int> postIds,string userId);
 
+        Task<List<string>> GetUserIdsWhoLikedPostAsync(int postId);
+
+        Task<List<string>> GetUserIdsWhoLikedCommentAsync(int commentId);
+
         Task AddAsync(Like like);
 
         Task DeleteAsync(Like like);
