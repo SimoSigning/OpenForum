@@ -22,7 +22,6 @@ namespace Application.Mappers
             };
         }
 
-
         public CommentEditView ToEditView(Comment comment)
         {
             return new CommentEditView
@@ -49,15 +48,5 @@ namespace Application.Mappers
             };
         }
 
-        /*public Comment ToEntity(CommentEditView model)
-        {
-            return new Comment
-            {
-                Id = model.Id,
-                PostId = model.PostId,
-                Title = model.Title,
-                Content = model.Content
-            };
-        }*/
     }
 }

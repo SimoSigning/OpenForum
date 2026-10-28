@@ -17,5 +17,11 @@ namespace ViewModels.Post
         public DateTime CreatedAt { get; set; }
 
         public bool CanManage { get; set; }
+
+        public int LikeCount { get; set; }
+
+        public bool IsLikedByCurrentUser { get; set; }
+
+        public bool CanLike { get; set; }
     }
 }

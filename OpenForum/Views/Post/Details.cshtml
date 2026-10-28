@@ -89,10 +89,41 @@
                                         @post.Content
                                     </p>
 
-                                    <div class="d-flex flex-wrap align-items-center gap-2 text-muted small">
+                                    <div class="d-flex flex-wrap align-items-center gap-2 text-muted small mb-3">
                                         <span>By <strong class="text-body">@post.Creator</strong></span>
                                         <span aria-hidden="true">&middot;</span>
                                         <span>@post.CreatedAt</span>
+                                    </div>
+
+                                    <div class="d-flex align-items-center gap-2">
+                                        @if (post.CanLike)
+                                        {
+                                            <form asp-controller="Like"
+                                                  asp-action="TogglePostLike"
+                                                  method="post"
+                                                  class="d-inline">
+
+                                                @Html.AntiForgeryToken()
+
+                                                <input type="hidden" name="postId" value="@post.Id" />
+                                                <input type="hidden" name="returnUrl"
+                                                       value="@Url.Action("Details", "Post",
+                                                           new { id = Model.TopicId, page = Model.CurrentPage })" />
+
+                                                <button type="submit"
+                                                        class="btn btn-sm @(post.IsLikedByCurrentUser ? "btn-primary" : "btn-outline-primary")"
+                                                        aria-pressed="@post.IsLikedByCurrentUser">
+                                                    @(post.IsLikedByCurrentUser ? "♥ Liked" : "♡ Like")
+                                                    <span class="ms-1">@post.LikeCount</span>
+                                                </button>
+                                            </form>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted small">
+                                                ♡ @post.LikeCount @(post.LikeCount == 1 ? "like" : "likes")
+                                            </span>
+                                        }
                                     </div>
                                 </div>
 

@@ -12,20 +12,24 @@ namespace Application.Services
     {
         private readonly ICommentRepository commentRepository;
         private readonly IPostRepository postRepository;
+        private readonly ILikeRepository likeRepository;
         private readonly ICommentMapper commentMapper;
         private readonly ICurrentUserService currentUser;
         private readonly IUserService userService;
-        private const int PageSize = 10;
+        private const int PageSize = 5;
 
         public CommentService(
             ICommentRepository commentRepository,
             IPostRepository postRepository,
+            ILikeRepository likeRepository,
             ICommentMapper commentMapper,
             ICurrentUserService currentUser,
-            IUserService userService)
+            IUserService userService
+            )
         {
             this.commentRepository = commentRepository;
             this.postRepository = postRepository;
+            this.likeRepository = likeRepository;
             this.commentMapper = commentMapper;
             this.currentUser = currentUser;
             this.userService = userService;
@@ -34,23 +38,26 @@ namespace Application.Services
 
         public async Task<CommentIndexView?> GetCommentIndexViewAsync(
             int postId,
-            int page = 1)
+            int page)
         {
-            Post? post = await postRepository.GetByIdAsync(postId);
+            // Get the post.
+            var post = await postRepository.GetByIdWithoutCommentsAsync(postId);
 
             if (post == null)
                 return null;
 
+            // Ensure the page number is valid.
             page = Math.Max(1, page);
 
+            // Get the paginated top-level comments.
             var result = await commentRepository.GetPageByPostIdAsync(
                 postId, page, PageSize);
 
-            int totalPages = Math.Max(
-                1,
-                (int)Math.Ceiling(result.TotalCount / (double)PageSize));
+            int totalPages = (int)Math.Ceiling(
+                result.TotalCount / (double)PageSize);
 
-            if (page > totalPages)
+            // Keep the requested page within the available range.
+            if (totalPages > 0 && page > totalPages)
             {
                 page = totalPages;
 
@@ -58,59 +65,94 @@ namespace Application.Services
                     postId, page, PageSize);
             }
 
-            string? userId = currentUser.GetUserIdOrNull();
+            // Get the current user.
+            var userId = currentUser.GetUserIdOrNull();
 
-            // Retrieve every comment, including replies and nested replies.
-            List<Comment> allComments =
-                (await commentRepository.GetByPostIdAsync(postId)).ToList();
+            int postLikeCount = await likeRepository.GetPostLikeCountAsync(post.Id);
 
-            // Map each comment once so we can build the tree by ID.
-            Dictionary<int, CommentListItemView> items = allComments
-                .ToDictionary(
-                    c => c.Id,
-                    c =>
-                    {
-                        CommentListItemView item =
-                            commentMapper.ToListItemView(c);
+            bool isPostLikedByCurrentUser = userId != null && await likeRepository.IsPostLikedByUserAsync(post.Id, userId);
 
-                        item.CanManage =
-                            userId != null &&
-                            c.CreatedByUserId == userId;
-
-                        return item;
-                    });
-
-            // Attach each reply to its parent.
-            foreach (Comment comment in allComments)
-            {
-                if (!comment.ParentCommentId.HasValue)
-                    continue;
-
-                if (!items.TryGetValue(
-                        comment.ParentCommentId.Value,
-                        out CommentListItemView? parent))
+            // Create view models for the top-level comments on this page.
+            var commentsById = result.Items.ToDictionary(
+                c => c.Id,
+                c =>
                 {
-                    continue;
-                }
+                    var view = commentMapper.ToListItemView(c);
+                    view.CanManage = c.CreatedByUserId == userId;
+                    return view;
+                });
 
-                CommentListItemView reply = items[comment.Id];
-
-                // Replies have no title, so use their content as the
-                // reference text when someone replies to them.
-                reply.ParentTitle = !string.IsNullOrWhiteSpace(parent.Title)
-                    ? parent.Title
-                    : parent.Content;
-
-                reply.ParentCreator = parent.Creator;
-
-                parent.Replies.Add(reply);
-            }
-
-            // Return only the paginated top-level comments.
-            List<CommentListItemView> topLevelComments = result.Items
-                .Select(c => items[c.Id])
+            // Start with the IDs of the top-level comments on this page.
+            List<int> parentIds = result.Items
+                .Select(c => c.Id)
                 .ToList();
 
+            // Load replies one level at a time until there are no more.
+            while (parentIds.Count > 0)
+            {
+                var replies = await commentRepository
+                    .GetRepliesByParentIdsAsync(postId, parentIds);
+
+                // The next query will find replies to these replies.
+                parentIds = new List<int>();
+
+                foreach (var reply in replies)
+                {
+                    var replyView = commentMapper.ToListItemView(reply);
+                    replyView.CanManage = reply.CreatedByUserId == userId;
+
+                    // Attach the reply to its parent.
+                    if (reply.ParentCommentId.HasValue &&
+                        commentsById.TryGetValue(
+                            reply.ParentCommentId.Value,
+                            out var parentView))
+                    {
+                        replyView.ParentTitle =
+                            !string.IsNullOrWhiteSpace(parentView.Title)
+                                ? parentView.Title
+                                : parentView.Content;
+
+                        replyView.ParentCreator = parentView.Creator;
+
+                        parentView.Replies.Add(replyView);
+                    }
+
+                    // Store this reply so its own replies can be attached later.
+                    commentsById.Add(reply.Id, replyView);
+                    parentIds.Add(reply.Id);
+                }
+            }
+
+            // Get all comment and reply IDs loaded for this page.
+            List<int> allCommentIds = commentsById.Keys.ToList();
+
+            // Get like counts for all comments and replies in one query.
+            Dictionary<int, int> likeCounts =
+                await likeRepository.GetCommentLikeCountsAsync(allCommentIds);
+
+            // Get the comments and replies liked by the current user.
+            HashSet<int> likedCommentIds = userId == null
+                ? new HashSet<int>()
+                : (await likeRepository.GetCommentIdsLikedByUserAsync(
+                    allCommentIds, userId)).ToHashSet();
+
+            // Populate the Like properties on every ViewModel.
+            foreach (var entry in commentsById)
+            {
+                CommentListItemView view = entry.Value;
+
+                view.LikeCount = likeCounts.GetValueOrDefault(entry.Key);
+                view.IsLikedByCurrentUser = likedCommentIds.Contains(entry.Key);
+                view.CanLike = userId != null;
+            }
+
+            // Only return the paginated top-level comments.
+            // Their Replies properties contain the nested reply trees.
+            var comments = result.Items
+                .Select(c => commentsById[c.Id])
+                .ToList();
+
+            // Build the page view model.
             return new CommentIndexView
             {
                 PostId = post.Id,
@@ -119,18 +161,18 @@ namespace Application.Services
                 PostContent = post.Content,
                 PostCreator = post.CreatedByUserName,
                 PostCreatedAt = post.CreatedAt,
-
-                Comments = topLevelComments,
-
+                Comments = comments,
                 CreateComment = new CommentCreateView
                 {
                     PostId = postId
                 },
-
-                CanCreate = userId != null,
+                CanCreate = !string.IsNullOrEmpty(userId),
                 EditComment = null,
                 CurrentPage = page,
-                TotalPages = totalPages
+                TotalPages = totalPages,
+                PostLikeCount = postLikeCount,
+                IsPostLikedByCurrentUser = isPostLikedByCurrentUser,
+                CanLikePost = userId != null,
             };
         }
 
@@ -149,7 +191,7 @@ namespace Application.Services
                 throw new UnauthorizedAccessException("You are not allowed to edit this comment.");
             }
 
-            Post? post = await postRepository.GetByIdAsync(comment.PostId);
+            Post? post = await postRepository.GetByIdWithoutCommentsAsync(comment.PostId);
 
             if (post == null)
                 return null;
@@ -225,8 +267,6 @@ namespace Application.Services
             await commentRepository.UpdateAsync(comment);
         }
 
-
-
         public async Task DeleteAsync(int id)
         {
             string userId = currentUser.GetRequiredUserId();
@@ -245,6 +285,9 @@ namespace Application.Services
             List<Comment> comments =
                 (await commentRepository.GetByPostIdAsync(comment.PostId)).ToList();
 
+            Dictionary<int, Comment> commentsById =
+                comments.ToDictionary(c => c.Id);
+
             Dictionary<int, List<Comment>> repliesByParent = comments
                 .Where(c => c.ParentCommentId.HasValue)
                 .GroupBy(c => c.ParentCommentId!.Value)
@@ -254,14 +297,13 @@ namespace Application.Services
 
             void AddCommentAndReplies(int commentId)
             {
-                Comment? current = comments.FirstOrDefault(c => c.Id == commentId);
-
-                if (current == null)
+                if (!commentsById.TryGetValue(commentId, out Comment? current))
                     return;
 
                 deletionOrder.Add(current);
 
-                if (repliesByParent.TryGetValue(commentId, out List<Comment>? replies))
+                if (repliesByParent.TryGetValue(
+                    commentId, out List<Comment>? replies))
                 {
                     foreach (Comment reply in replies)
                     {
@@ -272,13 +314,19 @@ namespace Application.Services
 
             AddCommentAndReplies(comment.Id);
 
-            // Delete children before their parents to satisfy the database relationship.
-            for (int i = deletionOrder.Count - 1; i >= 0; i--)
-            {
-                await commentRepository.DeleteAsync(deletionOrder[i].Id);
-            }
-        }
+            // Mark descendants before their parents for deletion.
+            deletionOrder.Reverse();
 
+            // Delete likes belonging to the comment and all its replies.
+            List<int> commentIdsToDelete = deletionOrder
+                .Select(c => c.Id)
+                .ToList();
+
+            await likeRepository.DeleteByCommentIdsAsync(commentIdsToDelete);
+
+            // Delete the comments after their likes have been removed.
+            await commentRepository.DeleteRangeAsync(deletionOrder);
+        }
 
     }
 }

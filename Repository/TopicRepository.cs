@@ -14,13 +14,6 @@ namespace Repository
             context = forumContext;
         }
 
-        public async Task<IEnumerable<Topic>> GetAllAsync()
-        {
-            return await context.Topics
-                .OrderBy(t => t.CreatedAt)
-                .ToListAsync();
-        }
-
         public async Task<(IEnumerable<Topic> Items, int TotalCount)> GetPageAsync(int page, int pageSize)
         {
             if (page < 1)

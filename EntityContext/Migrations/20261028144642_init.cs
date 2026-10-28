@@ -81,6 +81,35 @@ namespace EntityContext.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "Likes",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    PostId = table.Column<int>(type: "int", nullable: true),
+                    CommentId = table.Column<int>(type: "int", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Likes", x => x.Id);
+                    table.CheckConstraint("CK_Likes_ExactlyOneTarget", "([PostId] IS NOT NULL AND [CommentId] IS NULL)\r\nOR\r\n([PostId] IS NULL AND [CommentId] IS NOT NULL)");
+                    table.ForeignKey(
+                        name: "FK_Likes_Comments_CommentId",
+                        column: x => x.CommentId,
+                        principalTable: "Comments",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Likes_Posts_PostId",
+                        column: x => x.PostId,
+                        principalTable: "Posts",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
             migrationBuilder.InsertData(
                 table: "Topics",
                 columns: new[] { "Id", "CreatedAt", "CreatedByUserId", "CreatedByUserName", "Title" },
@@ -107,6 +136,30 @@ namespace EntityContext.Migrations
                 column: "PostId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Likes_CommentId",
+                table: "Likes",
+                column: "CommentId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Likes_PostId",
+                table: "Likes",
+                column: "PostId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Likes_UserId_CommentId",
+                table: "Likes",
+                columns: new[] { "UserId", "CommentId" },
+                unique: true,
+                filter: "[CommentId] IS NOT NULL");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Likes_UserId_PostId",
+                table: "Likes",
+                columns: new[] { "UserId", "PostId" },
+                unique: true,
+                filter: "[PostId] IS NOT NULL");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Posts_TopicId",
                 table: "Posts",
                 column: "TopicId");
@@ -115,6 +168,9 @@ namespace EntityContext.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropTable(
+                name: "Likes");
+
             migrationBuilder.DropTable(
                 name: "Comments");
 

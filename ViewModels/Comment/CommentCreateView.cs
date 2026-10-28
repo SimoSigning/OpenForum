@@ -9,7 +9,6 @@ namespace ViewModels.Comment
 
         public int? ParentCommentId { get; set; }
 
-        // Required for top-level comments; omitted for replies.
         [StringLength(500)]
         public string? Title { get; set; }
 

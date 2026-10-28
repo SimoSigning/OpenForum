@@ -19,12 +19,12 @@ namespace EntityModels
 
         public Post Post { get; set; } = null!;
 
-        // Null for top-level comments; set for replies.
         public int? ParentCommentId { get; set; }
 
         public Comment? ParentComment { get; set; }
 
-        public ICollection<Comment> Replies { get; set; }
-            = new List<Comment>();
+        public ICollection<Comment> Replies { get; set; } = new List<Comment>();
+
+        public ICollection<Like> Likes { get; set; } = new List<Like>();
     }
 }

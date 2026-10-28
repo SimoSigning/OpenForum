@@ -23,6 +23,41 @@
             By @Model.Creator · @Model.CreatedAt.ToLocalTime().ToString("g")
         </div>
 
+        <div class="mt-2">
+            @if (Model.CanLike)
+            {
+                <form asp-controller="Like"
+                      asp-action="ToggleCommentLike"
+                      method="post"
+                      class="d-inline">
+
+                    @Html.AntiForgeryToken()
+
+                    <input type="hidden" name="commentId" value="@Model.Id" />
+                    <input type="hidden" name="returnUrl"
+                           value="@Url.Action("Details", "Comment",
+                               new {
+                                   id = (int)ViewData["PostId"]!,
+                                   page = (int)(ViewData["CurrentPage"] ?? 1)
+                               })" />
+
+                    <button type="submit"
+                            class="btn btn-sm @(Model.IsLikedByCurrentUser ? "btn-primary" : "btn-outline-primary")"
+                            aria-pressed="@Model.IsLikedByCurrentUser">
+                        @(Model.IsLikedByCurrentUser ? "♥ Liked" : "♡ Like")
+                        <span class="ms-1">@Model.LikeCount</span>
+                    </button>
+                </form>
+            }
+            else
+            {
+                <span class="text-muted small">
+                    ♡ @Model.LikeCount
+                    @(Model.LikeCount == 1 ? "like" : "likes")
+                </span>
+            }
+        </div>
+
         @if (ViewData["CanCreate"] is bool canCreate && canCreate)
         {
             <button type="button"

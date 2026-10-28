@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EntityContext.Migrations
 {
     [DbContext(typeof(ForumContext))]
-    [Migration("20261027211902_init")]
+    [Migration("20261028144642_init")]
     partial class init
     {
         /// <inheritdoc />
@@ -76,6 +76,47 @@ namespace EntityContext.Migrations
                             CreatedByUserName = "",
                             PostId = 1,
                             Title = ""
+                        });
+                });
+
+            modelBuilder.Entity("EntityModels.Like", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<int?>("CommentId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("PostId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CommentId");
+
+                    b.HasIndex("PostId");
+
+                    b.HasIndex("UserId", "CommentId")
+                        .IsUnique()
+                        .HasFilter("[CommentId] IS NOT NULL");
+
+                    b.HasIndex("UserId", "PostId")
+                        .IsUnique()
+                        .HasFilter("[PostId] IS NOT NULL");
+
+                    b.ToTable("Likes", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_Likes_ExactlyOneTarget", "([PostId] IS NOT NULL AND [CommentId] IS NULL)\r\nOR\r\n([PostId] IS NULL AND [CommentId] IS NOT NULL)");
                         });
                 });
 
@@ -184,6 +225,23 @@ namespace EntityContext.Migrations
                     b.Navigation("Post");
                 });
 
+            modelBuilder.Entity("EntityModels.Like", b =>
+                {
+                    b.HasOne("EntityModels.Comment", "Comment")
+                        .WithMany("Likes")
+                        .HasForeignKey("CommentId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("EntityModels.Post", "Post")
+                        .WithMany("Likes")
+                        .HasForeignKey("PostId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Comment");
+
+                    b.Navigation("Post");
+                });
+
             modelBuilder.Entity("EntityModels.Post", b =>
                 {
                     b.HasOne("EntityModels.Topic", "Topic")
@@ -197,12 +255,16 @@ namespace EntityContext.Migrations
 
             modelBuilder.Entity("EntityModels.Comment", b =>
                 {
+                    b.Navigation("Likes");
+
                     b.Navigation("Replies");
                 });
 
             modelBuilder.Entity("EntityModels.Post", b =>
                 {
                     b.Navigation("Comments");
+
+                    b.Navigation("Likes");
                 });
 #pragma warning restore 612, 618
         }

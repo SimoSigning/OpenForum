@@ -29,5 +29,11 @@ namespace ViewModels.Comment
         public int TotalPages { get; set; } = 1;
 
         public bool CanCreate { get; set; }
+
+        public int PostLikeCount { get; set; }
+
+        public bool IsPostLikedByCurrentUser { get; set; }
+
+        public bool CanLikePost { get; set; }
     }
 }

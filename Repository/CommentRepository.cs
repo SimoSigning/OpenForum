@@ -15,8 +15,7 @@ namespace Repository
             context = forumContext;
         }
 
-        public async Task<(IEnumerable<Comment> Items, int TotalCount)>
-            GetPageByPostIdAsync(int postId, int page, int pageSize)
+        public async Task<(IEnumerable<Comment> Items, int TotalCount)> GetPageByPostIdAsync(int postId, int page, int pageSize)
         {
             if (page < 1)
                 throw new ArgumentOutOfRangeException(nameof(page));
@@ -25,6 +24,7 @@ namespace Repository
                 throw new ArgumentOutOfRangeException(nameof(pageSize));
 
             IQueryable<Comment> topLevelComments = context.Comments
+                .AsNoTracking()
                 .Where(c => c.PostId == postId && c.ParentCommentId == null);
 
             int totalCount = await topLevelComments.CountAsync();
@@ -39,9 +39,16 @@ namespace Repository
             return (items, totalCount);
         }
 
-        public async Task<IEnumerable<Comment>> GetAllAsync()
+        public async Task<List<Comment>> GetRepliesByParentIdsAsync(int postId, List<int> parentIds)
         {
+            if (parentIds == null || parentIds.Count == 0)
+                return new List<Comment>();
+
             return await context.Comments
+                .Where(c =>
+                    c.PostId == postId &&
+                    c.ParentCommentId.HasValue &&
+                    parentIds.Contains(c.ParentCommentId.Value))
                 .OrderBy(c => c.CreatedAt)
                 .ThenBy(c => c.Id)
                 .ToListAsync();
@@ -49,8 +56,7 @@ namespace Repository
 
         public async Task<Comment?> GetByIdAsync(int id)
         {
-            return await context.Comments
-                .FirstOrDefaultAsync(c => c.Id == id);
+            return await context.Comments.FirstOrDefaultAsync(c => c.Id == id);
         }
 
         public async Task<IEnumerable<Comment>> GetByPostIdAsync(int postId)
@@ -76,16 +82,11 @@ namespace Repository
             await context.SaveChangesAsync();
         }
 
-        public async Task DeleteAsync(int id)
+        public async Task DeleteRangeAsync(IEnumerable<Comment> comments)
         {
-            Comment? comment = await context.Comments.FindAsync(id);
-
-            if (comment == null)
-                return;
-
-            context.Comments.Remove(comment);
-
+            context.Comments.RemoveRange(comments);
             await context.SaveChangesAsync();
         }
+
     }
 }

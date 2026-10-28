@@ -10,6 +10,7 @@ namespace EntityContext
         public DbSet<Topic> Topics => Set<Topic>();
         public DbSet<Post> Posts => Set<Post>();
         public DbSet<Comment> Comments => Set<Comment>();
+        public DbSet<Like> Likes => Set<Like>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -27,12 +28,49 @@ namespace EntityContext
                 .HasForeignKey(c => c.PostId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // A comment can have a parent comment and multiple replies.
             modelBuilder.Entity<Comment>()
                 .HasOne(c => c.ParentComment)
                 .WithMany(c => c.Replies)
                 .HasForeignKey(c => c.ParentCommentId)
                 .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<Like>(entity =>
+            {
+                entity.ToTable("Likes", table =>
+                    table.HasCheckConstraint(
+                        "CK_Likes_ExactlyOneTarget",
+                        """
+            ([PostId] IS NOT NULL AND [CommentId] IS NULL)
+            OR
+            ([PostId] IS NULL AND [CommentId] IS NOT NULL)
+            """));
+
+                entity.HasKey(l => l.Id);
+
+                entity.Property(l => l.UserId)
+                    .IsRequired();
+
+                entity.Property(l => l.CreatedAt)
+                    .IsRequired();
+
+                entity.HasOne(l => l.Post)
+                    .WithMany(p => p.Likes)
+                    .HasForeignKey(l => l.PostId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(l => l.Comment)
+                    .WithMany(c => c.Likes)
+                    .HasForeignKey(l => l.CommentId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasIndex(l => new { l.UserId, l.PostId })
+                    .IsUnique()
+                    .HasFilter("[PostId] IS NOT NULL");
+
+                entity.HasIndex(l => new { l.UserId, l.CommentId })
+                    .IsUnique()
+                    .HasFilter("[CommentId] IS NOT NULL");
+            });
 
             SeedData(modelBuilder);
         }

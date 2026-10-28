@@ -14,20 +14,24 @@ namespace Application.Services
     {
         private readonly IPostRepository postRepository;
         private readonly ITopicRepository topicRepository;
+        private readonly ILikeRepository likeRepository;
         private readonly IPostMapper postMapper;
         private readonly ICurrentUserService currentUser;
         private readonly IUserService userService;
+        
         private const int PageSize = 5;
 
         public PostService(
             IPostRepository postRepository,
             ITopicRepository topicRepository,
+            ILikeRepository likeRepository,
             IPostMapper postMapper,
             ICurrentUserService currentUser,
             IUserService userService)
         {
             this.postRepository = postRepository;
             this.topicRepository = topicRepository;
+            this.likeRepository = likeRepository;
             this.postMapper = postMapper;
             this.currentUser = currentUser;
             this.userService = userService;
@@ -57,14 +61,33 @@ namespace Application.Services
 
             string? userId = currentUser.GetUserIdOrNull();
 
-            List<PostListItemView> posts = result.Items.Select(
-            post =>
+            List<Post> postItems = result.Items.ToList();
+
+            List<int> postIds = postItems
+                .Select(p => p.Id)
+                .ToList();
+
+            Dictionary<int, int> likeCounts =
+                await likeRepository.GetPostLikeCountsAsync(postIds);
+
+            HashSet<int> likedPostIds = userId == null
+                ? new HashSet<int>()
+                : (await likeRepository.GetPostIdsLikedByUserAsync(
+                    postIds, userId)).ToHashSet();
+
+            List<PostListItemView> posts = postItems.Select(post =>
             {
                 PostListItemView item = postMapper.ToListItemView(post);
-                item.CanManage = userId != null && post.CreatedByUserId == userId;
+
+                item.CanManage =
+                    userId != null && post.CreatedByUserId == userId;
+
+                item.LikeCount = likeCounts.GetValueOrDefault(post.Id);
+                item.IsLikedByCurrentUser = likedPostIds.Contains(post.Id);
+                item.CanLike = userId != null;
+
                 return item;
-            })
-            .ToList();
+            }).ToList();
 
             return new PostIndexView
             {
@@ -149,6 +172,7 @@ namespace Application.Services
             if (post.CreatedByUserId != userId)
                 throw new UnauthorizedAccessException("You are not allowed to delete this post.");
 
+            await likeRepository.DeleteByPostIdAsync(id);
             await postRepository.DeleteAsync(id);
         }
 

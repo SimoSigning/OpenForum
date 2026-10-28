@@ -15,14 +15,18 @@ namespace ViewModels.Comment
 
         public bool CanManage { get; set; }
 
-        // Reply relationship
         public int? ParentCommentId { get; set; }
 
         public string? ParentTitle { get; set; }
 
         public string? ParentCreator { get; set; }
 
-        // Replies to this comment, including replies to replies.
         public List<CommentListItemView> Replies { get; set; } = new();
+
+        public int LikeCount { get; set; }
+
+        public bool IsLikedByCurrentUser { get; set; }
+
+        public bool CanLike { get; set; }
     }
 }

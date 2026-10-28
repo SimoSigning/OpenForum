@@ -23,5 +23,7 @@ namespace EntityModels
         public Topic Topic { get; set; } = null!;
 
         public ICollection<Comment> Comments { get; set; } = new List<Comment>();
+
+        public ICollection<Like> Likes { get; set; } = new List<Like>();
     }
 }
