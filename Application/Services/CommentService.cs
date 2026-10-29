@@ -38,14 +38,14 @@ namespace Application.Services
 
         public async Task<CommentIndexView?> GetCommentIndexViewAsync(int postId,int page)
         {
-            var post = await postRepository.GetByIdWithoutCommentsAsync(postId);
+            Post? post = await postRepository.GetByIdWithoutCommentsAsync(postId);
 
             if (post == null)
                 return null;
 
             page = Math.Max(1, page);
 
-            var result = await commentRepository.GetPageByPostIdAsync(postId, page, PageSize);
+            (IEnumerable<Comment> Items, int TotalCount) result = await commentRepository.GetPageByPostIdAsync(postId, page, PageSize);
 
             int totalPages = (int)Math.Ceiling(result.TotalCount / (double)PageSize);
 
@@ -55,16 +55,16 @@ namespace Application.Services
                 result = await commentRepository.GetPageByPostIdAsync(postId, page, PageSize);
             }
 
-            var userId = currentUser.GetUserIdOrNull();
+            string? userId = currentUser.GetUserIdOrNull();
             int postLikeCount = await likeRepository.GetPostLikeCountAsync(post.Id);
             bool isPostLikedByCurrentUser = userId != null && await likeRepository.IsPostLikedByUserAsync(post.Id, userId);
 
-            var commentsById = result.Items.ToDictionary(
+            Dictionary<int, CommentListItemView> commentsById = result.Items.ToDictionary(
                 c => c.Id,
                 c =>
                 {
-                    var view = commentMapper.ToListItemView(c);
-                    view.CanManage = c.CreatedByUserId == userId;
+                    CommentListItemView view = commentMapper.ToListItemView(c);
+                    view.CanManage = userId != null && c.CreatedByUserId == userId;
                     return view;
                 });
 
@@ -72,15 +72,15 @@ namespace Application.Services
 
             while (parentIds.Count > 0)
             {
-                var replies = await commentRepository.GetRepliesByParentIdsAsync(postId, parentIds);
+                List<Comment> replies = await commentRepository.GetRepliesByParentIdsAsync(postId, parentIds);
                 parentIds = new List<int>();
 
-                foreach (var reply in replies)
+                foreach (Comment reply in replies)
                 {
-                    var replyView = commentMapper.ToListItemView(reply);
+                    CommentListItemView replyView = commentMapper.ToListItemView(reply);
                     replyView.CanManage = reply.CreatedByUserId == userId;
 
-                    if (reply.ParentCommentId.HasValue && commentsById.TryGetValue(reply.ParentCommentId.Value, out var parentView))
+                    if (reply.ParentCommentId.HasValue && commentsById.TryGetValue(reply.ParentCommentId.Value, out CommentListItemView? parentView))
                     {
                         replyView.ParentTitle = !string.IsNullOrWhiteSpace(parentView.Title) ? parentView.Title : parentView.Content;
                         replyView.ParentCreator = parentView.Creator;
@@ -98,7 +98,7 @@ namespace Application.Services
             HashSet<int> likedCommentIds = userId == null ? 
                 new HashSet<int>() : (await likeRepository.GetCommentIdsLikedByUserAsync(allCommentIds, userId)).ToHashSet();
 
-            foreach (var entry in commentsById)
+            foreach (KeyValuePair<int, CommentListItemView> entry in commentsById)
             {
                 CommentListItemView view = entry.Value;
                 view.LikeCount = likeCounts.GetValueOrDefault(entry.Key);
@@ -106,7 +106,7 @@ namespace Application.Services
                 view.CanLike = userId != null;
             }
 
-            var comments = result.Items.Select(c => commentsById[c.Id]).ToList();
+            List<CommentListItemView> comments = result.Items.Select(c => commentsById[c.Id]).ToList();
 
             return new CommentIndexView
             {

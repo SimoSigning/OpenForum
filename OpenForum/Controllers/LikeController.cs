@@ -1,4 +1,5 @@
 ﻿using Application.Interfaces.Services;
+using Application.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
@@ -19,7 +20,7 @@ namespace OpenForum.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> TogglePostLike(int postId, string? returnUrl)
         {
-            var result = await likeService.TogglePostLikeAsync(postId);
+            LikeToggleResult result = await likeService.TogglePostLikeAsync(postId);
 
             if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
             {
@@ -33,7 +34,7 @@ namespace OpenForum.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ToggleCommentLike(int commentId, string? returnUrl)
         {
-            var result = await likeService.ToggleCommentLikeAsync(commentId);
+            LikeToggleResult result = await likeService.ToggleCommentLikeAsync(commentId);
 
             if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
             {
