@@ -72,9 +72,7 @@ namespace OpenForum.Controllers
             {
                 await postService.CreateAsync(model);
 
-                return RedirectToAction(
-                    nameof(Details),
-                    new { id = model.TopicId, page });
+                return RedirectToAction(nameof(Details), new { id = model.TopicId, page });
             }
             catch (UnauthorizedAccessException)
             {

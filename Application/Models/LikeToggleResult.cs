@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Application.Interfaces.Services
+namespace Application.Models
 {
     public class LikeToggleResult
     {

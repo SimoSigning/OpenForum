@@ -48,6 +48,7 @@
         button.classList.toggle("btn-primary", result.isLiked);
         button.classList.toggle("btn-outline-primary", !result.isLiked);
         button.setAttribute("aria-pressed", String(result.isLiked));
+
     } catch (error) {
         console.error("Could not update like:", error);
         alert("Could not update your like. Please try again.");

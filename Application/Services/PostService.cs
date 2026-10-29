@@ -18,7 +18,6 @@ namespace Application.Services
         private readonly IPostMapper postMapper;
         private readonly ICurrentUserService currentUser;
         private readonly IUserService userService;
-        
         private const int PageSize = 5;
 
         public PostService(
@@ -55,37 +54,24 @@ namespace Application.Services
             if (page > totalPages)
             {
                 page = totalPages;
-
                 result = await postRepository.GetPageByTopicIdAsync(topicId, page, PageSize);
             }
 
             string? userId = currentUser.GetUserIdOrNull();
 
             List<Post> postItems = result.Items.ToList();
+            List<int> postIds = postItems.Select(p => p.Id).ToList();
 
-            List<int> postIds = postItems
-                .Select(p => p.Id)
-                .ToList();
-
-            Dictionary<int, int> likeCounts =
-                await likeRepository.GetPostLikeCountsAsync(postIds);
-
-            HashSet<int> likedPostIds = userId == null
-                ? new HashSet<int>()
-                : (await likeRepository.GetPostIdsLikedByUserAsync(
-                    postIds, userId)).ToHashSet();
+            Dictionary<int, int> likeCounts = await likeRepository.GetPostLikeCountsAsync(postIds);
+            HashSet<int> likedPostIds = userId == null ? new HashSet<int>() : (await likeRepository.GetPostIdsLikedByUserAsync(postIds, userId)).ToHashSet();
 
             List<PostListItemView> posts = postItems.Select(post =>
             {
                 PostListItemView item = postMapper.ToListItemView(post);
-
-                item.CanManage =
-                    userId != null && post.CreatedByUserId == userId;
-
+                item.CanManage = userId != null && post.CreatedByUserId == userId;
                 item.LikeCount = likeCounts.GetValueOrDefault(post.Id);
                 item.IsLikedByCurrentUser = likedPostIds.Contains(post.Id);
                 item.CanLike = userId != null;
-
                 return item;
             }).ToList();
 

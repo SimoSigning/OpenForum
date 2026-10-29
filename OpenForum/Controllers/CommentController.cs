@@ -57,18 +57,14 @@ namespace OpenForum.Controllers
             page = Math.Max(1, page);
 
             // Only top-level comments need a title.
-            if (!model.ParentCommentId.HasValue &&
-                string.IsNullOrWhiteSpace(model.Title))
+            if (!model.ParentCommentId.HasValue && string.IsNullOrWhiteSpace(model.Title))
             {
-                ModelState.AddModelError(
-                    nameof(model.Title),
-                    "A title is required for a comment.");
+                ModelState.AddModelError(nameof(model.Title), "A title is required for a comment.");
             }
 
             if (!ModelState.IsValid)
             {
-                CommentIndexView? invalidView =
-                    await commentService.GetCommentIndexViewAsync(model.PostId, page);
+                CommentIndexView? invalidView = await commentService.GetCommentIndexViewAsync(model.PostId, page);
 
                 if (invalidView == null)
                     return NotFound();
@@ -86,17 +82,10 @@ namespace OpenForum.Controllers
 
                 if (model.ParentCommentId.HasValue)
                 {
-                    return Redirect(
-                        Url.Action(
-                            nameof(Details),
-                            "Comment",
-                            new { id = model.PostId, page })
-                        + $"#comment-{model.ParentCommentId.Value}");
+                    return Redirect(Url.Action(nameof(Details), "Comment", new { id = model.PostId, page }) + $"#comment-{model.ParentCommentId.Value}");
                 }
 
-                return RedirectToAction(
-                    nameof(Details),
-                    new { id = model.PostId, page });
+                return RedirectToAction(nameof(Details), new { id = model.PostId, page });
             }
             catch (UnauthorizedAccessException)
             {
@@ -106,8 +95,7 @@ namespace OpenForum.Controllers
             {
                 ModelState.AddModelError(string.Empty, ex.Message);
 
-                CommentIndexView? invalidView =
-                    await commentService.GetCommentIndexViewAsync(model.PostId, page);
+                CommentIndexView? invalidView = await commentService.GetCommentIndexViewAsync(model.PostId, page);
 
                 if (invalidView == null)
                     return NotFound();
@@ -152,17 +140,10 @@ namespace OpenForum.Controllers
 
                 if (model.ParentCommentId.HasValue)
                 {
-                    return Redirect(
-                        Url.Action(
-                            nameof(Details),
-                            "Comment",
-                            new { id = model.PostId, page })
-                        + $"#comment-{model.ParentCommentId.Value}");
+                    return Redirect(Url.Action(nameof(Details), "Comment", new { id = model.PostId, page }) + $"#comment-{model.ParentCommentId.Value}");
                 }
 
-                return RedirectToAction(
-                    nameof(Details),
-                    new { id = model.PostId, page });
+                return RedirectToAction(nameof(Details), new { id = model.PostId, page });
             }
             catch (UnauthorizedAccessException)
             {

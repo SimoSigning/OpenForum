@@ -62,7 +62,8 @@ namespace Repository
                 {
                     CommentId = g.Key,
                     Count = g.Count()
-                }).ToDictionaryAsync(x => x.CommentId, x => x.Count);
+                })
+                .ToDictionaryAsync(x => x.CommentId, x => x.Count);
         }
 
         public async Task<List<int>> GetCommentIdsLikedByUserAsync(List<int> commentIds, string userId)
@@ -87,7 +88,8 @@ namespace Repository
                 {
                     PostId = g.Key,
                     Count = g.Count()
-                }).ToDictionaryAsync(x => x.PostId, x => x.Count);
+                })
+                .ToDictionaryAsync(x => x.PostId, x => x.Count);
         }
 
         public async Task<List<int>> GetPostIdsLikedByUserAsync(List<int> postIds, string userId)

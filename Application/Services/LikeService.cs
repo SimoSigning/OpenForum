@@ -1,4 +1,5 @@
 ﻿using Application.Interfaces.Services;
+using Application.Models;
 using EntityModels;
 using Repository.interfaces;
 
@@ -35,9 +36,7 @@ namespace Application.Services
             if (post == null)
                 throw new KeyNotFoundException("Post not found.");
 
-            Like? existingLike =
-                await likeRepository.GetPostLikeAsync(postId, userId);
-
+            Like? existingLike = await likeRepository.GetPostLikeAsync(postId, userId);
             bool isLiked;
 
             if (existingLike != null)
@@ -58,8 +57,7 @@ namespace Application.Services
                 isLiked = true;
             }
 
-            int likeCount =
-                await likeRepository.GetPostLikeCountAsync(postId);
+            int likeCount = await likeRepository.GetPostLikeCountAsync(postId);
 
             return new LikeToggleResult
             {
@@ -71,16 +69,12 @@ namespace Application.Services
         public async Task<LikeToggleResult> ToggleCommentLikeAsync(int commentId)
         {
             string userId = currentUser.GetRequiredUserId();
-
-            Comment? comment =
-                await commentRepository.GetByIdAsync(commentId);
+            Comment? comment = await commentRepository.GetByIdAsync(commentId);
 
             if (comment == null)
                 throw new KeyNotFoundException("Comment not found.");
 
-            Like? existingLike =
-                await likeRepository.GetCommentLikeAsync(commentId, userId);
-
+            Like? existingLike = await likeRepository.GetCommentLikeAsync(commentId, userId);
             bool isLiked;
 
             if (existingLike != null)
@@ -101,10 +95,7 @@ namespace Application.Services
                 isLiked = true;
             }
 
-            Dictionary<int, int> counts =
-                await likeRepository.GetCommentLikeCountsAsync(
-                    new List<int> { commentId });
-
+            Dictionary<int, int> counts = await likeRepository.GetCommentLikeCountsAsync( new List<int> { commentId });
             int likeCount = counts.GetValueOrDefault(commentId, 0);
 
             return new LikeToggleResult
@@ -116,30 +107,18 @@ namespace Application.Services
 
         public async Task<List<string>> GetPostLikerUsernamesAsync(int postId)
         {
-            List<string> userIds =
-                await likeRepository.GetUserIdsWhoLikedPostAsync(postId);
+            List<string> userIds = await likeRepository.GetUserIdsWhoLikedPostAsync(postId);
+            Dictionary<string, string> usernames = await userService.GetUsernamesByIdsAsync(userIds);
 
-            Dictionary<string, string> usernames =
-                await userService.GetUsernamesByIdsAsync(userIds);
-
-            return userIds
-                .Where(usernames.ContainsKey)
-                .Select(userId => usernames[userId])
-                .ToList();
+            return userIds.Where(usernames.ContainsKey).Select(userId => usernames[userId]).ToList();
         }
 
         public async Task<List<string>> GetCommentLikerUsernamesAsync(int commentId)
         {
-            List<string> userIds =
-                await likeRepository.GetUserIdsWhoLikedCommentAsync(commentId);
+            List<string> userIds = await likeRepository.GetUserIdsWhoLikedCommentAsync(commentId);
+            Dictionary<string, string> usernames = await userService.GetUsernamesByIdsAsync(userIds);
 
-            Dictionary<string, string> usernames =
-                await userService.GetUsernamesByIdsAsync(userIds);
-
-            return userIds
-                .Where(usernames.ContainsKey)
-                .Select(userId => usernames[userId])
-                .ToList();
+            return userIds.Where(usernames.ContainsKey).Select(userId => usernames[userId]).ToList();
         }
 
     }

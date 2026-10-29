@@ -40,10 +40,11 @@ namespace EntityContext
                     table.HasCheckConstraint(
                         "CK_Likes_ExactlyOneTarget",
                         """
-            ([PostId] IS NOT NULL AND [CommentId] IS NULL)
-            OR
-            ([PostId] IS NULL AND [CommentId] IS NOT NULL)
-            """));
+                        ([PostId] IS NOT NULL AND [CommentId] IS NULL)
+                        OR
+                        ([PostId] IS NULL AND [CommentId] IS NOT NULL)
+                        """
+                        ));
 
                 entity.HasKey(l => l.Id);
 
@@ -80,7 +81,6 @@ namespace EntityContext
             int postId = 1;
             int commentId = 1;
 
-
             modelBuilder.Entity<Topic>().HasData(
                 new Topic
                 {
@@ -90,7 +90,6 @@ namespace EntityContext
                     CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc)
                 }
             );
-
 
             modelBuilder.Entity<Post>().HasData(
                 new Post
@@ -102,7 +101,6 @@ namespace EntityContext
                     CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc)
                 }
             );
-
 
             modelBuilder.Entity<Comment>().HasData(
                 new Comment

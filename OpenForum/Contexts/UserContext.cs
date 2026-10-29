@@ -15,21 +15,10 @@ namespace OpenForum.Services
         }
 
 
-        public string? UserId =>
-            httpContextAccessor.HttpContext?
-                .User?
-                .FindFirstValue(ClaimTypes.NameIdentifier);
+        public string? UserId => httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier);
 
-        public string? UserName => 
-            httpContextAccessor.HttpContext?
-                .User?
-                .Identity?
-                .Name;
+        public string? UserName => httpContextAccessor.HttpContext?.User?.Identity?.Name;
 
-        public bool IsAuthenticated =>
-            httpContextAccessor.HttpContext?
-                .User?
-                .Identity?
-                .IsAuthenticated ?? false;
+        public bool IsAuthenticated => httpContextAccessor.HttpContext?.User?.Identity?.IsAuthenticated ?? false;
     }
 }

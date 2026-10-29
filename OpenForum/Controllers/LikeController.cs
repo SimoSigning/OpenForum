@@ -17,9 +17,7 @@ namespace OpenForum.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> TogglePostLike(
-            int postId,
-            string? returnUrl)
+        public async Task<IActionResult> TogglePostLike(int postId, string? returnUrl)
         {
             var result = await likeService.TogglePostLikeAsync(postId);
 
@@ -28,15 +26,12 @@ namespace OpenForum.Controllers
                 return Ok(result);
             }
 
-            return LocalRedirect(
-                Url.IsLocalUrl(returnUrl) ? returnUrl! : "/");
+            return LocalRedirect(Url.IsLocalUrl(returnUrl) ? returnUrl! : "/");
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ToggleCommentLike(
-            int commentId,
-            string? returnUrl)
+        public async Task<IActionResult> ToggleCommentLike(int commentId, string? returnUrl)
         {
             var result = await likeService.ToggleCommentLikeAsync(commentId);
 
@@ -45,8 +40,7 @@ namespace OpenForum.Controllers
                 return Ok(result);
             }
 
-            return LocalRedirect(
-                Url.IsLocalUrl(returnUrl) ? returnUrl! : "/");
+            return LocalRedirect(Url.IsLocalUrl(returnUrl) ? returnUrl! : "/");
         }
 
         [HttpGet]
@@ -55,8 +49,7 @@ namespace OpenForum.Controllers
             if (postId <= 0)
                 return BadRequest();
 
-            List<string> usernames =
-                await likeService.GetPostLikerUsernamesAsync(postId);
+            List<string> usernames = await likeService.GetPostLikerUsernamesAsync(postId);
 
             return Ok(usernames);
         }
@@ -67,8 +60,7 @@ namespace OpenForum.Controllers
             if (commentId <= 0)
                 return BadRequest();
 
-            List<string> usernames =
-                await likeService.GetCommentLikerUsernamesAsync(commentId);
+            List<string> usernames = await likeService.GetCommentLikerUsernamesAsync(commentId);
 
             return Ok(usernames);
         }
