@@ -35,10 +35,7 @@
                 <div class="mt-3">
                     @if (Model.CanLikePost)
                     {
-                    <form asp-controller="Like"
-                          asp-action="TogglePostLike"
-                          method="post"
-                          class="d-inline js-like-form">
+                    <form asp-controller="Like" asp-action="TogglePostLike" method="post" class="d-inline js-like-form">
 
                         @Html.AntiForgeryToken()
 
@@ -74,10 +71,7 @@
                     }
                     @if (User.Identity?.IsAuthenticated ?? false)
                     {
-                        <a href="#"
-                           class="show-likers small ms-2"
-                           data-type="post"
-                           data-id="@Model.PostId">
+                        <a href="#" class="show-likers small ms-2" data-type="post" data-id="@Model.PostId">
                             Show likes
                         </a>
                     }

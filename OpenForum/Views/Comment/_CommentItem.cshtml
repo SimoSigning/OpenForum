@@ -35,27 +35,20 @@
 
                 @if (Model.CanLike)
                 {
-                    <form asp-controller="Like"
-                          asp-action="ToggleCommentLike"
-                          method="post"
-                          class="d-inline js-like-form">
+                    <form asp-controller="Like" asp-action="ToggleCommentLike" method="post" class="d-inline js-like-form">
 
                         @Html.AntiForgeryToken()
 
-                        <input type="hidden"
-                               name="commentId"
-                               value="@Model.Id" />
+                        <input type="hidden" name="commentId" value="@Model.Id" />
 
-                        <input type="hidden"
-                               name="returnUrl"
+                        <input type="hidden" name="returnUrl"
                                value="@Url.Action("Details", "Comment",
                                    new {
                                        id = (int)ViewData["PostId"]!,
                                        page = (int)(ViewData["CurrentPage"] ?? 1)
                                    })" />
 
-                        <button type="submit"
-                                data-like-button
+                        <button type="submit" data-like-button
                                 class="btn btn-sm @(Model.IsLikedByCurrentUser
                                     ? "btn-primary"
                                     : "btn-outline-primary")"
@@ -81,10 +74,7 @@
 
                 @if (User.Identity?.IsAuthenticated ?? false)
                 {
-                    <a href="#"
-                       class="show-likers small text-decoration-none px-1"
-                       data-type="comment"
-                       data-id="@Model.Id">
+                    <a href="#" class="show-likers small text-decoration-none px-1" data-type="comment" data-id="@Model.Id">
                         Show likes
                     </a>
                 }
@@ -122,20 +112,13 @@
 
                         @Html.AntiForgeryToken()
 
-                        <input type="hidden"
-                               name="id"
-                               value="@Model.Id" />
+                        <input type="hidden" name="id" value="@Model.Id" />
 
-                        <input type="hidden"
-                               name="postId"
-                               value="@ViewData["PostId"]" />
+                        <input type="hidden" name="postId" value="@ViewData["PostId"]" />
 
-                        <input type="hidden"
-                               name="page"
-                               value="@ViewData["CurrentPage"]" />
+                        <input type="hidden" name="page" value="@ViewData["CurrentPage"]" />
 
-                        <button type="submit"
-                                class="btn btn-outline-danger btn-sm">
+                        <button type="submit" class="btn btn-outline-danger btn-sm">
                             Delete
                         </button>
                     </form>
@@ -147,8 +130,7 @@
         {
             <div class="collapse mt-3" id="reply-form-@Model.Id">
                 @{
-                    var replyViewData =
-                        new ViewDataDictionary(ViewData)
+                    var replyViewData = new ViewDataDictionary(ViewData)
                         {
                             ["CurrentPage"] = ViewData["CurrentPage"]
                         };
