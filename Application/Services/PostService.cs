@@ -105,12 +105,7 @@ namespace Application.Services
             if (post.CreatedByUserId != userId)
                 throw new UnauthorizedAccessException("You are not allowed to edit this post.");
 
-            Topic? topic = await topicRepository.GetByIdAsync(post.TopicId);
-
-            if (topic == null)
-                return null;
-
-            PostIndexView? viewModel = await GetPostIndexViewAsync(topic.Id, page);
+            PostIndexView? viewModel = await GetPostIndexViewAsync(post.TopicId, page);
 
             if (viewModel == null)
                 return null;

@@ -38,7 +38,7 @@ namespace Application.Services
 
         public async Task<CommentIndexView?> GetCommentIndexViewAsync(int postId,int page)
         {
-            Post? post = await postRepository.GetByIdWithoutCommentsAsync(postId);
+            Post? post = await postRepository.GetByIdAsync(postId);
 
             if (post == null)
                 return null;
@@ -56,8 +56,6 @@ namespace Application.Services
             }
 
             string? userId = currentUser.GetUserIdOrNull();
-            int postLikeCount = await likeRepository.GetPostLikeCountAsync(post.Id);
-            bool isPostLikedByCurrentUser = userId != null && await likeRepository.IsPostLikedByUserAsync(post.Id, userId);
 
             Dictionary<int, CommentListItemView> commentsById = result.Items.ToDictionary(
                 c => c.Id,
@@ -92,9 +90,10 @@ namespace Application.Services
                 }
             }
 
+            int postLikeCount = await likeRepository.GetPostLikeCountAsync(post.Id);
+            bool isPostLikedByCurrentUser = userId != null && await likeRepository.IsPostLikedByUserAsync(post.Id, userId);
             List<int> allCommentIds = commentsById.Keys.ToList();
             Dictionary<int, int> likeCounts = await likeRepository.GetCommentLikeCountsAsync(allCommentIds);
-
             HashSet<int> likedCommentIds = userId == null ? 
                 new HashSet<int>() : (await likeRepository.GetCommentIdsLikedByUserAsync(allCommentIds, userId)).ToHashSet();
 
@@ -146,7 +145,7 @@ namespace Application.Services
                 throw new UnauthorizedAccessException("You are not allowed to edit this comment.");
             }
 
-            Post? post = await postRepository.GetByIdWithoutCommentsAsync(comment.PostId);
+            Post? post = await postRepository.GetByIdAsync(comment.PostId);
 
             if (post == null)
                 return null;
@@ -254,6 +253,7 @@ namespace Application.Services
                 }
             }
 
+            
             AddCommentAndReplies(comment.Id);
 
             // Mark descendants before their parents for deletion.

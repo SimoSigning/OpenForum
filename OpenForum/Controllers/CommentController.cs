@@ -54,7 +54,6 @@ namespace OpenForum.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(CommentCreateView model, int page = 1)
         {
-            page = Math.Max(1, page);
 
             // Only top-level comments need a title.
             if (!model.ParentCommentId.HasValue && string.IsNullOrWhiteSpace(model.Title))

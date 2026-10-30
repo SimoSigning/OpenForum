@@ -37,18 +37,18 @@ namespace Repository
             return (items, totalCount);
         }
 
-        public async Task<Post?> GetByIdWithoutCommentsAsync(int id)
+        public async Task<Post?> GetByIdAsync(int id)
         {
             return await context.Posts
                 .FirstOrDefaultAsync(p => p.Id == id);
         }
 
-        public async Task<Post?> GetByIdAsync(int id)
+      /*  public async Task<Post?> GetByIdWithCommentsAsync(int id)
         {
             return await context.Posts
                 .Include(p => p.Comments)
                 .FirstOrDefaultAsync(p => p.Id == id);
-        }
+        }*/
 
         public async Task AddAsync(Post post)
         {

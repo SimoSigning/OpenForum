@@ -31,7 +31,7 @@ namespace Application.Services
         {
             string userId = currentUser.GetRequiredUserId();
 
-            Post? post = await postRepository.GetByIdWithoutCommentsAsync(postId);
+            Post? post = await postRepository.GetByIdAsync(postId);
 
             if (post == null)
                 throw new KeyNotFoundException("Post not found.");
