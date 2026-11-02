@@ -8,6 +8,16 @@ namespace Application.Interfaces.Services
     {
         Task<string> GetUsernameByIdAsync(string userId);
 
-        Task<Dictionary<string, string>> GetUsernamesByIdsAsync(IEnumerable<string> userIds);
+        Task<Dictionary<string, string>> GetUsernamesByIdsAsync(
+            IEnumerable<string> userIds);
+
+        Task<string> GetEmailByIdAsync(string userId);
+
+        Task ChangeEmailAsync(string userId, string newEmail);
+
+        Task ChangePasswordAsync(
+            string userId,
+            string currentPassword,
+            string newPassword);
     }
 }

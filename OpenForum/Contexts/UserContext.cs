@@ -8,12 +8,10 @@ namespace OpenForum.Services
     {
         private readonly IHttpContextAccessor httpContextAccessor;
 
-
         public UserContext(IHttpContextAccessor httpContextAccessor)
         {
             this.httpContextAccessor = httpContextAccessor;
         }
-
 
         public string? UserId => httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier);
 

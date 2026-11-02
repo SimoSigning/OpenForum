@@ -22,8 +22,7 @@ namespace Identity.Services
 
             if (user?.UserName is not string username)
             {
-                throw new InvalidOperationException(
-                    $"Could not find a valid username for user '{userId}'.");
+                throw new InvalidOperationException($"Could not find a valid username for user '{userId}'.");
             }
 
             return username;
@@ -42,13 +41,58 @@ namespace Identity.Services
             }
 
             List<ApplicationUser> users = await userManager.Users
-                .Where(user => ids.Contains(user.Id)
-                    && user.UserName != null)
+                .Where(user => ids.Contains(user.Id) && user.UserName != null)
                 .ToListAsync();
 
-            return users.ToDictionary(
-                user => user.Id,
-                user => user.UserName!);
+            return users.ToDictionary(user => user.Id, user => user.UserName!);
+        }
+
+        public async Task<string> GetEmailByIdAsync(string userId)
+        {
+            ApplicationUser? user = await userManager.FindByIdAsync(userId);
+
+            if (user?.Email == null)
+            {
+                throw new InvalidOperationException("Could not find a valid email for the user.");
+            }
+
+            return user.Email;
+        }
+
+        public async Task ChangeEmailAsync(string userId, string newEmail)
+        {
+            ApplicationUser? user = await userManager.FindByIdAsync(userId);
+
+            if (user == null)
+            {
+                throw new InvalidOperationException("User not found.");
+            }
+
+            string token = await userManager.GenerateChangeEmailTokenAsync(user, newEmail);
+
+            IdentityResult result = await userManager.ChangeEmailAsync(user, newEmail, token);
+
+            if (!result.Succeeded)
+            {
+                throw new InvalidOperationException(string.Join(", ", result.Errors.Select(e => e.Description)));
+            }
+        }
+
+        public async Task ChangePasswordAsync(string userId, string currentPassword, string newPassword)
+        {
+            ApplicationUser? user = await userManager.FindByIdAsync(userId);
+
+            if (user == null)
+            {
+                throw new InvalidOperationException("User not found.");
+            }
+
+            IdentityResult result = await userManager.ChangePasswordAsync(user, currentPassword, newPassword);
+
+            if (!result.Succeeded)
+            {
+                throw new InvalidOperationException(string.Join(", ", result.Errors.Select(e => e.Description)));
+            }
         }
     }
 }

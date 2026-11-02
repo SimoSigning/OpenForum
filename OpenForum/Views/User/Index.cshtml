@@ -1,0 +1,266 @@
+﻿@model ViewModels.User.ProfilePageView
+
+@{
+    ViewData["Title"] = "Edit profile";
+}
+
+<div class="row justify-content-center">
+    <div class="col-12 col-lg-8">
+
+        <div class="mb-4">
+            <h2>Edit your account</h2>
+            <p class="text-muted">
+                Manage your personal information, email address and password.
+            </p>
+        </div>
+
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert alert-success alert-dismissible fade show">
+                @TempData["Success"]
+                <button type="button" class="btn-close"
+                        data-bs-dismiss="alert"
+                        aria-label="Close"></button>
+            </div>
+        }
+
+        <!-- Personal information -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Personal information</h5>
+            </div>
+
+            <div class="card-body">
+
+                <form asp-controller="User"
+                      asp-action="UpdateProfile"
+                      method="post">
+
+                    <div asp-validation-summary="ModelOnly"
+                         class="text-danger mb-3">
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="EditProfile.FirstName"
+                                   class="form-label">
+                                First name
+                            </label>
+
+                            <input asp-for="EditProfile.FirstName"
+                                   class="form-control" />
+
+                            <span asp-validation-for="EditProfile.FirstName"
+                                  class="text-danger">
+                            </span>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="EditProfile.LastName"
+                                   class="form-label">
+                                Last name
+                            </label>
+
+                            <input asp-for="EditProfile.LastName"
+                                   class="form-control" />
+
+                            <span asp-validation-for="EditProfile.LastName"
+                                  class="text-danger">
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="EditProfile.Address"
+                               class="form-label">
+                            Address
+                        </label>
+
+                        <input asp-for="EditProfile.Address"
+                               class="form-control" />
+
+                        <span asp-validation-for="EditProfile.Address"
+                              class="text-danger">
+                        </span>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label asp-for="EditProfile.PostalCode"
+                                   class="form-label">
+                                Postal code
+                            </label>
+
+                            <input asp-for="EditProfile.PostalCode"
+                                   class="form-control" />
+
+                            <span asp-validation-for="EditProfile.PostalCode"
+                                  class="text-danger">
+                            </span>
+                        </div>
+
+                        <div class="col-md-8 mb-3">
+                            <label asp-for="EditProfile.City"
+                                   class="form-label">
+                                City
+                            </label>
+
+                            <input asp-for="EditProfile.City"
+                                   class="form-control" />
+
+                            <span asp-validation-for="EditProfile.City"
+                                  class="text-danger">
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="text-end">
+                        <button type="submit" class="btn btn-primary">
+                            Save changes
+                        </button>
+                    </div>
+
+                </form>
+
+            </div>
+        </div>
+
+
+        <!-- Email address -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Email address</h5>
+            </div>
+
+            <div class="card-body">
+
+                <div class="mb-3">
+                    <label class="form-label">Current email</label>
+
+                    <input type="text"
+                           class="form-control"
+                           value="@Model.CurrentEmail"
+                           readonly />
+                </div>
+
+                <form asp-controller="User"
+                      asp-action="ChangeEmail"
+                      method="post">
+
+                    <div asp-validation-summary="ModelOnly"
+                         class="text-danger mb-3">
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="ChangeEmail.NewEmail"
+                               class="form-label">
+                            New email address
+                        </label>
+
+                        <input asp-for="ChangeEmail.NewEmail"
+                               class="form-control"
+                               type="email" />
+
+                        <span asp-validation-for="ChangeEmail.NewEmail"
+                              class="text-danger">
+                        </span>
+                    </div>
+
+                    <div class="text-end">
+                        <button type="submit" class="btn btn-primary">
+                            Change email
+                        </button>
+                    </div>
+
+                </form>
+
+            </div>
+        </div>
+
+
+        <!-- Change password -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Change password</h5>
+            </div>
+
+            <div class="card-body">
+
+                <form asp-controller="User"
+                      asp-action="ChangePassword"
+                      method="post">
+
+                    <div asp-validation-summary="ModelOnly"
+                         class="text-danger mb-3">
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="ChangePassword.CurrentPassword"
+                               class="form-label">
+                            Current password
+                        </label>
+
+                        <input asp-for="ChangePassword.CurrentPassword"
+                               class="form-control"
+                               autocomplete="current-password" />
+
+                        <span asp-validation-for="ChangePassword.CurrentPassword"
+                              class="text-danger">
+                        </span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="ChangePassword.NewPassword"
+                               class="form-label">
+                            New password
+                        </label>
+
+                        <input asp-for="ChangePassword.NewPassword"
+                               class="form-control"
+                               autocomplete="new-password" />
+
+                        <span asp-validation-for="ChangePassword.NewPassword"
+                              class="text-danger">
+                        </span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="ChangePassword.ConfirmPassword"
+                               class="form-label">
+                            Confirm new password
+                        </label>
+
+                        <input asp-for="ChangePassword.ConfirmPassword"
+                               class="form-control"
+                               autocomplete="new-password" />
+
+                        <span asp-validation-for="ChangePassword.ConfirmPassword"
+                              class="text-danger">
+                        </span>
+                    </div>
+
+                    <div class="text-end">
+                        <button type="submit" class="btn btn-primary">
+                            Change password
+                        </button>
+                    </div>
+
+                </form>
+
+            </div>
+        </div>
+
+        <div class="mb-4">
+            <a asp-controller="Topic"
+               asp-action="Index"
+               class="btn btn-outline-secondary">
+                Back to forum
+            </a>
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

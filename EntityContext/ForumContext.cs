@@ -11,6 +11,7 @@ namespace EntityContext
         public DbSet<Post> Posts => Set<Post>();
         public DbSet<Comment> Comments => Set<Comment>();
         public DbSet<Like> Likes => Set<Like>();
+        public DbSet<UserProfile> UserProfiles => Set<UserProfile>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -71,6 +72,32 @@ namespace EntityContext
                 entity.HasIndex(l => new { l.UserId, l.CommentId })
                     .IsUnique()
                     .HasFilter("[CommentId] IS NOT NULL");
+            });
+
+            modelBuilder.Entity<UserProfile>(entity =>
+            {
+                entity.HasKey(p => p.Id);
+
+                entity.Property(p => p.UserId)
+                    .IsRequired();
+
+                entity.HasIndex(p => p.UserId)
+                    .IsUnique();
+
+                entity.Property(p => p.FirstName)
+                    .HasMaxLength(100);
+
+                entity.Property(p => p.LastName)
+                    .HasMaxLength(100);
+
+                entity.Property(p => p.Address)
+                    .HasMaxLength(200);
+
+                entity.Property(p => p.PostalCode)
+                    .HasMaxLength(20);
+
+                entity.Property(p => p.City)
+                    .HasMaxLength(100);
             });
 
             SeedData(modelBuilder);
