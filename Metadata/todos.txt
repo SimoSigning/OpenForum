@@ -1,0 +1,11 @@
+Things to work through:
+
+1. Discover. The discover feature has been implemented, and its very simple, but it still deserves a debugging session, even if i for the first part did it without use of ai.
+
+2. My Activity. This has been implemented to a large degree with a shoot first, ask questions later mentality, to quicken up the process. The overall approach resonates with how i want it done. But i need proper analysis/debugging session to manifest it properly. Also the controller makes viewmodels, and i'd prefer it in the service, so i need to fix that.
+
+3. Suggested users, with purpose of showing who could be interesting to add to a friendlist.
+
+4. Actual friendlist functionality. Users should be able to add eachother as friends, and there should be a friendlist associated between users.
+
+5. Users should be able to send messages to each other internally, outside the normal forum. 

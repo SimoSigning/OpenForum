@@ -2,6 +2,7 @@
 using Application.Interfaces.Services;
 using Application.Interfaces.Services.Features;
 using Application.Interfaces.Services.User;
+using Application.Services.User;
 using EntityModels;
 using Repository.interfaces;
 using ViewModels.MyActivity;
@@ -14,7 +15,6 @@ namespace Application.Services.Features
         private readonly IPostRepository postRepository;
         private readonly ICommentRepository commentRepository;
         private readonly ICurrentUserService currentUser;
-
         private const int PageSize = 5;
         private const int PreviewLength = 150;
 
@@ -30,58 +30,68 @@ namespace Application.Services.Features
             this.currentUser = currentUser;
         }
 
-        public async Task<MyActivityIndexView> GetMyActivityIndexViewAsync(
-            ActivityFilter filter = ActivityFilter.All,
-            int page = 1)
+
+        public async Task<MyActivityIndexView> GetMyActivityIndexViewAsync(ActivityFilter filter = ActivityFilter.All, int page = 1)
         {
-            string userId = currentUser.GetRequiredUserId();
+            var userId = currentUser.GetRequiredUserId();
 
             page = Math.Max(1, page);
 
-            // Retrieve all content created by the current user.
-            IEnumerable<Topic> topics =
-                await topicRepository.GetByCreatedByUserIdAsync(userId);
+            // Retrieve the total counts.
+            var topicCount = await topicRepository.CountByCreatedByUserIdAsync(userId);
 
-            IEnumerable<Post> posts =
-                await postRepository.GetByCreatedByUserIdAsync(userId);
+            var postCount = await postRepository.CountByCreatedByUserIdAsync(userId);
 
-            IEnumerable<Comment> comments =
-                await commentRepository.GetByCreatedByUserIdAsync(userId);
+            var commentCount = await commentRepository.CountByCreatedByUserIdAsync(userId);
 
-            // Convert all content types into activity items.
-            List<ActivityListItemView> activities = new();
+            // Calculate the total count for the selected filter.
+            var totalCount = filter switch
+            {
+                ActivityFilter.Topics => topicCount,
+                ActivityFilter.Posts => postCount,
+                ActivityFilter.Comments => commentCount,
+                _ => topicCount + postCount + commentCount
+            };
 
-            activities.AddRange(topics.Select(MapTopic));
+            // Calculate pagination.
+            var totalPages = Math.Max(1, (int)Math.Ceiling(totalCount / (double)PageSize));
 
-            activities.AddRange(posts.Select(MapPost));
+            page = Math.Min(page, totalPages);
 
-            activities.AddRange(comments.Select(MapComment));
+            var skip = (page - 1) * PageSize;
+            var take = skip + PageSize;
 
-            // Apply the selected filter.
-            activities = ApplyFilter(activities, filter);
+            // Retrieve records according to the selected filter.
+            var activities = new List<ActivityListItemView>();
 
-            // Sort all activity chronologically.
-            activities = activities
+            if (filter == ActivityFilter.All || filter == ActivityFilter.Topics)
+            {
+                var topics = await topicRepository.GetByCreatedByUserIdAsync(userId, 0, take);
+                activities.AddRange(topics.Select(MapTopic));
+            }
+
+            if (filter == ActivityFilter.All || filter == ActivityFilter.Posts)
+            {
+                var posts = await postRepository.GetByCreatedByUserIdAsync(userId, 0, take);
+                activities.AddRange(posts.Select(MapPost));
+            }
+
+            if (filter == ActivityFilter.All || filter == ActivityFilter.Comments)
+            {
+                var comments = await commentRepository.GetByCreatedByUserIdAsync(userId, 0, take);
+                activities.AddRange(comments.Select(MapComment));
+            }
+
+            // Sort all retrieved activities chronologically.
+            var orderedActivities = activities
                 .OrderByDescending(a => a.CreatedAt)
                 .ThenByDescending(a => a.Id)
                 .ThenBy(a => a.Type)
                 .ToList();
 
-            int totalCount = activities.Count;
-
-            int totalPages = Math.Max(
-                1,
-                (int)Math.Ceiling(totalCount / (double)PageSize));
-
-            // Keep the requested page within valid bounds.
-            if (page > totalPages)
-            {
-                page = totalPages;
-            }
-
-            // Apply pagination to the combined activity list.
-            List<ActivityListItemView> pagedActivities = activities
-                .Skip((page - 1) * PageSize)
+            // Apply global pagination.
+            var pagedActivities = orderedActivities
+                .Skip(skip)
                 .Take(PageSize)
                 .ToList();
 
@@ -95,9 +105,7 @@ namespace Application.Services.Features
             };
         }
 
-        private static List<ActivityListItemView> ApplyFilter(
-            List<ActivityListItemView> activities,
-            ActivityFilter filter)
+        private static List<ActivityListItemView> ApplyFilter(List<ActivityListItemView> activities, ActivityFilter filter)
         {
             return filter switch
             {
@@ -114,7 +122,6 @@ namespace Application.Services.Features
                         a.Type == ActivityType.Comment ||
                         a.Type == ActivityType.Reply)
                     .ToList(),
-
                 _ => activities
             };
         }
@@ -147,7 +154,6 @@ namespace Application.Services.Features
         private static ActivityListItemView MapComment(Comment comment)
         {
             bool isReply = comment.ParentCommentId.HasValue;
-
             string contextTitle;
 
             if (isReply)

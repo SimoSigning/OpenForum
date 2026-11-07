@@ -39,7 +39,7 @@ namespace Repository
             return (items, totalCount);
         }
 
-        public async Task<IEnumerable<Comment>> GetByCreatedByUserIdAsync(string userId)
+        public async Task<IEnumerable<Comment>> GetByCreatedByUserIdAsync(string userId, int skip, int take)
         {
             return await context.Comments
                 .AsNoTracking()
@@ -49,7 +49,14 @@ namespace Repository
                 .Where(c => c.CreatedByUserId == userId)
                 .OrderByDescending(c => c.CreatedAt)
                 .ThenByDescending(c => c.Id)
+                .Skip(skip)
+                .Take(take)
                 .ToListAsync();
+        }
+
+        public async Task<int> CountByCreatedByUserIdAsync(string userId)
+        {
+            return await context.Comments.CountAsync(c => c.CreatedByUserId == userId);
         }
 
         public async Task<List<Comment>> GetRepliesByParentIdsAsync(int postId, List<int> parentIds)

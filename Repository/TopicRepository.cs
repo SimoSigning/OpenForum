@@ -34,14 +34,21 @@ namespace Repository
             return (items, totalCount);
         }
 
-        public async Task<IEnumerable<Topic>> GetByCreatedByUserIdAsync(string userId)
+        public async Task<IEnumerable<Topic>> GetByCreatedByUserIdAsync(string userId, int skip, int take)
         {
             return await context.Topics
                 .AsNoTracking()
                 .Where(t => t.CreatedByUserId == userId)
                 .OrderByDescending(t => t.CreatedAt)
                 .ThenByDescending(t => t.Id)
+                .Skip(skip)
+                .Take(take)
                 .ToListAsync();
+        }
+
+        public async Task<int> CountByCreatedByUserIdAsync(string userId)
+        {
+            return await context.Topics.CountAsync(t => t.CreatedByUserId == userId);
         }
 
         public async Task<Topic?> GetByIdAsync(int id)

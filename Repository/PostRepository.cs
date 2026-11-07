@@ -37,7 +37,7 @@ namespace Repository
             return (items, totalCount);
         }
 
-        public async Task<IEnumerable<Post>> GetByCreatedByUserIdAsync(string userId)
+        public async Task<IEnumerable<Post>> GetByCreatedByUserIdAsync(string userId, int skip, int take)
         {
             return await context.Posts
                 .AsNoTracking()
@@ -45,7 +45,14 @@ namespace Repository
                 .Where(p => p.CreatedByUserId == userId)
                 .OrderByDescending(p => p.CreatedAt)
                 .ThenByDescending(p => p.Id)
+                .Skip(skip)
+                .Take(take)
                 .ToListAsync();
+        }
+
+        public async Task<int> CountByCreatedByUserIdAsync(string userId)
+        {
+            return await context.Posts.CountAsync(p => p.CreatedByUserId == userId);
         }
 
         public async Task<Post?> GetByIdAsync(int id)

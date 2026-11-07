@@ -6,7 +6,12 @@ namespace Repository.interfaces
     {
         Task<(IEnumerable<Topic> Items, int TotalCount)> GetPageAsync(int page, int pageSize);
 
-        Task<IEnumerable<Topic>> GetByCreatedByUserIdAsync(string userId);
+        Task<IEnumerable<Topic>> GetByCreatedByUserIdAsync(
+    string userId,
+    int skip,
+    int take);
+
+        Task<int> CountByCreatedByUserIdAsync(string userId);
 
         Task<Topic?> GetByIdAsync(int id);
 

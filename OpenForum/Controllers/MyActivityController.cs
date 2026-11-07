@@ -39,20 +39,16 @@ namespace OpenForum.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> EditTopic(
-            int id,
-            ActivityFilter filter = ActivityFilter.All,
-            int page = 1)
+        public async Task<IActionResult> EditTopic(int id, ActivityFilter filter = ActivityFilter.All, int page = 1)
         {
             try
             {
-                TopicIndexView? result =
-                    await topicService.GetEditViewAsync(id);
+                TopicIndexView? result = await topicService.GetEditViewAsync(id);
 
                 if (result?.EditTopic == null)
                     return NotFound();
 
-                ActivityTopicEditView model = new()
+                ActivityTopicEditView model = new() //should correct
                 {
                     Id = result.EditTopic.Id,
                     Title = result.EditTopic.Title
@@ -71,10 +67,7 @@ namespace OpenForum.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> UpdateTopic(
-            ActivityTopicEditView model,
-            ActivityFilter filter = ActivityFilter.All,
-            int page = 1)
+        public async Task<IActionResult> UpdateTopic(ActivityTopicEditView model, ActivityFilter filter = ActivityFilter.All, int page = 1)
         {
             if (!ModelState.IsValid)
             {
@@ -85,7 +78,7 @@ namespace OpenForum.Controllers
 
             try
             {
-                TopicEditView topicModel = new()
+                TopicEditView topicModel = new() //normally wouldnt do that here, but to use old functionality it becomes necessary
                 {
                     Id = model.Id,
                     Title = model.Title
@@ -93,9 +86,7 @@ namespace OpenForum.Controllers
 
                 await topicService.UpdateAsync(topicModel);
 
-                return RedirectToAction(
-                    nameof(Index),
-                    new { filter, page });
+                return RedirectToAction(nameof(Index), new { filter, page });
             }
             catch (UnauthorizedAccessException)
             {
@@ -105,18 +96,13 @@ namespace OpenForum.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteTopic(
-            int id,
-            ActivityFilter filter = ActivityFilter.All,
-            int page = 1)
+        public async Task<IActionResult> DeleteTopic(int id, ActivityFilter filter = ActivityFilter.All, int page = 1)
         {
             try
             {
                 await topicService.DeleteAsync(id);
 
-                return RedirectToAction(
-                    nameof(Index),
-                    new { filter, page });
+                return RedirectToAction(nameof(Index), new { filter, page });
             }
             catch (UnauthorizedAccessException)
             {
@@ -124,25 +110,17 @@ namespace OpenForum.Controllers
             }
         }
 
-        // -------------------------
-        // Edit post
-        // -------------------------
-
         [HttpGet]
-        public async Task<IActionResult> EditPost(
-            int id,
-            ActivityFilter filter = ActivityFilter.All,
-            int page = 1)
+        public async Task<IActionResult> EditPost(int id, ActivityFilter filter = ActivityFilter.All, int page = 1)
         {
             try
             {
-                PostIndexView? result =
-                    await postService.GetEditViewAsync(id);
+                PostIndexView? result = await postService.GetEditViewAsync(id);
 
                 if (result?.EditPost == null)
                     return NotFound();
 
-                ActivityPostEditView model = new()
+                ActivityPostEditView model = new() //should correct
                 {
                     Id = result.EditPost.Id,
                     Title = result.EditPost.Title,
@@ -162,10 +140,7 @@ namespace OpenForum.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> UpdatePost(
-            ActivityPostEditView model,
-            ActivityFilter filter = ActivityFilter.All,
-            int page = 1)
+        public async Task<IActionResult> UpdatePost(ActivityPostEditView model, ActivityFilter filter = ActivityFilter.All, int page = 1)
         {
             if (!ModelState.IsValid)
             {
@@ -176,7 +151,7 @@ namespace OpenForum.Controllers
 
             try
             {
-                PostEditView postModel = new()
+                PostEditView postModel = new() //normally wouldnt do that here, but to use old functionality it becomes necessary
                 {
                     Id = model.Id,
                     Title = model.Title,
@@ -185,9 +160,7 @@ namespace OpenForum.Controllers
 
                 await postService.UpdateAsync(postModel);
 
-                return RedirectToAction(
-                    nameof(Index),
-                    new { filter, page });
+                return RedirectToAction(nameof(Index), new { filter, page });
             }
             catch (UnauthorizedAccessException)
             {
@@ -197,18 +170,13 @@ namespace OpenForum.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeletePost(
-            int id,
-            ActivityFilter filter = ActivityFilter.All,
-            int page = 1)
+        public async Task<IActionResult> DeletePost(int id, ActivityFilter filter = ActivityFilter.All, int page = 1)
         {
             try
             {
                 await postService.DeleteAsync(id);
 
-                return RedirectToAction(
-                    nameof(Index),
-                    new { filter, page });
+                return RedirectToAction(nameof(Index), new { filter, page });
             }
             catch (UnauthorizedAccessException)
             {
@@ -216,25 +184,17 @@ namespace OpenForum.Controllers
             }
         }
 
-        // -------------------------
-        // Edit comment or reply
-        // -------------------------
-
         [HttpGet]
-        public async Task<IActionResult> EditComment(
-            int id,
-            ActivityFilter filter = ActivityFilter.All,
-            int page = 1)
+        public async Task<IActionResult> EditComment(int id, ActivityFilter filter = ActivityFilter.All, int page = 1)
         {
             try
             {
-                CommentIndexView? result =
-                    await commentService.GetEditViewAsync(id);
+                CommentIndexView? result = await commentService.GetEditViewAsync(id);
 
                 if (result?.EditComment == null)
                     return NotFound();
 
-                ActivityCommentEditView model = new()
+                ActivityCommentEditView model = new()  //should correct
                 {
                     Id = result.EditComment.Id,
                     Title = result.EditComment.Title,
@@ -256,10 +216,7 @@ namespace OpenForum.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> UpdateComment(
-            ActivityCommentEditView model,
-            ActivityFilter filter = ActivityFilter.All,
-            int page = 1)
+        public async Task<IActionResult> UpdateComment(ActivityCommentEditView model, ActivityFilter filter = ActivityFilter.All, int page = 1)
         {
             if (!ModelState.IsValid)
             {
@@ -270,7 +227,7 @@ namespace OpenForum.Controllers
 
             try
             {
-                CommentEditView commentModel = new()
+                CommentEditView commentModel = new() //normally wouldnt do that here, but to use old functionality it becomes necessary
                 {
                     Id = model.Id,
                     Title = model.Title,
@@ -281,9 +238,7 @@ namespace OpenForum.Controllers
 
                 await commentService.UpdateAsync(commentModel);
 
-                return RedirectToAction(
-                    nameof(Index),
-                    new { filter, page });
+                return RedirectToAction(nameof(Index), new { filter, page });
             }
             catch (UnauthorizedAccessException)
             {
@@ -293,18 +248,13 @@ namespace OpenForum.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteComment(
-            int id,
-            ActivityFilter filter = ActivityFilter.All,
-            int page = 1)
+        public async Task<IActionResult> DeleteComment(int id, ActivityFilter filter = ActivityFilter.All, int page = 1)
         {
             try
             {
                 await commentService.DeleteAsync(id);
 
-                return RedirectToAction(
-                    nameof(Index),
-                    new { filter, page });
+                return RedirectToAction(nameof(Index), new { filter, page });
             }
             catch (UnauthorizedAccessException)
             {
