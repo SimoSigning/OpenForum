@@ -1,9 +1,9 @@
-﻿using Application.Interfaces.Services;
-using Identity.Models;
+﻿using Identity.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
 using System.Collections.Generic;
+using Application.Interfaces.Services.User;
 
 namespace Identity.Services
 {

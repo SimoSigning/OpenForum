@@ -1,8 +1,14 @@
 using Application.Interfaces.Contexts;
-using Application.Interfaces.Mappers;
-using Application.Interfaces.Services;
-using Application.Mappers;
-using Application.Services;
+using Application.Interfaces.Mappers.Features;
+using Application.Interfaces.Mappers.Forum;
+using Application.Interfaces.Services.Features;
+using Application.Interfaces.Services.Forum;
+using Application.Interfaces.Services.User;
+using Application.Mappers.Features;
+using Application.Mappers.Forum;
+using Application.Services.Features;
+using Application.Services.Forum;
+using Application.Services.User;
 using EntityContext;
 using Identity.Context;
 using Identity.Models;
@@ -69,22 +75,28 @@ builder.Services.AddScoped<IUserProfileRepository, UserProfileRepository>();
 
 
 // Register mappers
+// Forum
 builder.Services.AddScoped<ITopicMapper, TopicMapper>();
 builder.Services.AddScoped<IPostMapper, PostMapper>();
 builder.Services.AddScoped<ICommentMapper, CommentMapper>();
+// Features
+builder.Services.AddScoped<IDiscoverMapper, DiscoverMapper>();
 
 
 // Register services
+// Forum
 builder.Services.AddScoped<ITopicService, TopicService>();
 builder.Services.AddScoped<IPostService, PostService>();
 builder.Services.AddScoped<ICommentService, CommentService>();
+// User
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddScoped<IUserService, UserService>();
-builder.Services.AddScoped<ILikeService, LikeService>();
 builder.Services.AddScoped<IUserProfileService, UserProfileService>();
 builder.Services.AddScoped<IAccountService, AccountService>();
-
-
+// Features
+builder.Services.AddScoped<ILikeService, LikeService>();
+builder.Services.AddScoped<IDiscoverService, DiscoverService>();
+builder.Services.AddScoped<IMyActivityService, MyActivityService>();
 
 var app = builder.Build();
 

@@ -1,0 +1,20 @@
+﻿<h5 class="panel-heading">Discover</h5>
+
+<section class="panel-section">
+    <a asp-controller="Topic" asp-action="Index">Home</a>
+</section>
+
+@if (User.Identity?.IsAuthenticated ?? false)
+{
+    <section class="panel-section">
+       <a class="nav-link" asp-controller="Discover" asp-action="Search"> Search Topics </a>
+    </section>
+}
+
+<section class="panel-section">
+    <a class="nav-link" asp-controller="Discover" asp-action="PopularTopics"> Popular Topics </a>
+</section>
+
+<section class="panel-section">
+    <a class="nav-link" asp-controller="Discover" asp-action="PopularPosts"> Trending Posts </a>
+</section>

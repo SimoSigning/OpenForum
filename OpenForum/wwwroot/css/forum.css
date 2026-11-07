@@ -1,0 +1,171 @@
+﻿
+/* ========================================
+   GENERAL PAGE LAYOUT
+======================================== */
+
+/* Make the entire page fill the viewport */
+html,
+body {
+    min-height: 100%;
+    margin: 0;
+}
+
+body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ========================================
+   MAIN THREE-COLUMN LAYOUT
+======================================== */
+
+.page-layout {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+}
+
+/* ========================================
+   LEFT PANEL - MY COMMUNITY
+======================================== */
+
+.left-panel {
+    width: 17%;
+    flex: 0 0 17%;
+    font-weight: 400;
+    background-color: #343a40;
+    color: white;
+    padding: 0;
+}
+
+/* Left panel menu */
+.left-panel-menu {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+/* Left panel links */
+.left-panel-link {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 16px 18px;
+    color: #f8f9fa;
+    text-decoration: none;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    transition: background-color 0.2s ease;
+}
+
+    /* Left panel hover */
+    .left-panel-link:hover {
+        background-color: #495057;
+        color: white;
+    }
+
+
+/* ========================================
+   MAIN CONTENT
+======================================== */
+
+.main-content {
+    flex: 1;
+    min-width: 0;
+    padding: 30px;
+}
+
+
+/* ========================================
+   RIGHT PANEL - DISCOVER
+======================================== */
+
+.right-panel {
+    width: 18%;
+    flex: 0 0 18%;
+    padding: 20px 15px;
+    background-color: #e9ecef;
+    border-left: 1px solid #dee2e6;
+}
+
+/* Right panel headings */
+.panel-heading {
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #ced4da;
+}
+
+/* Right panel sections */
+.panel-section {
+    margin-bottom: 20px;
+}
+
+    .panel-section a {
+        font-weight: 500;
+        color: #343a40;
+        margin-bottom: 10px;
+        text-decoration: none;
+    }
+
+/* Placeholder text */
+.panel-placeholder {
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+
+/* Right panel links */
+.panel-link {
+    display: block;
+    padding: 10px;
+    color: inherit;
+    text-decoration: none;
+    border-radius: 5px;
+}
+
+    .panel-link:hover {
+        background-color: #dee2e6;
+    }
+
+/* ========================================
+   FOOTER
+======================================== */
+
+.site-footer {
+    padding: 18px 0;
+    margin-top: auto;
+}
+
+/* ========================================
+   RESPONSIVE LAYOUT
+======================================== */
+
+@media (max-width: 992px) {
+
+    /* Stack panels and content vertically */
+    .page-layout {
+        flex-direction: column;
+    }
+
+    /* Both panels occupy full width */
+    .left-panel,
+    .right-panel {
+        width: 100%;
+        flex: 0 0 auto;
+    }
+
+    /* Left panel */
+    .left-panel {
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+
+    /* Right panel */
+    .right-panel {
+        border-bottom: 1px solid #dee2e6;
+        border-left: none;
+    }
+
+    /* Main content */
+    .main-content {
+        padding: 20px 15px;
+    }
+}

@@ -1,2 +1,4 @@
-C:\Users\simon\source\repos\OpenForum\OpenForum\wwwroot\js\likes.js
+C:\Users\MisterDerp\source\repos\OpenForum\OpenForum\wwwroot\css\forum.css
+C:\Users\MisterDerp\source\repos\OpenForum\OpenForum\wwwroot\js\likes.js
+wwwroot\css\forum.css
 wwwroot\js\likes.js

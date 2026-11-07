@@ -7,9 +7,11 @@ namespace Repository.interfaces
 
         Task<(IEnumerable<Post> Items, int TotalCount)> GetPageByTopicIdAsync(int topicId, int page, int pageSize);
 
-       // Task<Post?> GetByIdWithoutCommentsAsync(int id);
+        Task<IEnumerable<Post>> GetByCreatedByUserIdAsync(string userId);
 
         Task<Post?> GetByIdAsync(int id);
+
+        Task<IEnumerable<Post>> GetPopularPostsAsync();
 
         Task AddAsync(Post post);
 

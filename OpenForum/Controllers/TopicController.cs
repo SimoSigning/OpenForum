@@ -1,5 +1,4 @@
-﻿
-using Application.Interfaces.Services;
+﻿using Application.Interfaces.Services.Forum;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ViewModels.Topic;

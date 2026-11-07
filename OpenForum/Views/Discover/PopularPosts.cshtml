@@ -1,0 +1,101 @@
+﻿@model IEnumerable<ViewModels.Discover.DiscoverPostListView>
+
+@{
+    ViewData["Title"] = "Popular Posts";
+}
+
+<div class="row justify-content-left">
+    <div class="col-12 col-lg-10">
+
+        <div class="mb-4">
+            <h1 class="mb-1">
+                Popular Posts
+            </h1>
+
+            <p class="text-muted mb-0">
+                Discover interesting posts and conversations from the community.
+            </p>
+        </div>
+
+        <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2 mb-3">
+            <div>
+                <h2 class="h4 mb-1">
+                    Trending Posts
+                </h2>
+
+                <p class="text-muted mb-0">
+                    Explore posts that are receiving the most attention.
+                </p>
+            </div>
+
+            <span class="badge bg-secondary rounded-pill align-self-start align-self-sm-center">
+                @Model.Count() @(Model.Count() == 1 ? "post" : "posts")
+            </span>
+        </div>
+
+        @if (!Model.Any())
+        {
+            <div class="card shadow-sm">
+                <div class="card-body text-center py-5">
+                    <h3 class="h5 mb-2">
+                        No popular posts yet
+                    </h3>
+
+                    <p class="text-muted mb-0">
+                        There are currently no posts to discover.
+                        Check back later to see what the community is discussing.
+                    </p>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="d-flex flex-column gap-3">
+                @foreach (ViewModels.Discover.DiscoverPostListView post in Model)
+                {
+                    <div class="card shadow-sm">
+                        <div class="card-body">
+
+                            <div class="mb-3">
+                                <h3 class="h5 mb-2">
+                                    @post.Title
+                                </h3>
+
+                                <div class="d-flex flex-wrap align-items-center gap-2 text-muted small">
+                                    <span>
+                                        By <strong class="text-body">@post.Creator</strong>
+                                    </span>
+
+                                    <span aria-hidden="true">&middot;</span>
+
+                                    <span>
+                                        @post.CreatedAt
+                                    </span>
+                                </div>
+                            </div>
+
+                            <p class="mb-3 text-break">
+                                @(
+                                    post.Content.Length > 250
+                                        ? post.Content.Substring(0, 250) + "..."
+                                        : post.Content
+                                )
+                            </p>
+
+                            <div class="d-flex flex-wrap align-items-center gap-2">
+                                <a asp-controller="Comment"
+                                   asp-action="Details"
+                                   asp-route-id="@post.Id"
+                                   class="btn btn-primary btn-sm">
+                                    View Discussion
+                                </a>
+                            </div>
+
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+
+    </div>
+</div>

@@ -1,0 +1,11 @@
+﻿@if (User.Identity?.IsAuthenticated ?? false)
+{
+    <div class="left-panel-menu">
+        <a href="#" class="left-panel-link">Friends online</a>
+        <a asp-controller="MyActivity" asp-action="Index" class="left-panel-link">My activity</a>
+        <a href="#" class="left-panel-link">Suggested users</a>
+    </div>
+}
+<div class="left-panel-menu">
+   <a asp-controller="Misc" asp-action="About" class="left-panel-link"> About</a>
+</div>

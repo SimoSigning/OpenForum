@@ -1,0 +1,84 @@
+﻿@using ViewModels.MyActivity
+@model ActivityCommentEditView
+
+@{
+    ViewData["Title"] = "Edit Comment";
+
+    var filter = ViewData["Filter"] ?? ActivityFilter.All;
+    var currentPage = ViewData["Page"] ?? 1;
+
+    var heading = Model.ParentCommentId.HasValue
+        ? "Edit Reply"
+        : "Edit Comment";
+}
+
+<div class="container mt-4">
+
+    <h1>@heading</h1>
+
+    <form asp-controller="MyActivity"
+          asp-action="UpdateComment"
+          method="post">
+
+        @Html.AntiForgeryToken()
+
+        <input type="hidden" asp-for="Id" />
+        <input type="hidden" asp-for="PostId" />
+        <input type="hidden" asp-for="ParentCommentId" />
+
+        <input type="hidden" name="filter" value="@filter" />
+        <input type="hidden" name="page" value="@currentPage" />
+
+        <div asp-validation-summary="ModelOnly"
+             class="text-danger mb-3">
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Title" class="form-label">
+                Title
+            </label>
+
+            <input asp-for="Title" class="form-control" />
+
+            <span asp-validation-for="Title"
+                  class="text-danger">
+            </span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Content" class="form-label">
+                Content
+            </label>
+
+            <textarea asp-for="Content"
+                      class="form-control"
+                      rows="6"></textarea>
+
+            <span asp-validation-for="Content"
+                  class="text-danger">
+            </span>
+        </div>
+
+        <div class="d-flex gap-2">
+
+            <button type="submit" class="btn btn-primary">
+                Save changes
+            </button>
+
+            <a asp-controller="MyActivity"
+               asp-action="Index"
+               asp-route-filter="@filter"
+               asp-route-page="@currentPage"
+               class="btn btn-secondary">
+                Cancel
+            </a>
+
+        </div>
+
+    </form>
+
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

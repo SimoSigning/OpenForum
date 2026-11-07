@@ -34,9 +34,41 @@ namespace Repository
             return (items, totalCount);
         }
 
+        public async Task<IEnumerable<Topic>> GetByCreatedByUserIdAsync(string userId)
+        {
+            return await context.Topics
+                .AsNoTracking()
+                .Where(t => t.CreatedByUserId == userId)
+                .OrderByDescending(t => t.CreatedAt)
+                .ThenByDescending(t => t.Id)
+                .ToListAsync();
+        }
+
         public async Task<Topic?> GetByIdAsync(int id)
         {
             return await context.Topics.FirstOrDefaultAsync(t => t.Id == id);
+        }
+
+        public async Task<IEnumerable<Topic>> SearchByTitleAsync(string query)
+        {
+            return await context.Topics
+                .AsNoTracking()
+                .Where(t => t.Title.Contains(query))
+                .OrderByDescending(t => t.CreatedAt)
+                .ThenByDescending(t => t.Id)
+                .Take(20)
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<Topic>> GetPopularTopicsAsync()
+        {
+            return await context.Topics
+                .AsNoTracking()
+                .OrderByDescending(t => context.Posts.Count(p => p.TopicId == t.Id))
+                .ThenByDescending(t => t.CreatedAt)
+                .ThenByDescending(t => t.Id)
+                .Take(10)
+                .ToListAsync();
         }
 
         public async Task AddAsync(Topic topic)

@@ -39,6 +39,19 @@ namespace Repository
             return (items, totalCount);
         }
 
+        public async Task<IEnumerable<Comment>> GetByCreatedByUserIdAsync(string userId)
+        {
+            return await context.Comments
+                .AsNoTracking()
+                .Include(c => c.Post)
+                    .ThenInclude(p => p.Topic)
+                .Include(c => c.ParentComment)
+                .Where(c => c.CreatedByUserId == userId)
+                .OrderByDescending(c => c.CreatedAt)
+                .ThenByDescending(c => c.Id)
+                .ToListAsync();
+        }
+
         public async Task<List<Comment>> GetRepliesByParentIdsAsync(int postId, List<int> parentIds)
         {
             if (parentIds == null || parentIds.Count == 0)

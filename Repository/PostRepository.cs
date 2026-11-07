@@ -37,18 +37,33 @@ namespace Repository
             return (items, totalCount);
         }
 
-        public async Task<Post?> GetByIdAsync(int id)
+        public async Task<IEnumerable<Post>> GetByCreatedByUserIdAsync(string userId)
         {
             return await context.Posts
-                .FirstOrDefaultAsync(p => p.Id == id);
+                .AsNoTracking()
+                .Include(p => p.Topic)
+                .Where(p => p.CreatedByUserId == userId)
+                .OrderByDescending(p => p.CreatedAt)
+                .ThenByDescending(p => p.Id)
+                .ToListAsync();
         }
 
-      /*  public async Task<Post?> GetByIdWithCommentsAsync(int id)
+        public async Task<Post?> GetByIdAsync(int id)
+        {
+            return await context.Posts.FirstOrDefaultAsync(p => p.Id == id);
+        }
+
+        public async Task<IEnumerable<Post>> GetPopularPostsAsync()
         {
             return await context.Posts
-                .Include(p => p.Comments)
-                .FirstOrDefaultAsync(p => p.Id == id);
-        }*/
+                .AsNoTracking()
+                .OrderByDescending(p => p.Likes.Count)
+                .ThenByDescending(p => p.Comments.Count)
+                .ThenByDescending(p => p.CreatedAt)
+                .ThenByDescending(p => p.Id)
+                .Take(10)
+                .ToListAsync();
+        }
 
         public async Task AddAsync(Post post)
         {

@@ -1,0 +1,142 @@
+﻿@model IEnumerable<ViewModels.Discover.DiscoverTopicListView>
+
+@{
+    ViewData["Title"] = "Search Topics";
+    string? query = Context.Request.Query["query"].ToString();
+}
+
+<div class="row justify-content-left">
+    <div class="col-12 col-lg-10">
+
+        <div class="mb-4">
+            <h1 class="mb-1">
+                Discover Topics
+            </h1>
+
+            <p class="text-muted mb-0">
+                Search for topics and find discussions that interest you.
+            </p>
+        </div>
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-body-tertiary">
+                <h2 class="h5 mb-0">
+                    Search Topics
+                </h2>
+            </div>
+
+            <div class="card-body">
+                <form asp-controller="Discover"
+                      asp-action="Search"
+                      method="get">
+
+                    <div class="input-group">
+                        <input type="text"
+                               name="query"
+                               value="@query"
+                               class="form-control"
+                               placeholder="Search for a topic..."
+                               aria-label="Search topics" />
+
+                        <button type="submit" class="btn btn-primary">
+                            Search
+                        </button>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+
+        @if (string.IsNullOrWhiteSpace(query))
+        {
+            <div class="card shadow-sm">
+                <div class="card-body text-center py-5">
+                    <h3 class="h5 mb-2">
+                        Find a discussion
+                    </h3>
+
+                    <p class="text-muted mb-0">
+                        Enter a search term above to discover topics.
+                    </p>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2 mb-3">
+                <div>
+                    <h2 class="h4 mb-1">
+                        Search Results
+                    </h2>
+
+                    <p class="text-muted mb-0">
+                        Results for "<strong>@query</strong>"
+                    </p>
+                </div>
+
+                <span class="badge bg-secondary rounded-pill align-self-start align-self-sm-center">
+                    @Model.Count() @(Model.Count() == 1 ? "topic" : "topics")
+                </span>
+            </div>
+
+            @if (!Model.Any())
+            {
+                <div class="card shadow-sm">
+                    <div class="card-body text-center py-5">
+                        <h3 class="h5 mb-2">
+                            No topics found
+                        </h3>
+
+                        <p class="text-muted mb-0">
+                            No topics matched your search.
+                            Try using different keywords.
+                        </p>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="d-flex flex-column gap-3">
+                    @foreach (ViewModels.Discover.DiscoverTopicListView topic in Model)
+                    {
+                        <div class="card shadow-sm">
+                            <div class="card-body">
+                                <div class="d-flex flex-column flex-md-row justify-content-between gap-3">
+
+                                    <div class="flex-grow-1">
+                                        <h3 class="h5 mb-2">
+                                            @topic.Title
+                                        </h3>
+
+                                        <div class="d-flex flex-wrap align-items-center gap-2 text-muted small">
+                                            <span>
+                                                By <strong class="text-body">@topic.Creator</strong>
+                                            </span>
+
+                                            <span aria-hidden="true">&middot;</span>
+
+                                            <span>
+                                                @topic.CreatedAt
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <div class="d-flex flex-wrap align-items-start gap-2">
+                                        <a asp-controller="Post"
+                                           asp-action="Details"
+                                           asp-route-id="@topic.Id"
+                                           class="btn btn-primary btn-sm">
+                                            View Topic
+                                        </a>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        }
+
+    </div>
+</div>

@@ -1,3 +1,0 @@
-1. Add a like button
-
-2. There are some stuff about reply logic in comments that might need optimization.

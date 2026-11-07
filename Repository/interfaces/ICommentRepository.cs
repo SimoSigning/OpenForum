@@ -7,6 +7,8 @@ namespace Repository.interfaces
 
         Task<(IEnumerable<Comment> Items, int TotalCount)> GetPageByPostIdAsync(int postId, int page, int pageSize);
 
+        Task<IEnumerable<Comment>> GetByCreatedByUserIdAsync(string userId);
+
         Task<List<Comment>> GetRepliesByParentIdsAsync(int postId, List<int> parentIds);
 
         Task<Comment?> GetByIdAsync(int id);

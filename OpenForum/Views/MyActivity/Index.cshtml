@@ -1,0 +1,260 @@
+﻿@using ViewModels.MyActivity
+@model MyActivityIndexView
+
+@{
+    ViewData["Title"] = "My Activity";
+}
+
+<div class="container mt-4">
+
+    <h1>My Activity</h1>
+
+    <p class="text-muted">
+        View and manage the topics, posts, comments, and replies you have created.
+    </p>
+
+    @* Activity filters *@
+    <div class="mb-4">
+        <div class="btn-group" role="group">
+
+            <a asp-controller="MyActivity"
+               asp-action="Index"
+               asp-route-filter="@ActivityFilter.All"
+               class="btn @(Model.Filter == ActivityFilter.All ? "btn-primary" : "btn-outline-primary")">
+                All
+            </a>
+
+            <a asp-controller="MyActivity"
+               asp-action="Index"
+               asp-route-filter="@ActivityFilter.Topics"
+               class="btn @(Model.Filter == ActivityFilter.Topics ? "btn-primary" : "btn-outline-primary")">
+                Topics
+            </a>
+
+            <a asp-controller="MyActivity"
+               asp-action="Index"
+               asp-route-filter="@ActivityFilter.Posts"
+               class="btn @(Model.Filter == ActivityFilter.Posts ? "btn-primary" : "btn-outline-primary")">
+                Posts
+            </a>
+
+            <a asp-controller="MyActivity"
+               asp-action="Index"
+               asp-route-filter="@ActivityFilter.Comments"
+               class="btn @(Model.Filter == ActivityFilter.Comments ? "btn-primary" : "btn-outline-primary")">
+                Comments
+            </a>
+
+        </div>
+    </div>
+
+    @* Activity count *@
+    <p class="text-muted">
+        Showing @Model.Activities.Count() of @Model.TotalCount activities
+    </p>
+
+    @if (!Model.Activities.Any())
+    {
+        <div class="alert alert-info">
+            You haven't created any activities in this category yet.
+        </div>
+    }
+    else
+    {
+        @foreach (ActivityListItemView activity in Model.Activities)
+        {
+            <div class="card mb-3">
+
+                <div class="card-body">
+
+                    <div class="d-flex justify-content-between align-items-start">
+
+                        <div>
+                            @* Activity type *@
+                            <span class="badge bg-secondary">
+                                @activity.Type
+                            </span>
+
+                            @* Activity title *@
+                            <h5 class="card-title mt-2">
+                                @if (!string.IsNullOrWhiteSpace(activity.Title))
+                                {
+                                    @activity.Title
+                                }
+                                else
+                                {
+                                    <span class="text-muted">
+                                        @(activity.Type == ActivityType.Reply
+                                            ? "Untitled reply"
+                                            : "Untitled comment")
+                                    </span>
+                                }
+                            </h5>
+                        </div>
+
+                        @* Creation date *@
+                        <small class="text-muted">
+                            @activity.CreatedAt.ToLocalTime().ToString("dd MMM yyyy HH:mm")
+                        </small>
+
+                    </div>
+
+                    @* Content preview *@
+                    @if (!string.IsNullOrWhiteSpace(activity.ContentPreview))
+                    {
+                        <p class="card-text mt-2">
+                            @activity.ContentPreview
+                        </p>
+                    }
+
+                    @* Context *@
+                    @if (!string.IsNullOrWhiteSpace(activity.ContextTitle))
+                    {
+                        <p class="text-muted small mb-3">
+                            @if (activity.Type == ActivityType.Post)
+                            {
+                                <span>In topic: </span>
+                            }
+                            else if (activity.Type == ActivityType.Comment)
+                            {
+                                <span>On post: </span>
+                            }
+                            else if (activity.Type == ActivityType.Reply)
+                            {
+                                <span>Replying to: </span>
+                            }
+
+                            <strong>@activity.ContextTitle</strong>
+                        </p>
+                    }
+
+                    <div class="d-flex gap-2">
+
+                        @* Edit action *@
+                        @if (activity.Type == ActivityType.Topic)
+                        {
+                            <a asp-controller="MyActivity"
+                               asp-action="EditTopic"
+                               asp-route-id="@activity.Id"
+                               asp-route-filter="@Model.Filter"
+                               asp-route-page="@Model.CurrentPage"
+                               class="btn btn-sm btn-outline-primary">
+                                Edit
+                            </a>
+                        }
+                        else if (activity.Type == ActivityType.Post)
+                        {
+                            <a asp-controller="MyActivity"
+                               asp-action="EditPost"
+                               asp-route-id="@activity.Id"
+                               asp-route-filter="@Model.Filter"
+                               asp-route-page="@Model.CurrentPage"
+                               class="btn btn-sm btn-outline-primary">
+                                Edit
+                            </a>
+                        }
+                        else
+                        {
+                            <a asp-controller="MyActivity"
+                               asp-action="EditComment"
+                               asp-route-id="@activity.Id"
+                               asp-route-filter="@Model.Filter"
+                               asp-route-page="@Model.CurrentPage"
+                               class="btn btn-sm btn-outline-primary">
+                                Edit
+                            </a>
+                        }
+
+                        @* Delete action *@
+                        <form asp-controller="MyActivity"
+                              asp-action="@(activity.Type == ActivityType.Topic
+                                  ? "DeleteTopic"
+                                  : activity.Type == ActivityType.Post
+                                      ? "DeletePost"
+                                      : "DeleteComment")"
+                              method="post">
+
+                            @Html.AntiForgeryToken()
+
+                            <input type="hidden"
+                                   name="id"
+                                   value="@activity.Id" />
+
+                            <input type="hidden"
+                                   name="filter"
+                                   value="@Model.Filter" />
+
+                            <input type="hidden"
+                                   name="page"
+                                   value="@Model.CurrentPage" />
+
+                            <button type="submit"
+                                    class="btn btn-sm btn-outline-danger"
+                                    onclick="return confirm('Are you sure you want to delete this activity?');">
+                                Delete
+                            </button>
+
+                        </form>
+
+                    </div>
+
+                </div>
+            </div>
+        }
+    }
+
+    @* Pagination *@
+    @if (Model.TotalPages > 1)
+    {
+        <nav aria-label="Activity pagination">
+
+            <ul class="pagination justify-content-center">
+
+                @* Previous page *@
+                <li class="page-item @(Model.CurrentPage <= 1 ? "disabled" : "")">
+
+                    <a class="page-link"
+                       asp-controller="MyActivity"
+                       asp-action="Index"
+                       asp-route-filter="@Model.Filter"
+                       asp-route-page="@(Model.CurrentPage - 1)">
+                        Previous
+                    </a>
+
+                </li>
+
+                @* Page numbers *@
+                @for (int pageNumber = 1; pageNumber <= Model.TotalPages; pageNumber++)
+                {
+                    <li class="page-item @(pageNumber == Model.CurrentPage ? "active" : "")">
+
+                        <a class="page-link"
+                           asp-controller="MyActivity"
+                           asp-action="Index"
+                           asp-route-filter="@Model.Filter"
+                           asp-route-page="@pageNumber">
+                            @pageNumber
+                        </a>
+
+                    </li>
+                }
+
+                @* Next page *@
+                <li class="page-item @(Model.CurrentPage >= Model.TotalPages ? "disabled" : "")">
+
+                    <a class="page-link"
+                       asp-controller="MyActivity"
+                       asp-action="Index"
+                       asp-route-filter="@Model.Filter"
+                       asp-route-page="@(Model.CurrentPage + 1)">
+                        Next
+                    </a>
+
+                </li>
+
+            </ul>
+
+        </nav>
+    }
+
+</div>
