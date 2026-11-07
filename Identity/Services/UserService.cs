@@ -1,9 +1,10 @@
-﻿using Identity.Models;
+﻿using Application.Interfaces.Services.User;
+using Application.Models;
+using Identity.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using System.Linq;
 using System.Collections.Generic;
-using Application.Interfaces.Services.User;
+using System.Linq;
 
 namespace Identity.Services
 {
@@ -45,6 +46,40 @@ namespace Identity.Services
                 .ToListAsync();
 
             return users.ToDictionary(user => user.Id, user => user.UserName!);
+        }
+
+        public async Task<(IEnumerable<UserSearchResult> Items, int TotalCount)> SearchUsersByUsernameAsync(string query, string excludedUserId, int skip, int take)
+        {
+            if (string.IsNullOrWhiteSpace(query))
+                return (Enumerable.Empty<UserSearchResult>(), 0);
+
+            IQueryable<ApplicationUser> users = userManager.Users
+                .Where(u =>
+                    u.Id != excludedUserId &&
+                    u.UserName != null &&
+                    u.UserName.Contains(query));
+
+            int totalCount = await users.CountAsync();
+
+            List<UserSearchResult> items = await users
+                .OrderBy(u => u.UserName)
+                .Skip(skip)
+                .Take(take)
+                .Select(u => new UserSearchResult
+                {
+                    UserId = u.Id,
+                    Username = u.UserName!
+                })
+                .ToListAsync();
+
+            return (items, totalCount);
+        }
+
+        public async Task<bool> UserExistsAsync(string userId)
+        {
+            ApplicationUser? user = await userManager.FindByIdAsync(userId);
+
+            return user != null;
         }
 
         public async Task<string> GetEmailByIdAsync(string userId)

@@ -1,11 +1,33 @@
-﻿@if (User.Identity?.IsAuthenticated ?? false)
+﻿
+@if (User.Identity?.IsAuthenticated ?? false)
 {
     <div class="left-panel-menu">
-        <a href="#" class="left-panel-link">Friends online</a>
-        <a asp-controller="MyActivity" asp-action="Index" class="left-panel-link">My activity</a>
-        <a href="#" class="left-panel-link">Suggested users</a>
+
+        <a asp-controller="Friendship"
+           asp-action="Index"
+           class="left-panel-link">
+            Friends
+        </a>
+
+        <a asp-controller="Friendship"
+           asp-action="Search"
+           class="left-panel-link">
+            Search/Suggested users
+        </a>
+
+        <a asp-controller="MyActivity"
+           asp-action="Index"
+           class="left-panel-link">
+            My activity
+        </a>
+
     </div>
 }
+
 <div class="left-panel-menu">
-   <a asp-controller="Misc" asp-action="About" class="left-panel-link"> About</a>
+    <a asp-controller="Misc"
+       asp-action="About"
+       class="left-panel-link">
+        About
+    </a>
 </div>

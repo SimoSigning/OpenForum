@@ -12,6 +12,25 @@ namespace EntityContext.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
+                name: "Friendships",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    RequesterUserId = table.Column<string>(type: "nvarchar(450)", maxLength: 450, nullable: false),
+                    AddresseeUserId = table.Column<string>(type: "nvarchar(450)", maxLength: 450, nullable: false),
+                    UserIdLow = table.Column<string>(type: "nvarchar(450)", maxLength: 450, nullable: false),
+                    UserIdHigh = table.Column<string>(type: "nvarchar(450)", maxLength: 450, nullable: false),
+                    Status = table.Column<int>(type: "int", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Friendships", x => x.Id);
+                    table.CheckConstraint("CK_Friendships_DifferentUsers", "[UserIdLow] <> [UserIdHigh]");
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Topics",
                 columns: table => new
                 {
@@ -154,6 +173,12 @@ namespace EntityContext.Migrations
                 column: "PostId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Friendships_UserIdLow_UserIdHigh",
+                table: "Friendships",
+                columns: new[] { "UserIdLow", "UserIdHigh" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Likes_CommentId",
                 table: "Likes",
                 column: "CommentId");
@@ -192,6 +217,9 @@ namespace EntityContext.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropTable(
+                name: "Friendships");
+
             migrationBuilder.DropTable(
                 name: "Likes");
 

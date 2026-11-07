@@ -114,10 +114,7 @@ namespace OpenForum.Controllers
             }
         }
 
-        private async Task<ProfilePageView> BuildProfilePageAsync(
-            UserProfileEditView? editProfile = null,
-            ChangeEmailView? changeEmail = null,
-            ChangePasswordView? changePassword = null)
+        private async Task<ProfilePageView> BuildProfilePageAsync(UserProfileEditView? editProfile = null, ChangeEmailView? changeEmail = null, ChangePasswordView? changePassword = null)
         {
             UserProfileView profile = await profileService.GetProfileAsync();
 

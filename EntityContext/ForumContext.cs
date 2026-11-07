@@ -12,6 +12,7 @@ namespace EntityContext
         public DbSet<Comment> Comments => Set<Comment>();
         public DbSet<Like> Likes => Set<Like>();
         public DbSet<UserProfile> UserProfiles => Set<UserProfile>();
+        public DbSet<Friendship> Friendships => Set<Friendship>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -98,6 +99,37 @@ namespace EntityContext
 
                 entity.Property(p => p.City)
                     .HasMaxLength(100);
+            });
+
+            modelBuilder.Entity<Friendship>(entity =>
+            {
+                entity.ToTable("Friendships", table =>
+                    table.HasCheckConstraint(
+                        "CK_Friendships_DifferentUsers",
+                        "[UserIdLow] <> [UserIdHigh]"
+                    ));
+
+                entity.Property(f => f.RequesterUserId)
+                    .IsRequired()
+                    .HasMaxLength(450);
+
+                entity.Property(f => f.AddresseeUserId)
+                    .IsRequired()
+                    .HasMaxLength(450);
+
+                entity.Property(f => f.UserIdLow)
+                    .IsRequired()
+                    .HasMaxLength(450);
+
+                entity.Property(f => f.UserIdHigh)
+                    .IsRequired()
+                    .HasMaxLength(450);
+
+                entity.HasIndex(f => new
+                {
+                    f.UserIdLow,
+                    f.UserIdHigh
+                }).IsUnique();
             });
 
             SeedData(modelBuilder);

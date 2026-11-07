@@ -1,5 +1,3 @@
-I got a forum, with core functionality consisting of the following entities and dataflows:
-
 namespace EntityModels
 {
     public class Topic
@@ -81,8 +79,6 @@ namespace EntityModels
 }
 
 
-
-Topic flow: 
 using Microsoft.EntityFrameworkCore;
 using EntityModels;
 using Repository.interfaces;
@@ -119,14 +115,48 @@ namespace Repository
             return (items, totalCount);
         }
 
+        public async Task<IEnumerable<Topic>> GetByCreatedByUserIdAsync(string userId, int skip, int take)
+        {
+            return await context.Topics
+                .AsNoTracking()
+                .Where(t => t.CreatedByUserId == userId)
+                .OrderByDescending(t => t.CreatedAt)
+                .ThenByDescending(t => t.Id)
+                .Skip(skip)
+                .Take(take)
+                .ToListAsync();
+        }
+
+        public async Task<int> CountByCreatedByUserIdAsync(string userId)
+        {
+            return await context.Topics.CountAsync(t => t.CreatedByUserId == userId);
+        }
+
         public async Task<Topic?> GetByIdAsync(int id)
         {
             return await context.Topics.FirstOrDefaultAsync(t => t.Id == id);
         }
 
-        public async Task<IEnumerable<Topic>> GetPopularTopics()
+        public async Task<IEnumerable<Topic>> SearchByTitleAsync(string query)
         {
-            return await context.Topics.ToListAsync();
+            return await context.Topics
+                .AsNoTracking()
+                .Where(t => t.Title.Contains(query))
+                .OrderByDescending(t => t.CreatedAt)
+                .ThenByDescending(t => t.Id)
+                .Take(20)
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<Topic>> GetPopularTopicsAsync()
+        {
+            return await context.Topics
+                .AsNoTracking()
+                .OrderByDescending(t => context.Posts.Count(p => p.TopicId == t.Id))
+                .ThenByDescending(t => t.CreatedAt)
+                .ThenByDescending(t => t.Id)
+                .Take(10)
+                .ToListAsync();
         }
 
         public async Task AddAsync(Topic topic)
@@ -158,13 +188,14 @@ namespace Repository
 }
 
 using Application.Interfaces.Contexts;
-using Application.Interfaces.Mappers;
-using Application.Interfaces.Services;
+using Application.Interfaces.Mappers.Forum;
+using Application.Interfaces.Services.Forum;
+using Application.Interfaces.Services.User;
 using EntityModels;
 using Repository.interfaces;
 using ViewModels.Topic;
 
-namespace Application.Services
+namespace Application.Services.Forum
 {
     public class TopicService : ITopicService
     {
@@ -288,9 +319,7 @@ namespace Application.Services
     }
 }
 
-
-
-using Application.Interfaces.Services;
+using Application.Interfaces.Services.Forum;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ViewModels.Topic;
@@ -423,7 +452,8 @@ namespace OpenForum.Controllers
 }
 
 
-Post flow:using Microsoft.EntityFrameworkCore;
+a posts:
+using Microsoft.EntityFrameworkCore;
 using EntityContext;
 using EntityModels;
 using Repository.interfaces;
@@ -462,14 +492,39 @@ namespace Repository
             return (items, totalCount);
         }
 
+        public async Task<IEnumerable<Post>> GetByCreatedByUserIdAsync(string userId, int skip, int take)
+        {
+            return await context.Posts
+                .AsNoTracking()
+                .Include(p => p.Topic)
+                .Where(p => p.CreatedByUserId == userId)
+                .OrderByDescending(p => p.CreatedAt)
+                .ThenByDescending(p => p.Id)
+                .Skip(skip)
+                .Take(take)
+                .ToListAsync();
+        }
+
+        public async Task<int> CountByCreatedByUserIdAsync(string userId)
+        {
+            return await context.Posts.CountAsync(p => p.CreatedByUserId == userId);
+        }
+
         public async Task<Post?> GetByIdAsync(int id)
         {
             return await context.Posts.FirstOrDefaultAsync(p => p.Id == id);
         }
 
-        public async Task<IEnumerable<Post>> GetPopularPosts()
+        public async Task<IEnumerable<Post>> GetPopularPostsAsync()
         {
-            return await context.Posts.Take(10).ToListAsync();
+            return await context.Posts
+                .AsNoTracking()
+                .OrderByDescending(p => p.Likes.Count)
+                .ThenByDescending(p => p.Comments.Count)
+                .ThenByDescending(p => p.CreatedAt)
+                .ThenByDescending(p => p.Id)
+                .Take(10)
+                .ToListAsync();
         }
 
         public async Task AddAsync(Post post)
@@ -501,15 +556,16 @@ namespace Repository
 }
 
 using Application.Interfaces.Contexts;
-using Application.Interfaces.Mappers;
-using Application.Interfaces.Services;
+using Application.Interfaces.Mappers.Forum;
+using Application.Interfaces.Services.Forum;
+using Application.Interfaces.Services.User;
 using Application.Mappers;
 using EntityModels;
 using Repository.interfaces;
 using ViewModels.Post;
 using ViewModels.Topic;
 
-namespace Application.Services
+namespace Application.Services.Forum
 {
 
     public class PostService : IPostService
@@ -639,6 +695,7 @@ namespace Application.Services
             if (post.CreatedByUserId != userId)
                 throw new UnauthorizedAccessException("You are not allowed to edit this post.");
 
+            post.Id = model.Id;
             post.Content = model.Content;
 
             await postRepository.UpdateAsync(post);
@@ -662,8 +719,7 @@ namespace Application.Services
     }
 }
 
-
-using Application.Interfaces.Services;
+using Application.Interfaces.Services.Forum;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ViewModels.Post;
@@ -801,9 +857,7 @@ namespace OpenForum.Controllers
     }
 }
 
-
-Comment flow:
-
+Comments:
 
 using Microsoft.EntityFrameworkCore;
 using EntityContext;
@@ -843,6 +897,26 @@ namespace Repository
                 .ToListAsync();
 
             return (items, totalCount);
+        }
+
+        public async Task<IEnumerable<Comment>> GetByCreatedByUserIdAsync(string userId, int skip, int take)
+        {
+            return await context.Comments
+                .AsNoTracking()
+                .Include(c => c.Post)
+                    .ThenInclude(p => p.Topic)
+                .Include(c => c.ParentComment)
+                .Where(c => c.CreatedByUserId == userId)
+                .OrderByDescending(c => c.CreatedAt)
+                .ThenByDescending(c => c.Id)
+                .Skip(skip)
+                .Take(take)
+                .ToListAsync();
+        }
+
+        public async Task<int> CountByCreatedByUserIdAsync(string userId)
+        {
+            return await context.Comments.CountAsync(c => c.CreatedByUserId == userId);
         }
 
         public async Task<List<Comment>> GetRepliesByParentIdsAsync(int postId, List<int> parentIds)
@@ -898,15 +972,15 @@ namespace Repository
 }
 
 
-
 using Application.Interfaces.Contexts;
-using Application.Interfaces.Mappers;
-using Application.Interfaces.Services;
+using Application.Interfaces.Mappers.Forum;
+using Application.Interfaces.Services.Forum;
+using Application.Interfaces.Services.User;
 using EntityModels;
 using Repository.interfaces;
 using ViewModels.Comment;
 
-namespace Application.Services
+namespace Application.Services.Forum
 {
     public class CommentService : ICommentService
     {
@@ -1170,8 +1244,7 @@ namespace Application.Services
 }
 
 
-
-using Application.Interfaces.Services;
+using Application.Interfaces.Services.Forum;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ViewModels.Comment;
@@ -1340,4 +1413,9 @@ namespace OpenForum.Controllers
         }
     }
 }
+
+
+
+
+
 

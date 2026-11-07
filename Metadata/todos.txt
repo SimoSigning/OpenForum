@@ -1,5 +1,7 @@
 Things to work through:
 
+-- Order doesnt matter, aslong as it gets done eventually.
+
 1. Discover. The discover feature has been implemented, and its very simple, but it still deserves a debugging session, even if i for the first part did it without use of ai.
 
 2. My Activity. This has been implemented to a large degree with a shoot first, ask questions later mentality, to quicken up the process. The overall approach resonates with how i want it done. But i need proper analysis/debugging session to manifest it properly. Also the controller makes viewmodels, and i'd prefer it in the service, so i need to fix that.

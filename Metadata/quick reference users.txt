@@ -1,0 +1,493 @@
+using Identity.Models;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace Identity.Context
+{
+    public class IdentityContext : IdentityDbContext<ApplicationUser>
+    {
+        public IdentityContext(
+            DbContextOptions<IdentityContext> options)
+            : base(options)
+        {
+        }
+    }
+}
+
+using Microsoft.AspNetCore.Identity;
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace Identity.Models
+{
+    public class ApplicationUser : IdentityUser
+    {
+    }
+}
+
+
+
+
+using Application.Interfaces;
+using Application.Interfaces.Contexts;
+using System.Security.Claims;
+
+namespace OpenForum.Services
+{
+    public class UserContext : IUserContext
+    {
+        private readonly IHttpContextAccessor httpContextAccessor;
+
+        public UserContext(IHttpContextAccessor httpContextAccessor)
+        {
+            this.httpContextAccessor = httpContextAccessor;
+        }
+
+        public string? UserId => httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        public string? UserName => httpContextAccessor.HttpContext?.User?.Identity?.Name;
+
+        public bool IsAuthenticated => httpContextAccessor.HttpContext?.User?.Identity?.IsAuthenticated ?? false;
+    }
+}
+
+using Application.Interfaces.Contexts;
+using Application.Interfaces.Services.User;
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace Application.Services.User
+{
+    public class CurrentUserService : ICurrentUserService
+    {
+        private readonly IUserContext userContext;
+
+        public CurrentUserService(IUserContext userContext)
+        {
+            this.userContext = userContext;
+        }
+
+        public string GetRequiredUserId()
+        {
+            string? userId = userContext.UserId;
+
+            if (!userContext.IsAuthenticated || string.IsNullOrWhiteSpace(userId))
+            {
+                throw new UnauthorizedAccessException("An authenticated user is required.");
+            }
+
+            return userId;
+        }
+
+        public string? GetUserIdOrNull()
+        {
+            string? userId = userContext.UserId;
+
+            if (!userContext.IsAuthenticated || string.IsNullOrWhiteSpace(userId))
+            {
+                return null;
+            }
+
+            return userId;
+        }
+    }
+}
+
+
+using Identity.Models;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using System.Linq;
+using System.Collections.Generic;
+using Application.Interfaces.Services.User;
+
+namespace Identity.Services
+{
+    public class UserService : IUserService
+    {
+        private readonly UserManager<ApplicationUser> userManager;
+
+        public UserService(UserManager<ApplicationUser> userManager)
+        {
+            this.userManager = userManager;
+        }
+
+        public async Task<string> GetUsernameByIdAsync(string userId)
+        {
+            ApplicationUser? user = await userManager.FindByIdAsync(userId);
+
+            if (user?.UserName is not string username)
+            {
+                throw new InvalidOperationException($"Could not find a valid username for user '{userId}'.");
+            }
+
+            return username;
+        }
+
+        public async Task<Dictionary<string, string>> GetUsernamesByIdsAsync(IEnumerable<string> userIds)
+        {
+            List<string> ids = userIds
+                .Where(id => !string.IsNullOrWhiteSpace(id))
+                .Distinct()
+                .ToList();
+
+            if (ids.Count == 0)
+            {
+                return new Dictionary<string, string>();
+            }
+
+            List<ApplicationUser> users = await userManager.Users
+                .Where(user => ids.Contains(user.Id) && user.UserName != null)
+                .ToListAsync();
+
+            return users.ToDictionary(user => user.Id, user => user.UserName!);
+        }
+
+        public async Task<string> GetEmailByIdAsync(string userId)
+        {
+            ApplicationUser? user = await userManager.FindByIdAsync(userId);
+
+            if (user?.Email == null)
+            {
+                throw new InvalidOperationException("Could not find a valid email for the user.");
+            }
+
+            return user.Email;
+        }
+
+        public async Task ChangeEmailAsync(string userId, string newEmail)
+        {
+            ApplicationUser? user = await userManager.FindByIdAsync(userId);
+
+            if (user == null)
+            {
+                throw new InvalidOperationException("User not found.");
+            }
+
+            string token = await userManager.GenerateChangeEmailTokenAsync(user, newEmail);
+
+            IdentityResult result = await userManager.ChangeEmailAsync(user, newEmail, token);
+
+            if (!result.Succeeded)
+            {
+                throw new InvalidOperationException(string.Join(", ", result.Errors.Select(e => e.Description)));
+            }
+        }
+
+        public async Task ChangePasswordAsync(string userId, string currentPassword, string newPassword)
+        {
+            ApplicationUser? user = await userManager.FindByIdAsync(userId);
+
+            if (user == null)
+            {
+                throw new InvalidOperationException("User not found.");
+            }
+
+            IdentityResult result = await userManager.ChangePasswordAsync(user, currentPassword, newPassword);
+
+            if (!result.Succeeded)
+            {
+                throw new InvalidOperationException(string.Join(", ", result.Errors.Select(e => e.Description)));
+            }
+        }
+    }
+}
+
+
+using Application.Interfaces.Services.User;
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace Application.Services.User
+{
+    public class AccountService : IAccountService
+    {
+        private readonly IUserService userService;
+        private readonly ICurrentUserService currentUser;
+
+        public AccountService(
+            IUserService userService,
+            ICurrentUserService currentUser)
+        {
+            this.userService = userService;
+            this.currentUser = currentUser;
+        }
+
+        public async Task<string> GetEmailAsync()
+        {
+            string userId = currentUser.GetRequiredUserId();
+
+            return await userService.GetEmailByIdAsync(userId);
+        }
+
+        public async Task ChangeEmailAsync(string newEmail)
+        {
+            string userId = currentUser.GetRequiredUserId();
+
+            await userService.ChangeEmailAsync(userId, newEmail);
+        }
+
+        public async Task ChangePasswordAsync(string currentPassword, string newPassword)
+        {
+            string userId = currentUser.GetRequiredUserId();
+
+            await userService.ChangePasswordAsync(userId, currentPassword, newPassword);
+        }
+    }
+
+}
+
+namespace EntityModels
+{
+    public class UserProfile
+    {
+        public int Id { get; set; }
+
+        public string UserId { get; set; } = null!;
+
+        public string? FirstName { get; set; }
+
+        public string? LastName { get; set; }
+
+        public string? Address { get; set; }
+
+        public string? PostalCode { get; set; }
+
+        public string? City { get; set; }
+    }
+}
+
+using Application.Interfaces.Services.User;
+using EntityModels;
+using Repository.interfaces;
+using System;
+using System.Collections.Generic;
+using System.Text;
+using ViewModels.User;
+
+namespace Application.Services.User
+{
+    public class UserProfileService : IUserProfileService
+    {
+        private readonly IUserProfileRepository profileRepository;
+        private readonly ICurrentUserService currentUser;
+
+        public UserProfileService(
+            IUserProfileRepository profileRepository,
+            ICurrentUserService currentUser)
+        {
+            this.profileRepository = profileRepository;
+            this.currentUser = currentUser;
+        }
+
+        public async Task<UserProfileView> GetProfileAsync()
+        {
+            string userId = currentUser.GetRequiredUserId();
+
+            UserProfile? profile = await profileRepository.GetByUserIdAsync(userId);
+
+            if (profile == null)
+            {
+                throw new InvalidOperationException("User profile could not be found.");
+            }
+
+            return new UserProfileView
+            {
+                FirstName = profile.FirstName,
+                LastName = profile.LastName,
+                Address = profile.Address,
+                PostalCode = profile.PostalCode,
+                City = profile.City
+            };
+        }
+
+        public async Task UpdateProfileAsync(UserProfileEditView model)
+        {
+            string userId = currentUser.GetRequiredUserId();
+
+            UserProfile? profile = await profileRepository.GetByUserIdAsync(userId);
+
+            if (profile == null)
+            {
+                throw new InvalidOperationException("User profile could not be found.");
+            }
+
+            profile.FirstName = model.FirstName;
+            profile.LastName = model.LastName;
+            profile.Address = model.Address;
+            profile.PostalCode = model.PostalCode;
+            profile.City = model.City;
+
+            await profileRepository.UpdateAsync(profile);
+        }
+
+        public async Task CreateProfileForUserAsync(string userId)
+        {
+            UserProfile profile = new UserProfile
+            {
+                UserId = userId,
+                FirstName = string.Empty,
+                LastName = string.Empty,
+                Address = null,
+                PostalCode = null,
+                City = null
+            };
+
+            await profileRepository.AddAsync(profile);
+        }
+    }
+}
+
+
+using Application.Interfaces.Services.User;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using ViewModels.User;
+
+namespace OpenForum.Controllers
+{
+    [Authorize]
+    public class UserController : Controller
+    {
+        private readonly IUserProfileService profileService;
+        private readonly IAccountService accountService;
+
+        public UserController(
+            IUserProfileService profileService,
+            IAccountService accountService)
+        {
+            this.profileService = profileService;
+            this.accountService = accountService;
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Index()
+        {
+            ProfilePageView model = await BuildProfilePageAsync();
+
+            return View(model);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdateProfile([Bind(Prefix = "EditProfile")] UserProfileEditView model)
+        {
+            if (!ModelState.IsValid)
+            {
+                ProfilePageView page = await BuildProfilePageAsync(editProfile: model);
+
+                return View("Index", page);
+            }
+
+            try
+            {
+                await profileService.UpdateProfileAsync(model);
+
+                TempData["Success"] = "Profile updated successfully.";
+
+                return RedirectToAction(nameof(Index));
+            }
+            catch (InvalidOperationException ex)
+            {
+                ModelState.AddModelError(string.Empty, ex.Message);
+
+                ProfilePageView page = await BuildProfilePageAsync(editProfile: model);
+
+                return View("Index", page);
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ChangeEmail([Bind(Prefix = "ChangeEmail")] ChangeEmailView model)
+        {
+            if (!ModelState.IsValid)
+            {
+                ProfilePageView page = await BuildProfilePageAsync(changeEmail: model);
+
+                return View("Index", page);
+            }
+
+            try
+            {
+                await accountService.ChangeEmailAsync(model.NewEmail);
+
+                TempData["Success"] = "Email changed successfully.";
+
+                return RedirectToAction(nameof(Index));
+            }
+            catch (InvalidOperationException ex)
+            {
+                ModelState.AddModelError(string.Empty, ex.Message);
+
+                ProfilePageView page = await BuildProfilePageAsync(changeEmail: model);
+
+                return View("Index", page);
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ChangePassword([Bind(Prefix = "ChangePassword")] ChangePasswordView model)
+        {
+            if (!ModelState.IsValid)
+            {
+                ProfilePageView page = await BuildProfilePageAsync(changePassword: model);
+
+                return View("Index", page);
+            }
+
+            try
+            {
+                await accountService.ChangePasswordAsync(model.CurrentPassword, model.NewPassword);
+
+                TempData["Success"] = "Password changed successfully.";
+
+                return RedirectToAction(nameof(Index));
+            }
+            catch (InvalidOperationException ex)
+            {
+                ModelState.AddModelError(string.Empty, ex.Message);
+
+                ProfilePageView page = await BuildProfilePageAsync(changePassword: model);
+
+                return View("Index", page);
+            }
+        }
+
+        private async Task<ProfilePageView> BuildProfilePageAsync(UserProfileEditView? editProfile = null, ChangeEmailView? changeEmail = null, ChangePasswordView? changePassword = null)
+        {
+            UserProfileView profile = await profileService.GetProfileAsync();
+
+            string email = await accountService.GetEmailAsync();
+
+            return new ProfilePageView
+            {
+                Profile = profile,
+
+                EditProfile = editProfile ?? new UserProfileEditView
+                {
+                    FirstName = profile.FirstName,
+                    LastName = profile.LastName,
+                    Address = profile.Address,
+                    PostalCode = profile.PostalCode,
+                    City = profile.City
+                },
+
+                ChangeEmail = changeEmail ?? new ChangeEmailView(),
+
+                ChangePassword = changePassword ?? new ChangePasswordView(),
+
+                CurrentEmail = email
+            };
+        }
+    }
+}
+
+

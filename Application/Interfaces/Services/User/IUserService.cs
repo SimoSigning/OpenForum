@@ -1,6 +1,5 @@
-﻿using System;
+﻿using Application.Models;
 using System.Collections.Generic;
-using System.Text;
 
 namespace Application.Interfaces.Services.User
 {
@@ -8,16 +7,16 @@ namespace Application.Interfaces.Services.User
     {
         Task<string> GetUsernameByIdAsync(string userId);
 
-        Task<Dictionary<string, string>> GetUsernamesByIdsAsync(
-            IEnumerable<string> userIds);
+        Task<Dictionary<string, string>> GetUsernamesByIdsAsync(IEnumerable<string> userIds);
+
+        Task<(IEnumerable<UserSearchResult> Items, int TotalCount)> SearchUsersByUsernameAsync(string query, string excludedUserId, int skip, int take);
+
+        Task<bool> UserExistsAsync(string userId);
 
         Task<string> GetEmailByIdAsync(string userId);
 
         Task ChangeEmailAsync(string userId, string newEmail);
 
-        Task ChangePasswordAsync(
-            string userId,
-            string currentPassword,
-            string newPassword);
+        Task ChangePasswordAsync(string userId, string currentPassword, string newPassword);
     }
 }
