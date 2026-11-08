@@ -17,6 +17,7 @@ namespace Application.Mappers.Forum
                 Title = comment.Title,
                 Content = comment.Content,
                 Creator = comment.CreatedByUserName,
+                CreatorUserId = comment.CreatedByUserId,
                 CreatedAt = comment.CreatedAt,
                 ParentCommentId = comment.ParentCommentId
             };

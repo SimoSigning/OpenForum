@@ -14,6 +14,10 @@ namespace ViewModels.Post
 
         public string Creator { get; set; } = string.Empty;
 
+        public string CreatorDisplayName { get; set; } = string.Empty;
+
+        public string CreatorUserId { get; set; } = string.Empty;
+
         public DateTime CreatedAt { get; set; }
 
         public bool CanManage { get; set; }

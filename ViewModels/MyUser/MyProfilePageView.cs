@@ -1,13 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using ViewModels.User;
+using ViewModels.MyUser;
 
-namespace ViewModels.User
+namespace ViewModels.MyUser
 {
-    public class ProfilePageView
+    public class MyProfilePageView
     {
-        public UserProfileView Profile { get; set; } = new();
+        public MyUserProfileView Profile { get; set; } = new();
 
         public UserProfileEditView EditProfile { get; set; } = new();
 

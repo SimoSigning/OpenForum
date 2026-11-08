@@ -10,8 +10,6 @@ namespace Application.Interfaces.Services.User
 
         Task ChangeEmailAsync(string newEmail);
 
-        Task ChangePasswordAsync(
-            string currentPassword,
-            string newPassword);
+        Task ChangePasswordAsync(string currentPassword, string newPassword);
     }
 }

@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace ViewModels.User
+namespace ViewModels.MyUser
 {
-    public class UserProfileView
+    public class MyUserProfileView
     {
         public string? FirstName { get; set; }
         
@@ -15,6 +15,8 @@ namespace ViewModels.User
         public string? PostalCode { get; set; }
 
         public string? City { get; set; }
+
+        public string? ProfileText { get; set; }
     }
 
 }

@@ -26,7 +26,7 @@ namespace OpenForum.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> SendRequest(string addresseeUserId, string? query)
+        public async Task<IActionResult> SendRequest(string addresseeUserId, string? query, string? returnUrl)
         {
             try
             {
@@ -46,6 +46,11 @@ namespace OpenForum.Controllers
                 TempData["ErrorMessage"] = ex.Message;
             }
 
+            if (!string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl))
+            {
+                return LocalRedirect(returnUrl);
+            }
+
             return RedirectToAction(nameof(Search), new { query });
         }
 
@@ -59,7 +64,7 @@ namespace OpenForum.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> AcceptRequest(int friendshipId)
+        public async Task<IActionResult> AcceptRequest(int friendshipId, string? returnUrl)
         {
             try
             {
@@ -79,12 +84,17 @@ namespace OpenForum.Controllers
                 TempData["ErrorMessage"] = ex.Message;
             }
 
+            if (!string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl))
+            {
+                return LocalRedirect(returnUrl);
+            }
+
             return RedirectToAction(nameof(Index));
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeclineRequest(int friendshipId)
+        public async Task<IActionResult> DeclineRequest(int friendshipId, string? returnUrl)
         {
             try
             {
@@ -102,6 +112,11 @@ namespace OpenForum.Controllers
             catch (KeyNotFoundException ex)
             {
                 TempData["ErrorMessage"] = ex.Message;
+            }
+
+            if (!string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl))
+            {
+                return LocalRedirect(returnUrl);
             }
 
             return RedirectToAction(nameof(Index));

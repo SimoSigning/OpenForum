@@ -16,6 +16,7 @@ namespace Application.Mappers.Forum
                 Id = topic.Id,
                 Title = topic.Title,
                 Creator = topic.CreatedByUserName,
+                CreatorUserId = topic.CreatedByUserId,
                 CreatedAt = topic.CreatedAt
             };
         }

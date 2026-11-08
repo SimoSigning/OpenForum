@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace ViewModels.User
+namespace ViewModels.MyUser
 {
     public class UserProfileEditView
     {
@@ -18,5 +18,8 @@ namespace ViewModels.User
 
         [StringLength(100)]
         public string? City { get; set; }
+
+        [StringLength(5000)]
+        public string? ProfileText { get; set; }
     }
 }

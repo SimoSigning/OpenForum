@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Text;
 
-namespace ViewModels.User
+namespace ViewModels.MyUser
 {
     public class ChangeEmailView
     {

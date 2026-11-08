@@ -1,5 +1,6 @@
 ﻿using Application.Interfaces.Services.Features;
 using Application.Interfaces.Services.User;
+using Application.Models;
 using EntityModels;
 using Repository.interfaces;
 using System;
@@ -170,7 +171,7 @@ namespace Application.Services.Features
 
             int skip = (page - 1) * PageSize;
 
-            var searchResult = await userService.SearchUsersByUsernameAsync(query, currentUserId, skip, PageSize);
+            (IEnumerable<UserSearchResult> Items, int TotalCount) searchResult = await userService.SearchUsersByUsernameAsync(query, currentUserId, skip, PageSize);
 
             int totalPages = Math.Max(1, (int)Math.Ceiling(searchResult.TotalCount / (double)PageSize));
 
@@ -286,6 +287,46 @@ namespace Application.Services.Features
             {
                 Friends = friends,
                 IncomingRequests = requests
+            };
+        }
+
+        public async Task<UserRelationshipView> GetRelationshipAsync(string targetUserId)
+        {
+            string currentUserId = currentUserService.GetRequiredUserId();
+
+            if (string.IsNullOrWhiteSpace(targetUserId))
+                throw new ArgumentException("A target user ID is required.");
+
+            // A user cannot send a friend request to themselves.
+            if (currentUserId == targetUserId)
+            {
+                return new UserRelationshipView
+                {
+                    CanSendRequest = false
+                };
+            }
+
+            Friendship? relationship = await friendshipRepository.GetBetweenUsersAsync(currentUserId,targetUserId);
+
+            if (relationship == null)
+            {
+                return new UserRelationshipView
+                {
+                    CanSendRequest = true
+                };
+            }
+
+            return new UserRelationshipView
+            {
+                FriendshipId = relationship.Id,
+                CanSendRequest = false,
+                RelationshipStatus = relationship.Status switch
+                {
+                    FriendshipStatus.Accepted => "Friends",
+                    FriendshipStatus.Pending when relationship.RequesterUserId == currentUserId => "Request sent",
+                    FriendshipStatus.Pending => "Request received",
+                    _ => null
+                }
             };
         }
     }

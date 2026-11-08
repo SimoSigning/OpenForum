@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EntityContext.Migrations
 {
     [DbContext(typeof(ForumContext))]
-    [Migration("20261107173542_init")]
+    [Migration("20261108123922_init")]
     partial class init
     {
         /// <inheritdoc />
@@ -279,6 +279,10 @@ namespace EntityContext.Migrations
                     b.Property<string>("PostalCode")
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("ProfileText")
+                        .HasMaxLength(5000)
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("UserId")
                         .IsRequired()

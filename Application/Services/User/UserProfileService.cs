@@ -4,7 +4,8 @@ using Repository.interfaces;
 using System;
 using System.Collections.Generic;
 using System.Text;
-using ViewModels.User;
+using ViewModels.PublicUserProfile;
+using ViewModels.MyUser;
 
 namespace Application.Services.User
 {
@@ -21,7 +22,7 @@ namespace Application.Services.User
             this.currentUser = currentUser;
         }
 
-        public async Task<UserProfileView> GetProfileAsync()
+        public async Task<MyUserProfileView> GetLoggedInProfileAsync()
         {
             string userId = currentUser.GetRequiredUserId();
 
@@ -32,13 +33,14 @@ namespace Application.Services.User
                 throw new InvalidOperationException("User profile could not be found.");
             }
 
-            return new UserProfileView
+            return new MyUserProfileView
             {
                 FirstName = profile.FirstName,
                 LastName = profile.LastName,
                 Address = profile.Address,
                 PostalCode = profile.PostalCode,
-                City = profile.City
+                City = profile.City,
+                ProfileText = profile.ProfileText
             };
         }
 
@@ -58,6 +60,7 @@ namespace Application.Services.User
             profile.Address = model.Address;
             profile.PostalCode = model.PostalCode;
             profile.City = model.City;
+            profile.ProfileText = model.ProfileText;
 
             await profileRepository.UpdateAsync(profile);
         }
@@ -71,10 +74,31 @@ namespace Application.Services.User
                 LastName = string.Empty,
                 Address = null,
                 PostalCode = null,
-                City = null
+                City = null,
+                ProfileText= null
             };
 
             await profileRepository.AddAsync(profile);
+        }
+
+        public async Task<PublicUserProfileView> GetPublicProfileAsync(string userId, string userName)
+        {
+            UserProfile? profile = await profileRepository.GetByUserIdAsync(userId);
+
+            if (profile == null)
+            {
+                throw new InvalidOperationException("User profile could not be found.");
+            }
+
+            return new PublicUserProfileView
+            {
+                UserId = userId,
+                UserName = userName,
+                FirstName = profile.FirstName,
+                LastName = profile.LastName,
+                City = profile.City,
+                ProfileText = profile.ProfileText
+            };
         }
     }
 }

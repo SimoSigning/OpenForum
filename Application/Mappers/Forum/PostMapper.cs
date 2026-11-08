@@ -17,6 +17,7 @@ namespace Application.Mappers.Forum
                 Title = post.Title,
                 Content = post.Content,
                 Creator = post.CreatedByUserName,
+                CreatorUserId = post.CreatedByUserId,
                 CreatedAt = post.CreatedAt
             };
         }

@@ -1,0 +1,195 @@
+﻿@model ViewModels.PublicUserProfile.PublicUserProfileView
+
+@{
+    ViewData["Title"] = $"{Model.UserName}'s profile";
+}
+
+<div class="row justify-content-left">
+    <div class="col-12 col-lg-8">
+
+        <!-- Profile header -->
+        <div class="d-flex flex-column flex-sm-row
+                    justify-content-between align-items-sm-center
+                    gap-3 mb-4">
+
+            <div>
+                <h1 class="h2 mb-1">@Model.UserName</h1>
+                <p class="text-muted mb-0">Public profile</p>
+            </div>
+
+            <div>
+                @if (Model.CanSendFriendRequest)
+                {
+                    <form asp-controller="Friendship"
+                          asp-action="SendRequest"
+                          method="post">
+
+                        <input type="hidden"
+                               name="addresseeUserId"
+                               value="@Model.UserId" />
+
+                        <input type="hidden"
+                               name="returnUrl"
+                               value="@(Context.Request.Path + Context.Request.QueryString)" />
+
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-person-plus me-1"></i>
+                            Add friend
+                        </button>
+                    </form>
+                }
+                else if (Model.RelationshipStatus == "Friends")
+                {
+                    <span class="badge bg-success fs-6">
+                        <i class="bi bi-people me-1"></i>
+                        Friends
+                    </span>
+                }
+                else if (Model.RelationshipStatus == "Request sent")
+                {
+                    <span class="badge bg-secondary fs-6">
+                        Friend request sent
+                    </span>
+                }
+                else if (Model.RelationshipStatus == "Request received")
+                {
+                    <div class="d-flex flex-column align-items-start gap-2">
+                        <span class="badge bg-info text-dark fs-6">
+                            Friend request received
+                        </span>
+
+                        <div class="d-flex gap-2">
+                            <form asp-controller="Friendship"
+                                  asp-action="AcceptRequest"
+                                  method="post">
+
+                                <input type="hidden"
+                                       name="friendshipId"
+                                       value="@Model.FriendshipId" />
+
+                                <input type="hidden"
+                                       name="returnUrl"
+                                       value="@(Context.Request.Path + Context.Request.QueryString)" />
+
+                                <button type="submit" class="btn btn-success btn-sm">
+                                    Accept
+                                </button>
+                            </form>
+
+                            <form asp-controller="Friendship"
+                                  asp-action="DeclineRequest"
+                                  method="post">
+
+                                <input type="hidden"
+                                       name="friendshipId"
+                                       value="@Model.FriendshipId" />
+
+                                <input type="hidden"
+                                       name="returnUrl"
+                                       value="@(Context.Request.Path + Context.Request.QueryString)" />
+
+                                <button type="submit" class="btn btn-outline-danger btn-sm">
+                                    Decline
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Personal information -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white py-3">
+                <h2 class="h5 mb-0">Personal information</h2>
+            </div>
+
+            <div class="card-body p-4">
+
+                <div class="mb-4">
+                    <label class="form-label text-muted small mb-1">
+                        Username
+                    </label>
+                    <p class="fs-5 fw-semibold mb-0">
+                        @Model.UserName
+                    </p>
+                </div>
+
+                <div class="row">
+                    <div class="col-sm-6 mb-3">
+                        <label class="form-label text-muted small mb-1">
+                            First name
+                        </label>
+                        <p class="mb-0">
+                            @(string.IsNullOrWhiteSpace(Model.FirstName)
+                                ? "Not provided"
+                                : Model.FirstName)
+                        </p>
+                    </div>
+
+                    <div class="col-sm-6 mb-3">
+                        <label class="form-label text-muted small mb-1">
+                            Last name
+                        </label>
+                        <p class="mb-0">
+                            @(string.IsNullOrWhiteSpace(Model.LastName)
+                                ? "Not provided"
+                                : Model.LastName)
+                        </p>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label text-muted small mb-1">
+                        City
+                    </label>
+                    <p class="mb-0">
+                        @(string.IsNullOrWhiteSpace(Model.City)
+                            ? "Not provided"
+                            : Model.City)
+                    </p>
+                </div>
+
+                <hr class="my-4" />
+
+                <div>
+                    <h3 class="h5 mb-3">About me</h3>
+
+                    @if (string.IsNullOrWhiteSpace(Model.ProfileText))
+                    {
+                        <p class="text-muted mb-0">
+                            This user hasn't written anything about themselves yet.
+                        </p>
+                    }
+                    else
+                    {
+                        <p class="mb-0 text-break"
+                           style="white-space: pre-line;">@Model.ProfileText</p>
+                    }
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <div class="d-flex justify-content-start">
+            @if (ViewData["ReturnUrl"] is string returnUrl)
+            {
+                <a href="@returnUrl" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-1"></i>
+                    Back
+                </a>
+            }
+            else
+            {
+                <a asp-controller="Topic"
+                   asp-action="Index"
+                   class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-1"></i>
+                    Back to forum
+                </a>
+            }
+        </div>
+
+    </div>
+</div>

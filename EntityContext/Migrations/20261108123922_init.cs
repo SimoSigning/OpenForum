@@ -57,7 +57,8 @@ namespace EntityContext.Migrations
                     LastName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
                     Address = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
                     PostalCode = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true),
-                    City = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true)
+                    City = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    ProfileText = table.Column<string>(type: "nvarchar(max)", maxLength: 5000, nullable: true)
                 },
                 constraints: table =>
                 {

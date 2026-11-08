@@ -1,4 +1,5 @@
-﻿using Application.Interfaces.Contexts;
+﻿using Application.common.Application.Common;
+using Application.Interfaces.Contexts;
 using Application.Interfaces.Mappers.Forum;
 using Application.Interfaces.Services.Forum;
 using Application.Interfaces.Services.User;
@@ -50,6 +51,7 @@ namespace Application.Services.Forum
                 topic => 
                 {
                     TopicListItemView item = topicMapper.ToListItemView(topic);
+                    item.CreatorDisplayName = CreatorDisplayNameResolver.Resolve(userId, topic.CreatedByUserId, item.Creator);
                     item.CanManage = userId != null && topic.CreatedByUserId == userId;
                     return item;
                 })

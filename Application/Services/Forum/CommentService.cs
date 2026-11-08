@@ -1,8 +1,10 @@
-﻿using Application.Interfaces.Contexts;
+﻿using Application.common.Application.Common;
+using Application.Interfaces.Contexts;
 using Application.Interfaces.Mappers.Forum;
 using Application.Interfaces.Services.Forum;
 using Application.Interfaces.Services.User;
 using EntityModels;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Repository.interfaces;
 using ViewModels.Comment;
 
@@ -62,6 +64,7 @@ namespace Application.Services.Forum
                 c =>
                 {
                     CommentListItemView view = commentMapper.ToListItemView(c);
+                    view.CreatorDisplayName = CreatorDisplayNameResolver.Resolve(userId, c.CreatedByUserId, view.Creator);
                     view.CanManage = userId != null && c.CreatedByUserId == userId;
                     return view;
                 });
@@ -76,6 +79,7 @@ namespace Application.Services.Forum
                 foreach (Comment reply in replies)
                 {
                     CommentListItemView replyView = commentMapper.ToListItemView(reply);
+                    replyView.CreatorDisplayName = CreatorDisplayNameResolver.Resolve(userId,reply.CreatedByUserId, replyView.Creator);
                     replyView.CanManage = reply.CreatedByUserId == userId;
 
                     if (reply.ParentCommentId.HasValue && commentsById.TryGetValue(reply.ParentCommentId.Value, out CommentListItemView? parentView))
@@ -114,6 +118,8 @@ namespace Application.Services.Forum
                 PostTitle = post.Title,
                 PostContent = post.Content,
                 PostCreator = post.CreatedByUserName,
+                PostCreatorDisplayName = CreatorDisplayNameResolver.Resolve(userId, post.CreatedByUserId, post.CreatedByUserName),
+                PostCreatorId = post.CreatedByUserId,
                 PostCreatedAt = post.CreatedAt,
                 Comments = comments,
                 CreateComment = new CommentCreateView

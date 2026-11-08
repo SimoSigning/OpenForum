@@ -23,5 +23,7 @@ namespace Application.Interfaces.Services.Features
         Task<UserSearchView> SearchUsersAsync(string query, int page = 1);
 
         Task<FriendsIndexView> GetFriendsIndexViewAsync();
+
+        Task<UserRelationshipView> GetRelationshipAsync(string targetUserId);
     }
 }

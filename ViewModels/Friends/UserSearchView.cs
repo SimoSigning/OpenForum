@@ -5,8 +5,7 @@ namespace ViewModels.Friends
     {
         public string SearchQuery { get; set; } = string.Empty;
 
-        public IEnumerable<UserSearchItemView> Users { get; set; }
-            = Enumerable.Empty<UserSearchItemView>();
+        public IEnumerable<UserSearchItemView> Users { get; set; } = Enumerable.Empty<UserSearchItemView>();
 
         public int CurrentPage { get; set; } = 1;
 

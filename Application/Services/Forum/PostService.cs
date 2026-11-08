@@ -1,4 +1,5 @@
-﻿using Application.Interfaces.Contexts;
+﻿using Application.common.Application.Common;
+using Application.Interfaces.Contexts;
 using Application.Interfaces.Mappers.Forum;
 using Application.Interfaces.Services.Forum;
 using Application.Interfaces.Services.User;
@@ -69,6 +70,7 @@ namespace Application.Services.Forum
             List<PostListItemView> posts = postItems.Select(post =>
             {
                 PostListItemView item = postMapper.ToListItemView(post);
+                item.CreatorDisplayName = CreatorDisplayNameResolver.Resolve(userId, post.CreatedByUserId, item.Creator);
                 item.CanManage = userId != null && post.CreatedByUserId == userId;
                 item.LikeCount = likeCounts.GetValueOrDefault(post.Id);
                 item.IsLikedByCurrentUser = likedPostIds.Contains(post.Id);
@@ -81,6 +83,7 @@ namespace Application.Services.Forum
                 TopicId = topic.Id,
                 TopicTitle = topic.Title,
                 TopicCreator = topic.CreatedByUserName,
+                TopicCreatorId = topic.CreatedByUserId,
                 TopicCreatedAt = topic.CreatedAt,
                 Posts = posts,
                 CreatePost = new PostCreateView

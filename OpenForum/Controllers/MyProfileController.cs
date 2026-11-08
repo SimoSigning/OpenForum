@@ -1,17 +1,17 @@
 ﻿using Application.Interfaces.Services.User;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using ViewModels.User;
+using ViewModels.MyUser;
 
 namespace OpenForum.Controllers
 {
     [Authorize]
-    public class UserController : Controller
+    public class MyProfileController : Controller
     {
         private readonly IUserProfileService profileService;
         private readonly IAccountService accountService;
 
-        public UserController(
+        public MyProfileController(
             IUserProfileService profileService,
             IAccountService accountService)
         {
@@ -22,7 +22,7 @@ namespace OpenForum.Controllers
         [HttpGet]
         public async Task<IActionResult> Index()
         {
-            ProfilePageView model = await BuildProfilePageAsync();
+            MyProfilePageView model = await BuildProfilePageAsync();
 
             return View(model);
         }
@@ -33,7 +33,7 @@ namespace OpenForum.Controllers
         {
             if (!ModelState.IsValid)
             {
-                ProfilePageView page = await BuildProfilePageAsync(editProfile: model);
+                MyProfilePageView page = await BuildProfilePageAsync(editProfile: model);
 
                 return View("Index", page);
             }
@@ -50,7 +50,7 @@ namespace OpenForum.Controllers
             {
                 ModelState.AddModelError(string.Empty, ex.Message);
 
-                ProfilePageView page = await BuildProfilePageAsync(editProfile: model);
+                MyProfilePageView page = await BuildProfilePageAsync(editProfile: model);
 
                 return View("Index", page);
             }
@@ -62,7 +62,7 @@ namespace OpenForum.Controllers
         {
             if (!ModelState.IsValid)
             {
-                ProfilePageView page = await BuildProfilePageAsync(changeEmail: model);
+                MyProfilePageView page = await BuildProfilePageAsync(changeEmail: model);
 
                 return View("Index", page);
             }
@@ -79,7 +79,7 @@ namespace OpenForum.Controllers
             {
                 ModelState.AddModelError(string.Empty, ex.Message);
 
-                ProfilePageView page = await BuildProfilePageAsync(changeEmail: model);
+                MyProfilePageView page = await BuildProfilePageAsync(changeEmail: model);
 
                 return View("Index", page);
             }
@@ -91,7 +91,7 @@ namespace OpenForum.Controllers
         {
             if (!ModelState.IsValid)
             {
-                ProfilePageView page = await BuildProfilePageAsync(changePassword: model);
+                MyProfilePageView page = await BuildProfilePageAsync(changePassword: model);
 
                 return View("Index", page);
             }
@@ -108,19 +108,20 @@ namespace OpenForum.Controllers
             {
                 ModelState.AddModelError(string.Empty, ex.Message);
 
-                ProfilePageView page = await BuildProfilePageAsync(changePassword: model);
+                MyProfilePageView page = await BuildProfilePageAsync(changePassword: model);
 
                 return View("Index", page);
             }
         }
 
-        private async Task<ProfilePageView> BuildProfilePageAsync(UserProfileEditView? editProfile = null, ChangeEmailView? changeEmail = null, ChangePasswordView? changePassword = null)
+        //This is wrong, should put it in service.. 
+        private async Task<MyProfilePageView> BuildProfilePageAsync(UserProfileEditView? editProfile = null, ChangeEmailView? changeEmail = null, ChangePasswordView? changePassword = null)
         {
-            UserProfileView profile = await profileService.GetProfileAsync();
+            MyUserProfileView profile = await profileService.GetLoggedInProfileAsync();
 
             string email = await accountService.GetEmailAsync();
 
-            return new ProfilePageView
+            return new MyProfilePageView
             {
                 Profile = profile,
 
@@ -130,7 +131,8 @@ namespace OpenForum.Controllers
                     LastName = profile.LastName,
                     Address = profile.Address,
                     PostalCode = profile.PostalCode,
-                    City = profile.City
+                    City = profile.City,
+                    ProfileText = profile.ProfileText
                 },
 
                 ChangeEmail = changeEmail ?? new ChangeEmailView(),

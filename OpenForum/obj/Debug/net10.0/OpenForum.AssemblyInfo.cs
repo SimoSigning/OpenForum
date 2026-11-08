@@ -15,7 +15,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("OpenForum")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+04cea7a67607e8b6aa7b2b0d62eb3a24e0ea7ab7")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+2bae5e42a0eb4a55337bf131fb5e1a7c3401015a")]
 [assembly: System.Reflection.AssemblyProductAttribute("OpenForum")]
 [assembly: System.Reflection.AssemblyTitleAttribute("OpenForum")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

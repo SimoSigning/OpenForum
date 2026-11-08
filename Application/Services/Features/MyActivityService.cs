@@ -33,19 +33,19 @@ namespace Application.Services.Features
 
         public async Task<MyActivityIndexView> GetMyActivityIndexViewAsync(ActivityFilter filter = ActivityFilter.All, int page = 1)
         {
-            var userId = currentUser.GetRequiredUserId();
+            string userId = currentUser.GetRequiredUserId();
 
             page = Math.Max(1, page);
 
             // Retrieve the total counts.
-            var topicCount = await topicRepository.CountByCreatedByUserIdAsync(userId);
+            int topicCount = await topicRepository.CountByCreatedByUserIdAsync(userId);
 
-            var postCount = await postRepository.CountByCreatedByUserIdAsync(userId);
+            int postCount = await postRepository.CountByCreatedByUserIdAsync(userId);
 
-            var commentCount = await commentRepository.CountByCreatedByUserIdAsync(userId);
+            int commentCount = await commentRepository.CountByCreatedByUserIdAsync(userId);
 
             // Calculate the total count for the selected filter.
-            var totalCount = filter switch
+            int totalCount = filter switch
             {
                 ActivityFilter.Topics => topicCount,
                 ActivityFilter.Posts => postCount,
@@ -54,43 +54,43 @@ namespace Application.Services.Features
             };
 
             // Calculate pagination.
-            var totalPages = Math.Max(1, (int)Math.Ceiling(totalCount / (double)PageSize));
+            int totalPages = Math.Max(1, (int)Math.Ceiling(totalCount / (double)PageSize));
 
             page = Math.Min(page, totalPages);
 
-            var skip = (page - 1) * PageSize;
-            var take = skip + PageSize;
+            int skip = (page - 1) * PageSize;
+            int take = skip + PageSize;
 
             // Retrieve records according to the selected filter.
-            var activities = new List<ActivityListItemView>();
+            List<ActivityListItemView> activities = new List<ActivityListItemView>();
 
             if (filter == ActivityFilter.All || filter == ActivityFilter.Topics)
             {
-                var topics = await topicRepository.GetByCreatedByUserIdAsync(userId, 0, take);
+                IEnumerable<Topic> topics = await topicRepository.GetByCreatedByUserIdAsync(userId, 0, take);
                 activities.AddRange(topics.Select(MapTopic));
             }
 
             if (filter == ActivityFilter.All || filter == ActivityFilter.Posts)
             {
-                var posts = await postRepository.GetByCreatedByUserIdAsync(userId, 0, take);
+                IEnumerable<Post> posts = await postRepository.GetByCreatedByUserIdAsync(userId, 0, take);
                 activities.AddRange(posts.Select(MapPost));
             }
 
             if (filter == ActivityFilter.All || filter == ActivityFilter.Comments)
             {
-                var comments = await commentRepository.GetByCreatedByUserIdAsync(userId, 0, take);
+                IEnumerable<Comment> comments = await commentRepository.GetByCreatedByUserIdAsync(userId, 0, take);
                 activities.AddRange(comments.Select(MapComment));
             }
 
             // Sort all retrieved activities chronologically.
-            var orderedActivities = activities
+            List<ActivityListItemView> orderedActivities = activities
                 .OrderByDescending(a => a.CreatedAt)
                 .ThenByDescending(a => a.Id)
                 .ThenBy(a => a.Type)
                 .ToList();
 
             // Apply global pagination.
-            var pagedActivities = orderedActivities
+            List<ActivityListItemView> pagedActivities = orderedActivities
                 .Skip(skip)
                 .Take(PageSize)
                 .ToList();
@@ -102,27 +102,6 @@ namespace Application.Services.Features
                 CurrentPage = page,
                 TotalPages = totalPages,
                 TotalCount = totalCount
-            };
-        }
-
-        private static List<ActivityListItemView> ApplyFilter(List<ActivityListItemView> activities, ActivityFilter filter)
-        {
-            return filter switch
-            {
-                ActivityFilter.Topics => activities
-                    .Where(a => a.Type == ActivityType.Topic)
-                    .ToList(),
-
-                ActivityFilter.Posts => activities
-                    .Where(a => a.Type == ActivityType.Post)
-                    .ToList(),
-
-                ActivityFilter.Comments => activities
-                    .Where(a =>
-                        a.Type == ActivityType.Comment ||
-                        a.Type == ActivityType.Reply)
-                    .ToList(),
-                _ => activities
             };
         }
 

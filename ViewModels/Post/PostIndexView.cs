@@ -12,6 +12,8 @@ namespace ViewModels.Post
 
         public string TopicCreator { get; set; } = string.Empty;
 
+        public string TopicCreatorId { get; set; } = string.Empty;
+
         public DateTime TopicCreatedAt { get; set; } 
 
         public IEnumerable<PostListItemView> Posts { get; set; } = Enumerable.Empty<PostListItemView>();

@@ -27,7 +27,19 @@
                 </p>
 
                 <div class="d-flex flex-wrap align-items-center gap-2 text-muted small">
-                    <span>By <strong class="text-body">@Model.PostCreator</strong></span>
+                    <span>
+                        By
+                        <strong class="text-body">
+                            <a asp-controller="PublicProfile"
+                               asp-action="Index"
+                               asp-route-userId="@Model.PostCreatorId"
+                               asp-route-userName="@Model.PostCreator"
+                               asp-route-returnUrl="@(Context.Request.Path + Context.Request.QueryString)"
+                               class="text-decoration-none text-body">
+                                @Model.PostCreatorDisplayName
+                            </a>
+                        </strong>
+                    </span>
                     <span aria-hidden="true">&middot;</span>
                     <span>@Model.PostCreatedAt</span>
                 </div>

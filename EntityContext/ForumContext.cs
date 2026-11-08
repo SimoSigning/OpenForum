@@ -99,6 +99,9 @@ namespace EntityContext
 
                 entity.Property(p => p.City)
                     .HasMaxLength(100);
+
+                entity.Property(p => p.ProfileText)
+                    .HasMaxLength(5000);
             });
 
             modelBuilder.Entity<Friendship>(entity =>

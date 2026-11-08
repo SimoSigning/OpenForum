@@ -88,7 +88,19 @@
                                     </h3>
 
                                     <div class="d-flex flex-wrap align-items-center gap-2 text-muted small">
-                                        <span>By <strong class="text-body">@topic.Creator</strong></span>
+                                        <span>
+                                            By
+                                            <strong class="text-body">
+                                                <a asp-controller="PublicProfile"
+                                                   asp-action="Index"
+                                                   asp-route-userId="@topic.CreatorUserId"
+                                                   asp-route-userName="@topic.Creator"
+                                                   asp-route-returnUrl="@(Context.Request.Path + Context.Request.QueryString)"
+                                                   class="text-decoration-none text-body">
+                                                    @topic.CreatorDisplayName
+                                                </a>
+                                            </strong>
+                                        </span>
                                         <span aria-hidden="true">&middot;</span>
                                         <span>@topic.CreatedAt</span>
                                     </div>

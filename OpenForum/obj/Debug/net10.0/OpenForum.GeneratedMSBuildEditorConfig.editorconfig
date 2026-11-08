@@ -247,6 +247,10 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcTXlBY3Rpdml0eVxJbmRleC5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
+[C:/Users/MisterDerp/source/repos/OpenForum/OpenForum/Views/MyProfile/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcTXlQcm9maWxlXEluZGV4LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
 [C:/Users/MisterDerp/source/repos/OpenForum/OpenForum/Views/Post/Details.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcUG9zdFxEZXRhaWxzLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
@@ -257,6 +261,10 @@ build_metadata.AdditionalFiles.CssScope =
 
 [C:/Users/MisterDerp/source/repos/OpenForum/OpenForum/Views/Post/_Edit.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcUG9zdFxfRWRpdC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/MisterDerp/source/repos/OpenForum/OpenForum/Views/PublicProfile/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcUHVibGljUHJvZmlsZVxJbmRleC5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
 [C:/Users/MisterDerp/source/repos/OpenForum/OpenForum/Views/Shared/_Layout.cshtml]
@@ -285,10 +293,6 @@ build_metadata.AdditionalFiles.CssScope =
 
 [C:/Users/MisterDerp/source/repos/OpenForum/OpenForum/Views/Topic/_Edit.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcVG9waWNcX0VkaXQuY3NodG1s
-build_metadata.AdditionalFiles.CssScope = 
-
-[C:/Users/MisterDerp/source/repos/OpenForum/OpenForum/Views/User/Index.cshtml]
-build_metadata.AdditionalFiles.TargetPath = Vmlld3NcVXNlclxJbmRleC5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
 [C:/Users/MisterDerp/source/repos/OpenForum/OpenForum/Views/_ViewImports.cshtml]

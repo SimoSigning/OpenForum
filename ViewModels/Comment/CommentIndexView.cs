@@ -16,6 +16,10 @@ namespace ViewModels.Comment
 
         public string PostCreator { get; set; } = string.Empty;
 
+        public string PostCreatorDisplayName { get; set; } = string.Empty;
+
+        public string PostCreatorId { get; set; } = string.Empty;
+
         public DateTime PostCreatedAt { get; set; }
 
         public IEnumerable<CommentListItemView> Comments { get; set; } = Enumerable.Empty<CommentListItemView>();
