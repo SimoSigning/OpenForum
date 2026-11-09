@@ -34,8 +34,7 @@ namespace OpenForum.Controllers
         [HttpGet]
         public async Task<IActionResult> Search(string? query)
         {
-            IEnumerable<DiscoverTopicListView> model =
-                Enumerable.Empty<DiscoverTopicListView>();
+            IEnumerable<DiscoverTopicListView> model = Enumerable.Empty<DiscoverTopicListView>();
 
             if (!string.IsNullOrWhiteSpace(query))
             {

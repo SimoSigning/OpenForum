@@ -67,13 +67,18 @@ builder.Services.AddScoped<IdentitySeeder>();
 
 
 // Register repositories
+//Forum
 builder.Services.AddScoped<ITopicRepository, TopicRepository>();
 builder.Services.AddScoped<IPostRepository, PostRepository>();
 builder.Services.AddScoped<ICommentRepository, CommentRepository>();
-builder.Services.AddScoped<ILikeRepository, LikeRepository>();
-builder.Services.AddScoped<IUserProfileRepository, UserProfileRepository>();
-builder.Services.AddScoped<IFriendshipRepository, FriendshipRepository>();
 
+//User
+builder.Services.AddScoped<IUserProfileRepository, UserProfileRepository>();
+
+//Features
+builder.Services.AddScoped<ILikeRepository, LikeRepository>();
+builder.Services.AddScoped<IFriendshipRepository, FriendshipRepository>();
+builder.Services.AddScoped<IMessageRepository, MessageRepository>();
 
 // Register mappers
 // Forum
@@ -99,6 +104,7 @@ builder.Services.AddScoped<ILikeService, LikeService>();
 builder.Services.AddScoped<IDiscoverService, DiscoverService>();
 builder.Services.AddScoped<IMyActivityService, MyActivityService>();
 builder.Services.AddScoped<IFriendshipService, FriendshipService>();
+builder.Services.AddScoped<IMessageService, MessageService>();
 
 var app = builder.Build();
 

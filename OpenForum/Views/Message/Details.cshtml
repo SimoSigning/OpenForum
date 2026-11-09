@@ -1,0 +1,74 @@
+﻿@model ViewModels.Messages.MessageDetailsView
+
+@{
+    ViewData["Title"] = "Message details";
+}
+
+<div class="container py-4">
+    <div class="card">
+        <div class="card-header">
+            <h3 class="mb-0">@Model.Subject</h3>
+        </div>
+
+        <div class="card-body">
+            <div class="mb-3">
+                <strong>From:</strong>
+                @Model.SenderUserName
+            </div>
+
+            <div class="mb-3">
+                <strong>To:</strong>
+                @Model.RecipientUserName
+            </div>
+
+            <div class="mb-3">
+                <strong>Sent:</strong>
+                @Model.SentAt.ToString("g")
+            </div>
+
+            @if (!Model.CanReply)
+            {
+                <div class="mb-3">
+                    <strong>Status:</strong>
+
+                    @if (Model.IsRead)
+                    {
+                        <span class="badge bg-success">Read</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-secondary">Unread</span>
+                    }
+                </div>
+            }
+
+            <hr />
+
+            <div style="white-space: pre-wrap;">@Model.Body</div>
+        </div>
+
+        <div class="card-footer d-flex gap-2">
+            @if (Model.CanReply)
+            {
+                <a asp-controller="Message"
+                   asp-action="Reply"
+                   asp-route-originalMessageId="@Model.Id"
+                   class="btn btn-primary">
+                    Reply
+                </a>
+            }
+
+            <a asp-controller="Message"
+               asp-action="Inbox"
+               class="btn btn-outline-secondary">
+                Inbox
+            </a>
+
+            <a asp-controller="Message"
+               asp-action="Sent"
+               class="btn btn-outline-secondary">
+                Sent messages
+            </a>
+        </div>
+    </div>
+</div>

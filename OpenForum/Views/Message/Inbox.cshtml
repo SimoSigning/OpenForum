@@ -1,0 +1,75 @@
+﻿@model ViewModels.Messages.InboxView
+
+@{
+    ViewData["Title"] = "Inbox";
+}
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2>Inbox</h2>
+            <p class="text-muted mb-0">
+                You have @Model.UnreadCount unread message(s).
+            </p>
+        </div>
+
+        <a asp-controller="Message"
+           asp-action="Sent"
+           class="btn btn-outline-primary">
+            Sent messages
+        </a>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">
+            @TempData["Success"]
+        </div>
+    }
+
+    @if (!Model.Messages.Any())
+    {
+        <div class="alert alert-light border">
+            Your inbox is empty.
+        </div>
+    }
+    else
+    {
+        <div class="list-group">
+            @foreach (var message in Model.Messages)
+            {
+                <a asp-controller="Message"
+                   asp-action="Details"
+                   asp-route-id="@message.Id"
+                   class="list-group-item list-group-item-action
+                          @(message.IsRead ? "" : "list-group-item-light fw-bold")">
+
+                    <div class="d-flex justify-content-between">
+                        <strong>
+                            @message.OtherUserName
+                        </strong>
+
+                        <small class="text-muted">
+                            @message.SentAt.ToString("g")
+                        </small>
+                    </div>
+
+                    <div class="mt-1">
+                        @message.Subject
+
+                        @if (!message.IsRead)
+                        {
+                            <span class="badge bg-primary ms-2">
+                                Unread
+                            </span>
+                        }
+                    </div>
+
+                    <small class="text-muted">
+                        @message.BodyPreview
+                    </small>
+                </a>
+            }
+        </div>
+    }
+</div>

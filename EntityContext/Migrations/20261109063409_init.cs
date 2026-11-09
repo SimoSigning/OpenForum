@@ -31,6 +31,24 @@ namespace EntityContext.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Messages",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    SenderUserId = table.Column<string>(type: "nvarchar(450)", maxLength: 450, nullable: false),
+                    RecipientUserId = table.Column<string>(type: "nvarchar(450)", maxLength: 450, nullable: false),
+                    Subject = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: false),
+                    Body = table.Column<string>(type: "nvarchar(max)", maxLength: 5000, nullable: false),
+                    SentAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    IsRead = table.Column<bool>(type: "bit", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Messages", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Topics",
                 columns: table => new
                 {
@@ -204,6 +222,16 @@ namespace EntityContext.Migrations
                 filter: "[PostId] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Messages_RecipientUserId_IsRead_SentAt",
+                table: "Messages",
+                columns: new[] { "RecipientUserId", "IsRead", "SentAt" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Messages_SenderUserId_SentAt",
+                table: "Messages",
+                columns: new[] { "SenderUserId", "SentAt" });
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Posts_TopicId",
                 table: "Posts",
                 column: "TopicId");
@@ -223,6 +251,9 @@ namespace EntityContext.Migrations
 
             migrationBuilder.DropTable(
                 name: "Likes");
+
+            migrationBuilder.DropTable(
+                name: "Messages");
 
             migrationBuilder.DropTable(
                 name: "UserProfiles");

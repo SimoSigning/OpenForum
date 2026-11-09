@@ -1,7 +1,13 @@
-﻿
-@if (User.Identity?.IsAuthenticated ?? false)
+﻿@if (User.Identity?.IsAuthenticated ?? false)
 {
     <div class="left-panel-menu">
+
+        <a asp-controller="Message"
+           asp-action="Inbox"
+           class="left-panel-link">
+            Messages
+            @await Component.InvokeAsync("UnreadMessages")
+        </a>
 
         <a asp-controller="Friendship"
            asp-action="Index"

@@ -76,7 +76,6 @@
                                         <h3 class="h5 mb-1">
                                             <a asp-controller="PublicProfile"
                                                asp-action="Index"
-                                               asp-route-userId="@user.UserId"
                                                asp-route-userName="@user.Username"
                                                asp-route-returnUrl="@(Context.Request.Path + Context.Request.QueryString)"
                                                class="text-decoration-none text-body">
@@ -101,17 +100,43 @@
                                         }
                                     </div>
 
-                                    @if (user.CanSendRequest)
-                                    {
-                                        <form asp-controller="Friendship" asp-action="SendRequest" method="post">
-                                            <input type="hidden" name="addresseeUserId" value="@user.UserId" />
-                                            <input type="hidden" name="query" value="@Model.SearchQuery" />
+                                        <div class="d-flex flex-wrap align-items-center gap-2">
 
-                                            <button type="submit" class="btn btn-primary btn-sm">
-                                                Add Friend
-                                            </button>
-                                        </form>
-                                    }
+                                            @if (user.CanSendRequest)
+                                            {
+                                                <form asp-controller="Friendship"
+                                                      asp-action="SendRequest"
+                                                      method="post">
+
+                                                    <input type="hidden"
+                                                           name="addresseeUserId"
+                                                           value="@user.UserId" />
+
+                                                    <input type="hidden"
+                                                           name="query"
+                                                           value="@Model.SearchQuery" />
+
+                                                    <button type="submit" class="btn btn-primary btn-sm">
+                                                        <i class="bi bi-person-plus me-1"></i>
+                                                        Add Friend
+                                                    </button>
+                                                </form>
+                                            }
+
+                                            @if ((User.Identity?.IsAuthenticated ?? false) &&
+                                                 !string.Equals(User.Identity?.Name, user.Username, StringComparison.OrdinalIgnoreCase))
+                                            {
+                                                <a asp-controller="Message"
+                                                   asp-action="Compose"
+                                                   asp-route-recipientUserName="@user.Username"
+                                                   asp-route-returnUrl="@(Context.Request.Path + Context.Request.QueryString)"
+                                                   class="btn btn-primary btn-sm">
+                                                    <i class="bi bi-envelope me-1"></i>
+                                                    Send Message
+                                                </a>
+                                            }
+
+                                        </div>
                                 </div>
                             </div>
                         </div>

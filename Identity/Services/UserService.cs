@@ -29,6 +29,24 @@ namespace Identity.Services
             return username;
         }
 
+        public async Task<string> GetUserIdByUsernameAsync(string username)
+        {
+            if (string.IsNullOrWhiteSpace(username))
+            {
+                throw new ArgumentException("A username is required.");
+            }
+
+            ApplicationUser? user =
+                await userManager.FindByNameAsync(username.Trim());
+
+            if (user == null)
+            {
+                throw new KeyNotFoundException("User not found.");
+            }
+
+            return user.Id;
+        }
+
         public async Task<Dictionary<string, string>> GetUsernamesByIdsAsync(IEnumerable<string> userIds)
         {
             List<string> ids = userIds

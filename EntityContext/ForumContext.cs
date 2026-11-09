@@ -13,6 +13,7 @@ namespace EntityContext
         public DbSet<Like> Likes => Set<Like>();
         public DbSet<UserProfile> UserProfiles => Set<UserProfile>();
         public DbSet<Friendship> Friendships => Set<Friendship>();
+        public DbSet<Message> Messages => Set<Message>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -133,6 +134,48 @@ namespace EntityContext
                     f.UserIdLow,
                     f.UserIdHigh
                 }).IsUnique();
+            });
+
+            modelBuilder.Entity<Message>(entity =>
+            {
+                entity.HasKey(m => m.Id);
+
+                entity.Property(m => m.SenderUserId)
+                    .IsRequired()
+                    .HasMaxLength(450);
+
+                entity.Property(m => m.RecipientUserId)
+                    .IsRequired()
+                    .HasMaxLength(450);
+
+                entity.Property(m => m.Subject)
+                    .IsRequired()
+                    .HasMaxLength(150);
+
+                entity.Property(m => m.Body)
+                    .IsRequired()
+                    .HasMaxLength(5000);
+
+                entity.Property(m => m.SentAt)
+                    .IsRequired();
+
+                entity.Property(m => m.IsRead)
+                    .IsRequired();
+
+                // Helps retrieve inbox messages and unread messages.
+                entity.HasIndex(m => new
+                {
+                    m.RecipientUserId,
+                    m.IsRead,
+                    m.SentAt
+                });
+
+                // Helps retrieve sent messages.
+                entity.HasIndex(m => new
+                {
+                    m.SenderUserId,
+                    m.SentAt
+                });
             });
 
             SeedData(modelBuilder);

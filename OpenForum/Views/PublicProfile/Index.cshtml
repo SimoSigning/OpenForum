@@ -4,20 +4,21 @@
     ViewData["Title"] = $"{Model.UserName}'s profile";
 }
 
-<div class="row justify-content-left">
+<div class="row justify-content-start">
     <div class="col-12 col-lg-8">
 
         <!-- Profile header -->
-        <div class="d-flex flex-column flex-sm-row
-                    justify-content-between align-items-sm-center
-                    gap-3 mb-4">
+            <div class="d-flex flex-column flex-sm-row
+                        justify-content-between align-items-start
+                        gap-3 mb-4">
 
             <div>
                 <h1 class="h2 mb-1">@Model.UserName</h1>
                 <p class="text-muted mb-0">Public profile</p>
             </div>
 
-            <div>
+            <div class="d-flex flex-wrap align-items-start gap-2 mt-1">
+
                 @if (Model.CanSendFriendRequest)
                 {
                     <form asp-controller="Friendship"
@@ -40,86 +41,113 @@
                 }
                 else if (Model.RelationshipStatus == "Friends")
                 {
-                    <span class="badge bg-success fs-6">
+                    <span class="badge bg-success fs-6 fw-normal">
                         <i class="bi bi-people me-1"></i>
                         Friends
                     </span>
                 }
                 else if (Model.RelationshipStatus == "Request sent")
                 {
-                    <span class="badge bg-secondary fs-6">
+                    <span class="badge bg-secondary fs-6 fw-normal">
                         Friend request sent
                     </span>
                 }
                 else if (Model.RelationshipStatus == "Request received")
                 {
-                    <div class="d-flex flex-column align-items-start gap-2">
-                        <span class="badge bg-info text-dark fs-6">
+                    <div class="d-flex flex-wrap align-items-center gap-2">
+
+                        <span class="badge bg-info text-dark fs-6 fw-normal">
                             Friend request received
                         </span>
 
-                        <div class="d-flex gap-2">
-                            <form asp-controller="Friendship"
-                                  asp-action="AcceptRequest"
-                                  method="post">
+                        <form asp-controller="Friendship"
+                              asp-action="AcceptRequest"
+                              method="post">
 
-                                <input type="hidden"
-                                       name="friendshipId"
-                                       value="@Model.FriendshipId" />
+                            <input type="hidden"
+                                   name="friendshipId"
+                                   value="@Model.FriendshipId" />
 
-                                <input type="hidden"
-                                       name="returnUrl"
-                                       value="@(Context.Request.Path + Context.Request.QueryString)" />
+                            <input type="hidden"
+                                   name="returnUrl"
+                                   value="@(Context.Request.Path + Context.Request.QueryString)" />
 
-                                <button type="submit" class="btn btn-success btn-sm">
-                                    Accept
-                                </button>
-                            </form>
+                            <button type="submit" class="btn btn-success">
+                                Accept
+                            </button>
+                        </form>
 
-                            <form asp-controller="Friendship"
-                                  asp-action="DeclineRequest"
-                                  method="post">
+                        <form asp-controller="Friendship"
+                              asp-action="DeclineRequest"
+                              method="post">
 
-                                <input type="hidden"
-                                       name="friendshipId"
-                                       value="@Model.FriendshipId" />
+                            <input type="hidden"
+                                   name="friendshipId"
+                                   value="@Model.FriendshipId" />
 
-                                <input type="hidden"
-                                       name="returnUrl"
-                                       value="@(Context.Request.Path + Context.Request.QueryString)" />
+                            <input type="hidden"
+                                   name="returnUrl"
+                                   value="@(Context.Request.Path + Context.Request.QueryString)" />
 
-                                <button type="submit" class="btn btn-outline-danger btn-sm">
-                                    Decline
-                                </button>
-                            </form>
-                        </div>
+                            <button type="submit" class="btn btn-outline-danger">
+                                Decline
+                            </button>
+                        </form>
+
                     </div>
                 }
+
             </div>
         </div>
 
         <!-- Personal information -->
         <div class="card shadow-sm mb-4">
-            <div class="card-header bg-white py-3">
+
+            <div class="card-header bg-body py-3
+                        d-flex flex-column flex-sm-row
+                        justify-content-between align-items-sm-center gap-2">
+
                 <h2 class="h5 mb-0">Personal information</h2>
+
+                @if ((User.Identity?.IsAuthenticated ?? false) &&
+                     !string.Equals(
+                         User.Identity?.Name,
+                         Model.UserName,
+                         StringComparison.OrdinalIgnoreCase))
+                {
+                    <a asp-controller="Message"
+                       asp-action="Compose"
+                       asp-route-recipientUserName="@Model.UserName"
+                       asp-route-returnUrl="@(Context.Request.Path + Context.Request.QueryString)"
+                       class="btn btn-primary btn-sm">
+                        <i class="bi bi-envelope me-1"></i>
+                        Send Message
+                    </a>
+                }
+
             </div>
 
             <div class="card-body p-4">
 
+                <!-- Username -->
                 <div class="mb-4">
-                    <label class="form-label text-muted small mb-1">
+                    <div class="text-muted small mb-1">
                         Username
-                    </label>
+                    </div>
+
                     <p class="fs-5 fw-semibold mb-0">
                         @Model.UserName
                     </p>
                 </div>
 
-                <div class="row">
-                    <div class="col-sm-6 mb-3">
-                        <label class="form-label text-muted small mb-1">
+                <!-- First and last name -->
+                <div class="row g-3 mb-3">
+
+                    <div class="col-sm-6">
+                        <div class="text-muted small mb-1">
                             First name
-                        </label>
+                        </div>
+
                         <p class="mb-0">
                             @(string.IsNullOrWhiteSpace(Model.FirstName)
                                 ? "Not provided"
@@ -127,22 +155,26 @@
                         </p>
                     </div>
 
-                    <div class="col-sm-6 mb-3">
-                        <label class="form-label text-muted small mb-1">
+                    <div class="col-sm-6">
+                        <div class="text-muted small mb-1">
                             Last name
-                        </label>
+                        </div>
+
                         <p class="mb-0">
                             @(string.IsNullOrWhiteSpace(Model.LastName)
                                 ? "Not provided"
                                 : Model.LastName)
                         </p>
                     </div>
+
                 </div>
 
+                <!-- City -->
                 <div class="mb-3">
-                    <label class="form-label text-muted small mb-1">
+                    <div class="text-muted small mb-1">
                         City
-                    </label>
+                    </div>
+
                     <p class="mb-0">
                         @(string.IsNullOrWhiteSpace(Model.City)
                             ? "Not provided"
@@ -152,6 +184,7 @@
 
                 <hr class="my-4" />
 
+                <!-- About me -->
                 <div>
                     <h3 class="h5 mb-3">About me</h3>
 
@@ -172,7 +205,8 @@
         </div>
 
         <!-- Navigation -->
-        <div class="d-flex justify-content-start">
+        <div class="d-flex justify-content-start mt-4">
+
             @if (ViewData["ReturnUrl"] is string returnUrl)
             {
                 <a href="@returnUrl" class="btn btn-outline-secondary">
@@ -189,6 +223,7 @@
                     Back to forum
                 </a>
             }
+
         </div>
 
     </div>

@@ -7,6 +7,8 @@ namespace Application.Interfaces.Services.User
     {
         Task<string> GetUsernameByIdAsync(string userId);
 
+        Task<string> GetUserIdByUsernameAsync(string username);
+
         Task<Dictionary<string, string>> GetUsernamesByIdsAsync(IEnumerable<string> userIds);
 
         Task<(IEnumerable<UserSearchResult> Items, int TotalCount)> SearchUsersByUsernameAsync(string query, string excludedUserId, int skip, int take);
