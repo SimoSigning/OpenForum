@@ -38,7 +38,7 @@ namespace Application.Services.Forum
             this.userService = userService;
         }
 
-        public async Task<PostIndexView?> GetPostIndexViewAsync(int topicId, int page = 1)
+        public async Task<PostIndexView?> GetPostIndexViewAsync(int topicId, int page = 1, PostCreateView? createPost = null)
         {
             Topic? topic = await topicRepository.GetByIdAsync(topicId);
 
@@ -86,7 +86,7 @@ namespace Application.Services.Forum
                 TopicCreatorId = topic.CreatedByUserId,
                 TopicCreatedAt = topic.CreatedAt,
                 Posts = posts,
-                CreatePost = new PostCreateView
+                CreatePost = createPost ?? new PostCreateView
                 {
                     TopicId = topicId
                 },
@@ -97,7 +97,7 @@ namespace Application.Services.Forum
             };
         }
 
-        public async Task<PostIndexView?> GetEditViewAsync(int postId, int page = 1)
+        public async Task<PostIndexView?> GetEditViewAsync(int postId, int page = 1, PostEditView? editPost = null)
         {
             Post? post = await postRepository.GetByIdAsync(postId);
 
@@ -114,7 +114,7 @@ namespace Application.Services.Forum
             if (viewModel == null)
                 return null;
 
-            viewModel.EditPost = postMapper.ToEditView(post);
+            viewModel.EditPost = editPost ?? postMapper.ToEditView(post);
 
             return viewModel;
         }

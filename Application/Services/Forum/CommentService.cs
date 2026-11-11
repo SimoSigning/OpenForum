@@ -38,7 +38,7 @@ namespace Application.Services.Forum
         }
 
 
-        public async Task<CommentIndexView?> GetCommentIndexViewAsync(int postId,int page)
+        public async Task<CommentIndexView?> GetCommentIndexViewAsync(int postId, int page = 1, CommentCreateView? createComment = null)
         {
             Post? post = await postRepository.GetByIdAsync(postId);
 
@@ -122,7 +122,7 @@ namespace Application.Services.Forum
                 PostCreatorId = post.CreatedByUserId,
                 PostCreatedAt = post.CreatedAt,
                 Comments = comments,
-                CreateComment = new CommentCreateView
+                CreateComment = createComment ?? new CommentCreateView
                 {
                     PostId = postId
                 },
@@ -137,7 +137,7 @@ namespace Application.Services.Forum
         }
 
 
-        public async Task<CommentIndexView?> GetEditViewAsync(int commentId, int page = 1)
+        public async Task<CommentIndexView?> GetEditViewAsync(int commentId, int page = 1, CommentEditView? editComment = null)
         {
             Comment? comment = await commentRepository.GetByIdAsync(commentId);
 
@@ -161,7 +161,7 @@ namespace Application.Services.Forum
             if (viewModel == null)
                 return null;
 
-            viewModel.EditComment = commentMapper.ToEditView(comment);
+            viewModel.EditComment = editComment ?? commentMapper.ToEditView(comment);
 
             return viewModel;
         }

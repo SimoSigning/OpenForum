@@ -29,7 +29,7 @@ namespace Application.Services.Forum
             this.userService = userService;
         }
 
-        public async Task<TopicIndexView> GetTopicIndexViewAsync(int page = 1)
+        public async Task<TopicIndexView> GetTopicIndexViewAsync(int page = 1, TopicCreateView? createTopic = null)
         {
             page = Math.Max(1, page);
 
@@ -60,7 +60,7 @@ namespace Application.Services.Forum
             return new TopicIndexView
             {
                 Topics = topics,
-                CreateTopic = new TopicCreateView(),
+                CreateTopic = createTopic ?? new TopicCreateView(),
                 EditTopic = null,
                 CanCreate = userId != null,
                 CurrentPage = page,
@@ -68,7 +68,7 @@ namespace Application.Services.Forum
             };
         }
 
-        public async Task<TopicIndexView?> GetEditViewAsync(int id, int page = 1)
+        public async Task<TopicIndexView?> GetEditViewAsync(int id, int page = 1, TopicEditView? editTopic = null)
         {
             Topic? topic = await topicRepository.GetByIdAsync(id);
 
@@ -82,7 +82,7 @@ namespace Application.Services.Forum
 
             TopicIndexView viewModel = await GetTopicIndexViewAsync(page);
 
-            viewModel.EditTopic = topicMapper.ToEditView(topic);
+            viewModel.EditTopic = editTopic ?? topicMapper.ToEditView(topic);
 
             return viewModel;
         }

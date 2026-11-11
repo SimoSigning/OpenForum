@@ -62,13 +62,12 @@ namespace OpenForum.Controllers
 
             if (!ModelState.IsValid)
             {
-                CommentIndexView? invalidView = await commentService.GetCommentIndexViewAsync(model.PostId, page);
+                CommentIndexView? invalidView = await commentService.GetCommentIndexViewAsync(model.PostId, page, model);
 
                 if (invalidView == null)
                     return NotFound();
 
-                invalidView.CreateComment = model;
-                ViewData["CurrentPage"] = page;
+                ViewData["CurrentPage"] = invalidView.CurrentPage;
                 ViewData["PostId"] = model.PostId;
 
                 return View("Details", invalidView);
@@ -93,13 +92,12 @@ namespace OpenForum.Controllers
             {
                 ModelState.AddModelError(string.Empty, ex.Message);
 
-                CommentIndexView? invalidView = await commentService.GetCommentIndexViewAsync(model.PostId, page);
+                CommentIndexView? invalidView = await commentService.GetCommentIndexViewAsync(model.PostId, page, model);
 
                 if (invalidView == null)
                     return NotFound();
 
-                invalidView.CreateComment = model;
-                ViewData["CurrentPage"] = page;
+                ViewData["CurrentPage"] = invalidView.CurrentPage;
                 ViewData["PostId"] = model.PostId;
 
                 return View("Details", invalidView);
@@ -115,12 +113,10 @@ namespace OpenForum.Controllers
             {
                 try
                 {
-                    CommentIndexView? viewModel = await commentService.GetEditViewAsync(model.Id, page);
+                    CommentIndexView? viewModel = await commentService.GetEditViewAsync(model.Id, page, model);
 
                     if (viewModel == null)
                         return NotFound();
-
-                    viewModel.EditComment = model;
 
                     ViewData["CurrentPage"] = viewModel.CurrentPage;
 

@@ -52,9 +52,7 @@ namespace OpenForum.Controllers
         {
             if (!ModelState.IsValid)
             {
-                TopicIndexView viewModel = await topicService.GetTopicIndexViewAsync(page);
-
-                viewModel.CreateTopic = model;
+                TopicIndexView viewModel = await topicService.GetTopicIndexViewAsync(page, model);
 
                 ViewData["CurrentPage"] = viewModel.CurrentPage;
 
@@ -82,12 +80,10 @@ namespace OpenForum.Controllers
             {
                 try
                 {
-                    TopicIndexView? viewModel = await topicService.GetEditViewAsync(model.Id, page);
+                    TopicIndexView? viewModel = await topicService.GetEditViewAsync(model.Id, page, model);
 
                     if (viewModel == null)
                         return NotFound();
-
-                    viewModel.EditTopic = model;
 
                     ViewData["CurrentPage"] = viewModel.CurrentPage;
 
