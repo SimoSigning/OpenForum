@@ -1,4 +1,6 @@
-i have these controllers and corresponding services. It might be abit of a mouthful to process all this. I have a rule in terms of how i want this build. I want the services to be responsible for building viewmodels, instead of the controllers. But some controllers have kinda started to build viewmodels along the way. I can see how the context of what happens, can make that easier, but i wonder if its possible to correct it so services handles it like services does most of the time. Other than that i figure some controllers here are just better made than others, in terms of validation and whatnot. I want you to analyse through this and figure out how to optimize this in the best way possible, so its all streamlined and optimized with the rules that applies etc.
+i have these controllers and corresponding services. It will be too much to do a larger scale optimization of all this in relation to
+all the possible parameters one can optimize. So i want to take one thing at a time. The first is that controllers are allowed to
+request and receive viewmodels from the services. But it is the services responsibility to build viewmodels. This pattern is currently broken some places. Is it possible for you to help adjust so this pattern becomes consistent all the way?
 
 using Application.Interfaces.Services.Forum;
 using Microsoft.AspNetCore.Authorization;
@@ -266,6 +268,7 @@ namespace Application.Services.Forum
 
     }
 }
+
 
 using Application.Interfaces.Services.Forum;
 using Microsoft.AspNetCore.Authorization;
@@ -571,7 +574,6 @@ namespace Application.Services.Forum
 
     }
 }
-
 
 using Application.Interfaces.Services.Forum;
 using Microsoft.AspNetCore.Authorization;
@@ -1021,878 +1023,281 @@ namespace Application.Services.Forum
     }
 }
 
-using Application.Interfaces.Services.Features;
-using Application.Interfaces.Services.User;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using ViewModels.Friends;
-using ViewModels.PublicUserProfile;
 
-namespace OpenForum.Controllers
-{
-    public class PublicProfileController : Controller
-    {
-        private readonly IUserProfileService profileService;
-        private readonly IFriendshipService friendshipService;
-
-        public PublicProfileController(
-            IUserProfileService profileService,
-            IFriendshipService friendshipService)
-        {
-            this.profileService = profileService;
-            this.friendshipService = friendshipService;
-        }
-
-
-        [Authorize]
-        [HttpGet]
-        public async Task<IActionResult> Index(string userId, string userName, string? returnUrl)
-        {
-            if (string.IsNullOrWhiteSpace(userId) || string.IsNullOrWhiteSpace(userName))
-            {
-                return BadRequest();
-            }
-
-            PublicUserProfileView profileView = await profileService.GetPublicProfileAsync(userId, userName);
-
-            if (profileView == null)
-                return NotFound();
-
-            UserRelationshipView relationship = await friendshipService.GetRelationshipAsync(profileView.UserId);
-
-            profileView.RelationshipStatus = relationship.RelationshipStatus;
-            profileView.CanSendFriendRequest = relationship.CanSendRequest;
-            profileView.FriendshipId = relationship.FriendshipId;
-
-            // Only allow local return URLs to prevent open redirects.
-            ViewData["ReturnUrl"] = Url.IsLocalUrl(returnUrl) ? returnUrl : Url.Action("Index", "Topic");
-
-            return View(profileView);
-        }
-
-    }
-}
-
-
-using Application.Interfaces.Services.User;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using ViewModels.MyUser;
-
-namespace OpenForum.Controllers
-{
-    [Authorize]
-    public class MyProfileController : Controller
-    {
-        private readonly IUserProfileService profileService;
-        private readonly IAccountService accountService;
-
-        public MyProfileController(
-            IUserProfileService profileService,
-            IAccountService accountService)
-        {
-            this.profileService = profileService;
-            this.accountService = accountService;
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> Index()
-        {
-            MyProfilePageView model = await BuildProfilePageAsync();
-
-            return View(model);
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> UpdateProfile([Bind(Prefix = "EditProfile")] UserProfileEditView model)
-        {
-            if (!ModelState.IsValid)
-            {
-                MyProfilePageView page = await BuildProfilePageAsync(editProfile: model);
-
-                return View("Index", page);
-            }
-
-            try
-            {
-                await profileService.UpdateProfileAsync(model);
-
-                TempData["Success"] = "Profile updated successfully.";
-
-                return RedirectToAction(nameof(Index));
-            }
-            catch (InvalidOperationException ex)
-            {
-                ModelState.AddModelError(string.Empty, ex.Message);
-
-                MyProfilePageView page = await BuildProfilePageAsync(editProfile: model);
-
-                return View("Index", page);
-            }
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ChangeEmail([Bind(Prefix = "ChangeEmail")] ChangeEmailView model)
-        {
-            if (!ModelState.IsValid)
-            {
-                MyProfilePageView page = await BuildProfilePageAsync(changeEmail: model);
-
-                return View("Index", page);
-            }
-
-            try
-            {
-                await accountService.ChangeEmailAsync(model.NewEmail);
-
-                TempData["Success"] = "Email changed successfully.";
-
-                return RedirectToAction(nameof(Index));
-            }
-            catch (InvalidOperationException ex)
-            {
-                ModelState.AddModelError(string.Empty, ex.Message);
-
-                MyProfilePageView page = await BuildProfilePageAsync(changeEmail: model);
-
-                return View("Index", page);
-            }
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ChangePassword([Bind(Prefix = "ChangePassword")] ChangePasswordView model)
-        {
-            if (!ModelState.IsValid)
-            {
-                MyProfilePageView page = await BuildProfilePageAsync(changePassword: model);
-
-                return View("Index", page);
-            }
-
-            try
-            {
-                await accountService.ChangePasswordAsync(model.CurrentPassword, model.NewPassword);
-
-                TempData["Success"] = "Password changed successfully.";
-
-                return RedirectToAction(nameof(Index));
-            }
-            catch (InvalidOperationException ex)
-            {
-                ModelState.AddModelError(string.Empty, ex.Message);
-
-                MyProfilePageView page = await BuildProfilePageAsync(changePassword: model);
-
-                return View("Index", page);
-            }
-        }
-
-        //This is wrong, should put it in service.. 
-        private async Task<MyProfilePageView> BuildProfilePageAsync(UserProfileEditView? editProfile = null, ChangeEmailView? changeEmail = null, ChangePasswordView? changePassword = null)
-        {
-            MyUserProfileView profile = await profileService.GetLoggedInProfileAsync();
-
-            string email = await accountService.GetEmailAsync();
-
-            return new MyProfilePageView
-            {
-                Profile = profile,
-
-                EditProfile = editProfile ?? new UserProfileEditView
-                {
-                    FirstName = profile.FirstName,
-                    LastName = profile.LastName,
-                    Address = profile.Address,
-                    PostalCode = profile.PostalCode,
-                    City = profile.City,
-                    ProfileText = profile.ProfileText
-                },
-
-                ChangeEmail = changeEmail ?? new ChangeEmailView(),
-
-                ChangePassword = changePassword ?? new ChangePasswordView(),
-
-                CurrentEmail = email
-            };
-        }
-    }
-}
-
-
-using Application.Interfaces.Services.User;
-using EntityModels;
-using Repository.interfaces;
-using System;
-using System.Collections.Generic;
-using System.Text;
-using ViewModels.PublicUserProfile;
-using ViewModels.MyUser;
-
-namespace Application.Services.User
-{
-    public class UserProfileService : IUserProfileService
-    {
-        private readonly IUserProfileRepository profileRepository;
-        private readonly ICurrentUserService currentUser;
-
-        public UserProfileService(
-            IUserProfileRepository profileRepository,
-            ICurrentUserService currentUser)
-        {
-            this.profileRepository = profileRepository;
-            this.currentUser = currentUser;
-        }
-
-        public async Task<MyUserProfileView> GetLoggedInProfileAsync()
-        {
-            string userId = currentUser.GetRequiredUserId();
-
-            UserProfile? profile = await profileRepository.GetByUserIdAsync(userId);
-
-            if (profile == null)
-            {
-                throw new InvalidOperationException("User profile could not be found.");
-            }
-
-            return new MyUserProfileView
-            {
-                FirstName = profile.FirstName,
-                LastName = profile.LastName,
-                Address = profile.Address,
-                PostalCode = profile.PostalCode,
-                City = profile.City,
-                ProfileText = profile.ProfileText
-            };
-        }
-
-        public async Task UpdateProfileAsync(UserProfileEditView model)
-        {
-            string userId = currentUser.GetRequiredUserId();
-
-            UserProfile? profile = await profileRepository.GetByUserIdAsync(userId);
-
-            if (profile == null)
-            {
-                throw new InvalidOperationException("User profile could not be found.");
-            }
-
-            profile.FirstName = model.FirstName;
-            profile.LastName = model.LastName;
-            profile.Address = model.Address;
-            profile.PostalCode = model.PostalCode;
-            profile.City = model.City;
-            profile.ProfileText = model.ProfileText;
-
-            await profileRepository.UpdateAsync(profile);
-        }
-
-        public async Task CreateProfileForUserAsync(string userId)
-        {
-            UserProfile profile = new UserProfile
-            {
-                UserId = userId,
-                FirstName = string.Empty,
-                LastName = string.Empty,
-                Address = null,
-                PostalCode = null,
-                City = null,
-                ProfileText= null
-            };
-
-            await profileRepository.AddAsync(profile);
-        }
-
-        public async Task<PublicUserProfileView> GetPublicProfileAsync(string userId, string userName)
-        {
-            UserProfile? profile = await profileRepository.GetByUserIdAsync(userId);
-
-            if (profile == null)
-            {
-                throw new InvalidOperationException("User profile could not be found.");
-            }
-
-            return new PublicUserProfileView
-            {
-                UserId = userId,
-                UserName = userName,
-                FirstName = profile.FirstName,
-                LastName = profile.LastName,
-                City = profile.City,
-                ProfileText = profile.ProfileText
-            };
-        }
-    }
-}
-
-
-using Application.Interfaces.Services.User;
-using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Application.Services.User
-{
-    public class AccountService : IAccountService
-    {
-        private readonly IUserService userService;
-        private readonly ICurrentUserService currentUser;
-
-        public AccountService(
-            IUserService userService,
-            ICurrentUserService currentUser)
-        {
-            this.userService = userService;
-            this.currentUser = currentUser;
-        }
-
-        public async Task<string> GetEmailAsync()
-        {
-            string userId = currentUser.GetRequiredUserId();
-
-            return await userService.GetEmailByIdAsync(userId);
-        }
-
-        public async Task ChangeEmailAsync(string newEmail)
-        {
-            string userId = currentUser.GetRequiredUserId();
-
-            await userService.ChangeEmailAsync(userId, newEmail);
-        }
-
-        public async Task ChangePasswordAsync(string currentPassword, string newPassword)
-        {
-            string userId = currentUser.GetRequiredUserId();
-
-            await userService.ChangePasswordAsync(userId, currentPassword, newPassword);
-        }
-    }
-
-}
-
-
-using Application.Interfaces.Services;
-using Application.Interfaces.Services.Features;
-using Application.Interfaces.Services.Forum;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using ViewModels.Comment;
-using ViewModels.MyActivity;
-using ViewModels.Post;
-using ViewModels.Topic;
-
-namespace OpenForum.Controllers
-{
-    [Authorize]
-    public class MyActivityController : Controller
-    {
-        private readonly IMyActivityService myActivityService;
-        private readonly ITopicService topicService;
-        private readonly IPostService postService;
-        private readonly ICommentService commentService;
-
-        public MyActivityController(
-            IMyActivityService myActivityService,
-            ITopicService topicService,
-            IPostService postService,
-            ICommentService commentService)
-        {
-            this.myActivityService = myActivityService;
-            this.topicService = topicService;
-            this.postService = postService;
-            this.commentService = commentService;
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> Index(ActivityFilter filter = ActivityFilter.All, int page = 1)
-        {
-            MyActivityIndexView model = await myActivityService.GetMyActivityIndexViewAsync(filter, page);
-
-            return View(model);
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> EditTopic(int id, ActivityFilter filter = ActivityFilter.All, int page = 1)
-        {
-            try
-            {
-                TopicIndexView? result = await topicService.GetEditViewAsync(id);
-
-                if (result?.EditTopic == null)
-                    return NotFound();
-
-                ActivityTopicEditView model = new() //should correct
-                {
-                    Id = result.EditTopic.Id,
-                    Title = result.EditTopic.Title
-                };
-
-                ViewData["Filter"] = filter;
-                ViewData["Page"] = page;
-
-                return View(model);
-            }
-            catch (UnauthorizedAccessException)
-            {
-                return Forbid();
-            }
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> UpdateTopic(ActivityTopicEditView model, ActivityFilter filter = ActivityFilter.All, int page = 1)
-        {
-            if (!ModelState.IsValid)
-            {
-                ViewData["Filter"] = filter;
-                ViewData["Page"] = page;
-                return View("EditTopic", model);
-            }
-
-            try
-            {
-                TopicEditView topicModel = new() //normally wouldnt do that here, but to use old functionality it becomes necessary
-                {
-                    Id = model.Id,
-                    Title = model.Title
-                };
-
-                await topicService.UpdateAsync(topicModel);
-
-                return RedirectToAction(nameof(Index), new { filter, page });
-            }
-            catch (UnauthorizedAccessException)
-            {
-                return Forbid();
-            }
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteTopic(int id, ActivityFilter filter = ActivityFilter.All, int page = 1)
-        {
-            try
-            {
-                await topicService.DeleteAsync(id);
-
-                return RedirectToAction(nameof(Index), new { filter, page });
-            }
-            catch (UnauthorizedAccessException)
-            {
-                return Forbid();
-            }
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> EditPost(int id, ActivityFilter filter = ActivityFilter.All, int page = 1)
-        {
-            try
-            {
-                PostIndexView? result = await postService.GetEditViewAsync(id);
-
-                if (result?.EditPost == null)
-                    return NotFound();
-
-                ActivityPostEditView model = new() //should correct
-                {
-                    Id = result.EditPost.Id,
-                    Title = result.EditPost.Title,
-                    Content = result.EditPost.Content
-                };
-
-                ViewData["Filter"] = filter;
-                ViewData["Page"] = page;
-
-                return View(model);
-            }
-            catch (UnauthorizedAccessException)
-            {
-                return Forbid();
-            }
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> UpdatePost(ActivityPostEditView model, ActivityFilter filter = ActivityFilter.All, int page = 1)
-        {
-            if (!ModelState.IsValid)
-            {
-                ViewData["Filter"] = filter;
-                ViewData["Page"] = page;
-                return View("EditPost", model);
-            }
-
-            try
-            {
-                PostEditView postModel = new() //normally wouldnt do that here, but to use old functionality it becomes necessary
-                {
-                    Id = model.Id,
-                    Title = model.Title,
-                    Content = model.Content
-                };
-
-                await postService.UpdateAsync(postModel);
-
-                return RedirectToAction(nameof(Index), new { filter, page });
-            }
-            catch (UnauthorizedAccessException)
-            {
-                return Forbid();
-            }
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeletePost(int id, ActivityFilter filter = ActivityFilter.All, int page = 1)
-        {
-            try
-            {
-                await postService.DeleteAsync(id);
-
-                return RedirectToAction(nameof(Index), new { filter, page });
-            }
-            catch (UnauthorizedAccessException)
-            {
-                return Forbid();
-            }
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> EditComment(int id, ActivityFilter filter = ActivityFilter.All, int page = 1)
-        {
-            try
-            {
-                CommentIndexView? result = await commentService.GetEditViewAsync(id);
-
-                if (result?.EditComment == null)
-                    return NotFound();
-
-                ActivityCommentEditView model = new()  //should correct
-                {
-                    Id = result.EditComment.Id,
-                    Title = result.EditComment.Title,
-                    Content = result.EditComment.Content,
-                    PostId = result.EditComment.PostId,
-                    ParentCommentId = result.EditComment.ParentCommentId
-                };
-
-                ViewData["Filter"] = filter;
-                ViewData["Page"] = page;
-
-                return View(model);
-            }
-            catch (UnauthorizedAccessException)
-            {
-                return Forbid();
-            }
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> UpdateComment(ActivityCommentEditView model, ActivityFilter filter = ActivityFilter.All, int page = 1)
-        {
-            if (!ModelState.IsValid)
-            {
-                ViewData["Filter"] = filter;
-                ViewData["Page"] = page;
-                return View("EditComment", model);
-            }
-
-            try
-            {
-                CommentEditView commentModel = new() //normally wouldnt do that here, but to use old functionality it becomes necessary
-                {//or does it..
-                    Id = model.Id,
-                    Title = model.Title,
-                    Content = model.Content,
-                    PostId = model.PostId,
-                    ParentCommentId = model.ParentCommentId
-                };
-
-                await commentService.UpdateAsync(commentModel);
-
-                return RedirectToAction(nameof(Index), new { filter, page });
-            }
-            catch (UnauthorizedAccessException)
-            {
-                return Forbid();
-            }
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteComment(int id, ActivityFilter filter = ActivityFilter.All, int page = 1)
-        {
-            try
-            {
-                await commentService.DeleteAsync(id);
-
-                return RedirectToAction(nameof(Index), new { filter, page });
-            }
-            catch (UnauthorizedAccessException)
-            {
-                return Forbid();
-            }
-        }
-    }
-}
-
+using Application.common.Application.Common;
 using Application.Interfaces.Contexts;
-using Application.Interfaces.Services;
-using Application.Interfaces.Services.Features;
+using Application.Interfaces.Mappers.Forum;
+using Application.Interfaces.Services.Forum;
 using Application.Interfaces.Services.User;
-using Application.Services.User;
 using EntityModels;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Repository.interfaces;
-using ViewModels.MyActivity;
+using ViewModels.Comment;
 
-namespace Application.Services.Features
+namespace Application.Services.Forum
 {
-    public class MyActivityService : IMyActivityService
+    public class CommentService : ICommentService
     {
-        private readonly ITopicRepository topicRepository;
-        private readonly IPostRepository postRepository;
         private readonly ICommentRepository commentRepository;
+        private readonly IPostRepository postRepository;
+        private readonly ILikeRepository likeRepository;
+        private readonly ICommentMapper commentMapper;
         private readonly ICurrentUserService currentUser;
+        private readonly IUserService userService;
         private const int PageSize = 5;
-        private const int PreviewLength = 150;
 
-        public MyActivityService(
-            ITopicRepository topicRepository,
-            IPostRepository postRepository,
+        public CommentService(
             ICommentRepository commentRepository,
-            ICurrentUserService currentUser)
+            IPostRepository postRepository,
+            ILikeRepository likeRepository,
+            ICommentMapper commentMapper,
+            ICurrentUserService currentUser,
+            IUserService userService
+            )
         {
-            this.topicRepository = topicRepository;
-            this.postRepository = postRepository;
             this.commentRepository = commentRepository;
+            this.postRepository = postRepository;
+            this.likeRepository = likeRepository;
+            this.commentMapper = commentMapper;
             this.currentUser = currentUser;
+            this.userService = userService;
         }
 
 
-        public async Task<MyActivityIndexView> GetMyActivityIndexViewAsync(ActivityFilter filter = ActivityFilter.All, int page = 1)
+        public async Task<CommentIndexView?> GetCommentIndexViewAsync(int postId,int page)
         {
-            string userId = currentUser.GetRequiredUserId();
+            Post? post = await postRepository.GetByIdAsync(postId);
+
+            if (post == null)
+                return null;
 
             page = Math.Max(1, page);
 
-            // Retrieve the total counts.
-            int topicCount = await topicRepository.CountByCreatedByUserIdAsync(userId);
+            (IEnumerable<Comment> Items, int TotalCount) result = await commentRepository.GetPageByPostIdAsync(postId, page, PageSize);
 
-            int postCount = await postRepository.CountByCreatedByUserIdAsync(userId);
+            int totalPages = (int)Math.Ceiling(result.TotalCount / (double)PageSize);
 
-            int commentCount = await commentRepository.CountByCreatedByUserIdAsync(userId);
-
-            // Calculate the total count for the selected filter.
-            int totalCount = filter switch
+            if (totalPages > 0 && page > totalPages)
             {
-                ActivityFilter.Topics => topicCount,
-                ActivityFilter.Posts => postCount,
-                ActivityFilter.Comments => commentCount,
-                _ => topicCount + postCount + commentCount
-            };
-
-            // Calculate pagination.
-            int totalPages = Math.Max(1, (int)Math.Ceiling(totalCount / (double)PageSize));
-
-            page = Math.Min(page, totalPages);
-
-            int skip = (page - 1) * PageSize;
-            int take = skip + PageSize;
-
-            // Retrieve records according to the selected filter.
-            List<ActivityListItemView> activities = new List<ActivityListItemView>();
-
-            if (filter == ActivityFilter.All || filter == ActivityFilter.Topics)
-            {
-                IEnumerable<Topic> topics = await topicRepository.GetByCreatedByUserIdAsync(userId, 0, take);
-                activities.AddRange(topics.Select(MapTopic));
+                page = totalPages;
+                result = await commentRepository.GetPageByPostIdAsync(postId, page, PageSize);
             }
 
-            if (filter == ActivityFilter.All || filter == ActivityFilter.Posts)
+            string? userId = currentUser.GetUserIdOrNull();
+
+            Dictionary<int, CommentListItemView> commentsById = result.Items.ToDictionary(
+                c => c.Id,
+                c =>
+                {
+                    CommentListItemView view = commentMapper.ToListItemView(c);
+                    view.CreatorDisplayName = CreatorDisplayNameResolver.Resolve(userId, c.CreatedByUserId, view.Creator);
+                    view.CanManage = userId != null && c.CreatedByUserId == userId;
+                    return view;
+                });
+
+            List<int> parentIds = result.Items.Select(c => c.Id).ToList();
+
+            while (parentIds.Count > 0)
             {
-                IEnumerable<Post> posts = await postRepository.GetByCreatedByUserIdAsync(userId, 0, take);
-                activities.AddRange(posts.Select(MapPost));
+                List<Comment> replies = await commentRepository.GetRepliesByParentIdsAsync(postId, parentIds);
+                parentIds = new List<int>();
+
+                foreach (Comment reply in replies)
+                {
+                    CommentListItemView replyView = commentMapper.ToListItemView(reply);
+                    replyView.CreatorDisplayName = CreatorDisplayNameResolver.Resolve(userId,reply.CreatedByUserId, replyView.Creator);
+                    replyView.CanManage = reply.CreatedByUserId == userId;
+
+                    if (reply.ParentCommentId.HasValue && commentsById.TryGetValue(reply.ParentCommentId.Value, out CommentListItemView? parentView))
+                    {
+                        replyView.ParentTitle = !string.IsNullOrWhiteSpace(parentView.Title) ? parentView.Title : parentView.Content;
+                        replyView.ParentCreator = parentView.Creator;
+                        parentView.Replies.Add(replyView);
+                    }
+
+                    commentsById.Add(reply.Id, replyView);
+                    parentIds.Add(reply.Id);
+                }
             }
 
-            if (filter == ActivityFilter.All || filter == ActivityFilter.Comments)
+            int postLikeCount = await likeRepository.GetPostLikeCountAsync(post.Id);
+            bool isPostLikedByCurrentUser = userId != null && await likeRepository.IsPostLikedByUserAsync(post.Id, userId);
+            List<int> allCommentIds = commentsById.Keys.ToList();
+            Dictionary<int, int> likeCounts = await likeRepository.GetCommentLikeCountsAsync(allCommentIds);
+            HashSet<int> likedCommentIds = userId == null ? 
+                new HashSet<int>() : (await likeRepository.GetCommentIdsLikedByUserAsync(allCommentIds, userId)).ToHashSet();
+
+            foreach (KeyValuePair<int, CommentListItemView> entry in commentsById)
             {
-                IEnumerable<Comment> comments = await commentRepository.GetByCreatedByUserIdAsync(userId, 0, take);
-                activities.AddRange(comments.Select(MapComment));
+                CommentListItemView view = entry.Value;
+                view.LikeCount = likeCounts.GetValueOrDefault(entry.Key);
+                view.IsLikedByCurrentUser = likedCommentIds.Contains(entry.Key);
+                view.CanLike = userId != null;
             }
 
-            // Sort all retrieved activities chronologically.
-            List<ActivityListItemView> orderedActivities = activities
-                .OrderByDescending(a => a.CreatedAt)
-                .ThenByDescending(a => a.Id)
-                .ThenBy(a => a.Type)
-                .ToList();
+            List<CommentListItemView> comments = result.Items.Select(c => commentsById[c.Id]).ToList();
 
-            // Apply global pagination.
-            List<ActivityListItemView> pagedActivities = orderedActivities
-                .Skip(skip)
-                .Take(PageSize)
-                .ToList();
-
-            return new MyActivityIndexView
+            return new CommentIndexView
             {
-                Activities = pagedActivities,
-                Filter = filter,
+                PostId = post.Id,
+                TopicId = post.TopicId,
+                PostTitle = post.Title,
+                PostContent = post.Content,
+                PostCreator = post.CreatedByUserName,
+                PostCreatorDisplayName = CreatorDisplayNameResolver.Resolve(userId, post.CreatedByUserId, post.CreatedByUserName),
+                PostCreatorId = post.CreatedByUserId,
+                PostCreatedAt = post.CreatedAt,
+                Comments = comments,
+                CreateComment = new CommentCreateView
+                {
+                    PostId = postId
+                },
+                CanCreate = !string.IsNullOrEmpty(userId),
+                EditComment = null,
                 CurrentPage = page,
                 TotalPages = totalPages,
-                TotalCount = totalCount
+                PostLikeCount = postLikeCount,
+                IsPostLikedByCurrentUser = isPostLikedByCurrentUser,
+                CanLikePost = userId != null,
             };
         }
 
-        private static ActivityListItemView MapTopic(Topic topic)
-        {
-            return new ActivityListItemView
-            {
-                Id = topic.Id,
-                Type = ActivityType.Topic,
-                Title = topic.Title,
-                CreatedAt = topic.CreatedAt
-            };
-        }
 
-        private static ActivityListItemView MapPost(Post post)
+        public async Task<CommentIndexView?> GetEditViewAsync(int commentId, int page = 1)
         {
-            return new ActivityListItemView
-            {
-                Id = post.Id,
-                Type = ActivityType.Post,
-                Title = post.Title,
-                ContentPreview = CreatePreview(post.Content),
-                CreatedAt = post.CreatedAt,
-                TopicId = post.TopicId,
-                ContextTitle = post.Topic?.Title ?? string.Empty
-            };
-        }
+            Comment? comment = await commentRepository.GetByIdAsync(commentId);
 
-        private static ActivityListItemView MapComment(Comment comment)
-        {
-            bool isReply = comment.ParentCommentId.HasValue;
-            string contextTitle;
+            if (comment == null)
+                return null;
 
-            if (isReply)
+            string userId = currentUser.GetRequiredUserId();
+
+            if (comment.CreatedByUserId != userId)
             {
-                contextTitle = !string.IsNullOrWhiteSpace(comment.ParentComment?.Title)
-                    ? comment.ParentComment.Title
-                    : comment.ParentComment?.Content ?? string.Empty;
-            }
-            else
-            {
-                contextTitle = comment.Post?.Title ?? string.Empty;
+                throw new UnauthorizedAccessException("You are not allowed to edit this comment.");
             }
 
-            return new ActivityListItemView
-            {
-                Id = comment.Id,
-                Type = isReply
-                    ? ActivityType.Reply
-                    : ActivityType.Comment,
+            Post? post = await postRepository.GetByIdAsync(comment.PostId);
 
-                Title = comment.Title,
-                ContentPreview = CreatePreview(comment.Content),
-                CreatedAt = comment.CreatedAt,
+            if (post == null)
+                return null;
 
-                PostId = comment.PostId,
-                TopicId = comment.Post?.TopicId,
-                ParentCommentId = comment.ParentCommentId,
+            CommentIndexView? viewModel = await GetCommentIndexViewAsync(post.Id, page);
 
-                ContextTitle = CreatePreview(contextTitle)
-            };
+            if (viewModel == null)
+                return null;
+
+            viewModel.EditComment = commentMapper.ToEditView(comment);
+
+            return viewModel;
         }
 
-        private static string CreatePreview(string? content)
+
+        public async Task CreateAsync(CommentCreateView model)
         {
-            if (string.IsNullOrWhiteSpace(content))
+            string userId = currentUser.GetRequiredUserId();
+
+            if (string.IsNullOrWhiteSpace(model.Content))
             {
-                return string.Empty;
+                throw new ArgumentException("Comment content is required.");
             }
 
-            content = content.Trim();
-
-            if (content.Length <= PreviewLength)
+            if (!model.ParentCommentId.HasValue &&
+                string.IsNullOrWhiteSpace(model.Title))
             {
-                return content;
+                throw new ArgumentException("A title is required for a top-level comment.");
             }
 
-            return content[..PreviewLength] + "...";
-        }
-    }
-}
-
-
-using Application.Interfaces.Services.Features;
-using Application.Models;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using System.Collections.Generic;
-
-namespace OpenForum.Controllers
-{
-    [Authorize]
-    public class LikeController : Controller
-    {
-        private readonly ILikeService likeService;
-
-        public LikeController(ILikeService likeService)
-        {
-            this.likeService = likeService;
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> TogglePostLike(int postId, string? returnUrl)
-        {
-            LikeToggleResult result = await likeService.TogglePostLikeAsync(postId);
-
-            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            if (model.ParentCommentId.HasValue)
             {
-                return Ok(result);
+                Comment? parent = await commentRepository.GetByIdAsync(model.ParentCommentId.Value);
+
+                if (parent == null || parent.PostId != model.PostId)
+                {
+                    throw new ArgumentException("The parent comment does not belong to this post.");
+                }
             }
 
-            return LocalRedirect(Url.IsLocalUrl(returnUrl) ? returnUrl! : "/");
+            Comment comment = commentMapper.ToEntity(model);
+            comment.CreatedByUserId = userId;
+            comment.CreatedByUserName = await userService.GetUsernameByIdAsync(userId);
+
+            await commentRepository.AddAsync(comment);
         }
 
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ToggleCommentLike(int commentId, string? returnUrl)
-        {
-            LikeToggleResult result = await likeService.ToggleCommentLikeAsync(commentId);
 
-            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+
+        public async Task UpdateAsync(CommentEditView model)
+        {
+            string userId = currentUser.GetRequiredUserId();
+            Comment? comment = await commentRepository.GetByIdAsync(model.Id);
+
+            if (comment == null)
+                return;
+
+            if (comment.CreatedByUserId != userId)
             {
-                return Ok(result);
+                throw new UnauthorizedAccessException("You are not allowed to edit this comment.");
             }
 
-            return LocalRedirect(Url.IsLocalUrl(returnUrl) ? returnUrl! : "/");
+            comment.Title = comment.ParentCommentId.HasValue ? string.Empty : model.Title?.Trim() ?? string.Empty;
+            comment.Content = model.Content;
+            await commentRepository.UpdateAsync(comment);
         }
 
-        [HttpGet]
-        public async Task<IActionResult> GetPostLikers(int postId)
+        public async Task DeleteAsync(int id)
         {
-            if (postId <= 0)
-                return BadRequest();
+            string userId = currentUser.GetRequiredUserId();
+            Comment? comment = await commentRepository.GetByIdAsync(id);
 
-            List<string> usernames = await likeService.GetPostLikerUsernamesAsync(postId);
+            if (comment == null)
+                return;
 
-            return Ok(usernames);
+            if (comment.CreatedByUserId != userId)
+            {
+                throw new UnauthorizedAccessException("You are not allowed to delete this comment.");
+            }
+
+            List<Comment> comments = (await commentRepository.GetByPostIdAsync(comment.PostId)).ToList();
+
+            Dictionary<int, Comment> commentsById = comments.ToDictionary(c => c.Id);
+
+            Dictionary<int, List<Comment>> repliesByParent = comments
+                .Where(c => c.ParentCommentId.HasValue)
+                .GroupBy(c => c.ParentCommentId!.Value)
+                .ToDictionary(g => g.Key, g => g.ToList());
+
+            List<Comment> deletionOrder = new();
+
+            void AddCommentAndReplies(int commentId)
+            {
+                if (!commentsById.TryGetValue(commentId, out Comment? current))
+                    return;
+
+                deletionOrder.Add(current);
+
+                if (repliesByParent.TryGetValue(commentId, out List<Comment>? replies))
+                {
+                    foreach (Comment reply in replies)
+                    {
+                        AddCommentAndReplies(reply.Id);
+                    }
+                }
+            }
+
+            
+            AddCommentAndReplies(comment.Id);
+
+            // Mark descendants before their parents for deletion.
+            deletionOrder.Reverse();
+
+            // Delete likes belonging to the comment and all its replies.
+            List<int> commentIdsToDelete = deletionOrder.Select(c => c.Id).ToList();
+
+            await likeRepository.DeleteByCommentIdsAsync(commentIdsToDelete);
+            await commentRepository.DeleteRangeAsync(deletionOrder);
         }
 
-        [HttpGet]
-        public async Task<IActionResult> GetCommentLikers(int commentId)
-        {
-            if (commentId <= 0)
-                return BadRequest();
-
-            List<string> usernames = await likeService.GetCommentLikerUsernamesAsync(commentId);
-
-            return Ok(usernames);
-        }
     }
 }
 
@@ -2514,6 +1919,512 @@ namespace Application.Services.Features
 using Application.Interfaces.Services.Features;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using ViewModels.Messages;
+
+namespace OpenForum.Controllers
+{
+    [Authorize]
+    public class MessageController : Controller
+    {
+        private readonly IMessageService messageService;
+
+        public MessageController(IMessageService messageService)
+        {
+            this.messageService = messageService;
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Inbox()
+        {
+            InboxView model = await messageService.GetInboxAsync();
+
+            return View(model);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Sent()
+        {
+            SentMessagesView model = await messageService.GetSentAsync();
+
+            return View(model);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Details(int id)
+        {
+            try
+            {
+                MessageDetailsView model =
+                    await messageService.GetDetailsAsync(id);
+
+                return View(model);
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound();
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Forbid();
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Compose(
+            string recipientUserName,
+            string? returnUrl)
+        {
+            try
+            {
+                ComposeMessageView model =
+                    await messageService.GetComposeViewAsync(
+                        recipientUserName);
+
+                model.ReturnUrl = Url.IsLocalUrl(returnUrl)
+                    ? returnUrl
+                    : Url.Action(nameof(Inbox));
+
+                return View(model);
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound();
+            }
+            catch (ArgumentException)
+            {
+                return BadRequest();
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Reply(int originalMessageId)
+        {
+            try
+            {
+                ComposeMessageView model =
+                    await messageService.GetReplyComposeViewAsync(
+                        originalMessageId);
+
+                model.ReturnUrl = Url.Action(nameof(Details),
+                    new { id = originalMessageId });
+
+                return View("Compose", model);
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound();
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Forbid();
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Send(ComposeMessageView model)
+        {
+
+            model.ReturnUrl = Url.IsLocalUrl(model.ReturnUrl)
+            ? model.ReturnUrl
+            : Url.Action(nameof(Inbox));
+
+            // For replies, the service generates the subject from the
+            // original message. It does not rely on the submitted subject.
+            if (model.IsReply)
+            {
+                ModelState.Remove(nameof(model.Subject));
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return View("Compose", model);
+            }
+
+            try
+            {
+                await messageService.SendAsync(model);
+
+                TempData["Success"] = "Message sent successfully.";
+
+                return RedirectToAction(nameof(Inbox));
+            }
+            catch (ArgumentException ex)
+            {
+                ModelState.AddModelError(string.Empty, ex.Message);
+
+                return View("Compose", model);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                ModelState.AddModelError(string.Empty, ex.Message);
+
+                return View("Compose", model);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Forbid();
+            }
+            catch (InvalidOperationException ex)
+            {
+                ModelState.AddModelError(string.Empty, ex.Message);
+
+                return View("Compose", model);
+            }
+        }
+    }
+}
+
+using Application.Interfaces.Services.Features;
+using Application.Interfaces.Services.User;
+using EntityModels;
+using Repository.interfaces;
+using ViewModels.Messages;
+
+namespace Application.Services.Features
+{
+    public class MessageService : IMessageService
+    {
+        private readonly IMessageRepository messageRepository;
+        private readonly IUserService userService;
+        private readonly ICurrentUserService currentUser;
+
+        public MessageService(
+            IMessageRepository messageRepository,
+            IUserService userService,
+            ICurrentUserService currentUser)
+        {
+            this.messageRepository = messageRepository;
+            this.userService = userService;
+            this.currentUser = currentUser;
+        }
+
+        public async Task<InboxView> GetInboxAsync()
+        {
+            string userId = currentUser.GetRequiredUserId();
+
+            List<Message> messages =
+                await messageRepository.GetInboxAsync(userId);
+
+            Dictionary<string, string> usernames =
+                await userService.GetUsernamesByIdsAsync(
+                    messages.Select(m => m.SenderUserId));
+
+            return new InboxView
+            {
+                Messages = messages.Select(m => new MessageItemView
+                {
+                    Id = m.Id,
+                    OtherUserId = m.SenderUserId,
+                    OtherUserName = usernames.GetValueOrDefault(
+                        m.SenderUserId, "Unknown user"),
+                    Subject = m.Subject,
+                    BodyPreview = CreatePreview(m.Body),
+                    SentAt = m.SentAt,
+                    IsRead = m.IsRead
+                }),
+
+                UnreadCount = await messageRepository.GetUnreadCountAsync(userId)
+            };
+        }
+
+        public async Task<SentMessagesView> GetSentAsync()
+        {
+            string userId = currentUser.GetRequiredUserId();
+
+            List<Message> messages =
+                await messageRepository.GetSentAsync(userId);
+
+            Dictionary<string, string> usernames =
+                await userService.GetUsernamesByIdsAsync(
+                    messages.Select(m => m.RecipientUserId));
+
+            return new SentMessagesView
+            {
+                Messages = messages.Select(m => new MessageItemView
+                {
+                    Id = m.Id,
+                    OtherUserId = m.RecipientUserId,
+                    OtherUserName = usernames.GetValueOrDefault(
+                        m.RecipientUserId, "Unknown user"),
+                    Subject = m.Subject,
+                    BodyPreview = CreatePreview(m.Body),
+                    SentAt = m.SentAt,
+                    IsRead = m.IsRead
+                })
+            };
+        }
+
+        public async Task<MessageDetailsView> GetDetailsAsync(int messageId)
+        {
+            string userId = currentUser.GetRequiredUserId();
+
+            Message? message =
+                await messageRepository.GetByIdAsync(messageId);
+
+            if (message == null)
+            {
+                throw new KeyNotFoundException("Message not found.");
+            }
+
+            bool isRecipient = message.RecipientUserId == userId;
+            bool isSender = message.SenderUserId == userId;
+
+            if (!isRecipient && !isSender)
+            {
+                throw new UnauthorizedAccessException(
+                    "You are not allowed to access this message.");
+            }
+
+            // Only mark incoming messages as read.
+            if (isRecipient && !message.IsRead)
+            {
+                message.IsRead = true;
+
+                await messageRepository.UpdateAsync(message);
+            }
+
+            string senderUsername =
+                await userService.GetUsernameByIdAsync(message.SenderUserId);
+
+            string recipientUsername =
+                await userService.GetUsernameByIdAsync(message.RecipientUserId);
+
+            return new MessageDetailsView
+            {
+                Id = message.Id,
+
+                SenderUserId = message.SenderUserId,
+                SenderUserName = senderUsername,
+
+                RecipientUserId = message.RecipientUserId,
+                RecipientUserName = recipientUsername,
+
+                Subject = message.Subject,
+                Body = message.Body,
+                SentAt = message.SentAt,
+                IsRead = message.IsRead,
+
+                CanReply = isRecipient
+            };
+        }
+
+        public async Task<ComposeMessageView> GetComposeViewAsync(
+            string recipientUserName)
+        {
+            string currentUserId = currentUser.GetRequiredUserId();
+
+            if (string.IsNullOrWhiteSpace(recipientUserName))
+            {
+                throw new ArgumentException("A recipient is required.");
+            }
+
+            string recipientUserId =
+                await userService.GetUserIdByUsernameAsync(recipientUserName);
+
+            if (recipientUserId == currentUserId)
+            {
+                throw new ArgumentException(
+                    "You cannot send a message to yourself.");
+            }
+
+            string username =
+                await userService.GetUsernameByIdAsync(recipientUserId);
+
+            return new ComposeMessageView
+            {
+                RecipientUserId = recipientUserId,
+                RecipientUserName = username
+            };
+        }
+
+        public async Task<ComposeMessageView> GetReplyComposeViewAsync(
+            int originalMessageId)
+        {
+            string userId = currentUser.GetRequiredUserId();
+
+            Message? originalMessage =
+                await messageRepository.GetByIdAsync(originalMessageId);
+
+            if (originalMessage == null)
+            {
+                throw new KeyNotFoundException("Original message not found.");
+            }
+
+            // Only the recipient of the original message can reply.
+            if (originalMessage.RecipientUserId != userId)
+            {
+                throw new UnauthorizedAccessException(
+                    "You are not allowed to reply to this message.");
+            }
+
+            if (!await userService.UserExistsAsync(originalMessage.SenderUserId))
+            {
+                throw new InvalidOperationException(
+                    "The original sender no longer exists.");
+            }
+
+            string username =
+                await userService.GetUsernameByIdAsync(
+                    originalMessage.SenderUserId);
+
+            return new ComposeMessageView
+            {
+                RecipientUserId = originalMessage.SenderUserId,
+                RecipientUserName = username,
+                Subject = CreateReplySubject(originalMessage.Subject),
+                IsReply = true,
+                OriginalMessageId = originalMessage.Id
+            };
+        }
+
+        public async Task SendAsync(ComposeMessageView model)
+        {
+            string senderUserId = currentUser.GetRequiredUserId();
+
+            if (string.IsNullOrWhiteSpace(model.Body))
+            {
+                throw new ArgumentException("Message body is required.");
+            }
+
+            string recipientUserId;
+            string subject;
+
+            if (model.IsReply)
+            {
+                if (!model.OriginalMessageId.HasValue)
+                {
+                    throw new ArgumentException("Original message is required for a reply.");
+                }
+
+                Message? originalMessage =
+                    await messageRepository.GetByIdAsync(model.OriginalMessageId.Value);
+
+                if (originalMessage == null)
+                {
+                    throw new KeyNotFoundException(
+                        "Original message not found.");
+                }
+
+                if (originalMessage.RecipientUserId != senderUserId)
+                {
+                    throw new UnauthorizedAccessException(
+                        "You are not allowed to reply to this message.");
+                }
+
+                recipientUserId = originalMessage.SenderUserId;
+
+                // Never trust the submitted reply subject.
+                subject = CreateReplySubject(originalMessage.Subject);
+            }
+            else
+            {
+                if (string.IsNullOrWhiteSpace(model.RecipientUserName))
+                {
+                    throw new ArgumentException("A recipient is required.");
+                }
+
+                // Resolve the recipient again instead of trusting a hidden ID.
+                recipientUserId =
+                    await userService.GetUserIdByUsernameAsync(
+                        model.RecipientUserName);
+
+                if (recipientUserId == senderUserId)
+                {
+                    throw new ArgumentException(
+                        "You cannot send a message to yourself.");
+                }
+
+                subject = model.Subject?.Trim() ?? string.Empty;
+
+                if (string.IsNullOrWhiteSpace(subject))
+                {
+                    throw new ArgumentException("Subject is required.");
+                }
+            }
+
+            if (recipientUserId == senderUserId)
+            {
+                throw new ArgumentException(
+                    "You cannot send a message to yourself.");
+            }
+
+            if (!await userService.UserExistsAsync(recipientUserId))
+            {
+                throw new KeyNotFoundException("Recipient not found.");
+            }
+
+            string body = model.Body.Trim();
+
+            if (body.Length > 5000)
+            {
+                throw new ArgumentException(
+                    "Message body cannot exceed 5000 characters.");
+            }
+
+            if (subject.Length > 150)
+            {
+                throw new ArgumentException(
+                    "Message subject cannot exceed 150 characters.");
+            }
+
+            Message message = new Message
+            {
+                SenderUserId = senderUserId,
+                RecipientUserId = recipientUserId,
+                Subject = subject,
+                Body = body,
+                SentAt = DateTime.UtcNow,
+                IsRead = false
+            };
+
+            await messageRepository.AddAsync(message);
+        }
+
+        public async Task<int> GetUnreadCountAsync()
+        {
+            string userId = currentUser.GetRequiredUserId();
+
+            return await messageRepository.GetUnreadCountAsync(userId);
+        }
+
+        private static string CreatePreview(string body)
+        {
+            if (string.IsNullOrWhiteSpace(body))
+            {
+                return string.Empty;
+            }
+
+            const int previewLength = 100;
+
+            string preview = body.Trim();
+
+            if (preview.Length <= previewLength)
+            {
+                return preview;
+            }
+
+            return preview.Substring(0, previewLength) + "...";
+        }
+
+        private static string CreateReplySubject(string originalSubject)
+        {
+            const string prefix = "Reply to: ";
+
+            string subject = prefix + originalSubject;
+
+            // The database allows a maximum of 150 characters.
+            return subject.Length <= 150
+                ? subject
+                : subject.Substring(0, 150);
+        }
+    }
+}
+
+
+using Application.Interfaces.Services.Features;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using ViewModels.Discover;
 
 namespace OpenForum.Controllers
@@ -2558,7 +2469,6 @@ namespace OpenForum.Controllers
         }
     }
 }
-
 
 
 using Application.Interfaces.Mappers.Features;
@@ -2612,3 +2522,871 @@ namespace Application.Services.Features
         }
     }
 }
+
+using Application.Interfaces.Services;
+using Application.Interfaces.Services.Features;
+using Application.Interfaces.Services.Forum;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using ViewModels.Comment;
+using ViewModels.MyActivity;
+using ViewModels.Post;
+using ViewModels.Topic;
+
+namespace OpenForum.Controllers
+{
+    [Authorize]
+    public class MyActivityController : Controller
+    {
+        private readonly IMyActivityService myActivityService;
+        private readonly ITopicService topicService;
+        private readonly IPostService postService;
+        private readonly ICommentService commentService;
+
+        public MyActivityController(
+            IMyActivityService myActivityService,
+            ITopicService topicService,
+            IPostService postService,
+            ICommentService commentService)
+        {
+            this.myActivityService = myActivityService;
+            this.topicService = topicService;
+            this.postService = postService;
+            this.commentService = commentService;
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Index(ActivityFilter filter = ActivityFilter.All, int page = 1)
+        {
+            MyActivityIndexView model = await myActivityService.GetMyActivityIndexViewAsync(filter, page);
+
+            return View(model);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> EditTopic(int id, ActivityFilter filter = ActivityFilter.All, int page = 1)
+        {
+            try
+            {
+                TopicIndexView? result = await topicService.GetEditViewAsync(id);
+
+                if (result?.EditTopic == null)
+                    return NotFound();
+
+                ActivityTopicEditView model = new() //should correct
+                {
+                    Id = result.EditTopic.Id,
+                    Title = result.EditTopic.Title
+                };
+
+                ViewData["Filter"] = filter;
+                ViewData["Page"] = page;
+
+                return View(model);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Forbid();
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdateTopic(ActivityTopicEditView model, ActivityFilter filter = ActivityFilter.All, int page = 1)
+        {
+            if (!ModelState.IsValid)
+            {
+                ViewData["Filter"] = filter;
+                ViewData["Page"] = page;
+                return View("EditTopic", model);
+            }
+
+            try
+            {
+                TopicEditView topicModel = new() //normally wouldnt do that here, but to use old functionality it becomes necessary
+                {
+                    Id = model.Id,
+                    Title = model.Title
+                };
+
+                await topicService.UpdateAsync(topicModel);
+
+                return RedirectToAction(nameof(Index), new { filter, page });
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Forbid();
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteTopic(int id, ActivityFilter filter = ActivityFilter.All, int page = 1)
+        {
+            try
+            {
+                await topicService.DeleteAsync(id);
+
+                return RedirectToAction(nameof(Index), new { filter, page });
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Forbid();
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> EditPost(int id, ActivityFilter filter = ActivityFilter.All, int page = 1)
+        {
+            try
+            {
+                PostIndexView? result = await postService.GetEditViewAsync(id);
+
+                if (result?.EditPost == null)
+                    return NotFound();
+
+                ActivityPostEditView model = new() //should correct
+                {
+                    Id = result.EditPost.Id,
+                    Title = result.EditPost.Title,
+                    Content = result.EditPost.Content
+                };
+
+                ViewData["Filter"] = filter;
+                ViewData["Page"] = page;
+
+                return View(model);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Forbid();
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdatePost(ActivityPostEditView model, ActivityFilter filter = ActivityFilter.All, int page = 1)
+        {
+            if (!ModelState.IsValid)
+            {
+                ViewData["Filter"] = filter;
+                ViewData["Page"] = page;
+                return View("EditPost", model);
+            }
+
+            try
+            {
+                PostEditView postModel = new() //normally wouldnt do that here, but to use old functionality it becomes necessary
+                {
+                    Id = model.Id,
+                    Title = model.Title,
+                    Content = model.Content
+                };
+
+                await postService.UpdateAsync(postModel);
+
+                return RedirectToAction(nameof(Index), new { filter, page });
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Forbid();
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeletePost(int id, ActivityFilter filter = ActivityFilter.All, int page = 1)
+        {
+            try
+            {
+                await postService.DeleteAsync(id);
+
+                return RedirectToAction(nameof(Index), new { filter, page });
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Forbid();
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> EditComment(int id, ActivityFilter filter = ActivityFilter.All, int page = 1)
+        {
+            try
+            {
+                CommentIndexView? result = await commentService.GetEditViewAsync(id);
+
+                if (result?.EditComment == null)
+                    return NotFound();
+
+                ActivityCommentEditView model = new()  //should correct
+                {
+                    Id = result.EditComment.Id,
+                    Title = result.EditComment.Title,
+                    Content = result.EditComment.Content,
+                    PostId = result.EditComment.PostId,
+                    ParentCommentId = result.EditComment.ParentCommentId
+                };
+
+                ViewData["Filter"] = filter;
+                ViewData["Page"] = page;
+
+                return View(model);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Forbid();
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdateComment(ActivityCommentEditView model, ActivityFilter filter = ActivityFilter.All, int page = 1)
+        {
+            if (!ModelState.IsValid)
+            {
+                ViewData["Filter"] = filter;
+                ViewData["Page"] = page;
+                return View("EditComment", model);
+            }
+
+            try
+            {
+                CommentEditView commentModel = new() //normally wouldnt do that here, but to use old functionality it becomes necessary
+                {//or does it..
+                    Id = model.Id,
+                    Title = model.Title,
+                    Content = model.Content,
+                    PostId = model.PostId,
+                    ParentCommentId = model.ParentCommentId
+                };
+
+                await commentService.UpdateAsync(commentModel);
+
+                return RedirectToAction(nameof(Index), new { filter, page });
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Forbid();
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteComment(int id, ActivityFilter filter = ActivityFilter.All, int page = 1)
+        {
+            try
+            {
+                await commentService.DeleteAsync(id);
+
+                return RedirectToAction(nameof(Index), new { filter, page });
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Forbid();
+            }
+        }
+    }
+}
+
+using Application.Interfaces.Contexts;
+using Application.Interfaces.Services;
+using Application.Interfaces.Services.Features;
+using Application.Interfaces.Services.User;
+using Application.Services.User;
+using EntityModels;
+using Repository.interfaces;
+using ViewModels.MyActivity;
+
+namespace Application.Services.Features
+{
+    public class MyActivityService : IMyActivityService
+    {
+        private readonly ITopicRepository topicRepository;
+        private readonly IPostRepository postRepository;
+        private readonly ICommentRepository commentRepository;
+        private readonly ICurrentUserService currentUser;
+        private const int PageSize = 5;
+        private const int PreviewLength = 150;
+
+        public MyActivityService(
+            ITopicRepository topicRepository,
+            IPostRepository postRepository,
+            ICommentRepository commentRepository,
+            ICurrentUserService currentUser)
+        {
+            this.topicRepository = topicRepository;
+            this.postRepository = postRepository;
+            this.commentRepository = commentRepository;
+            this.currentUser = currentUser;
+        }
+
+
+        public async Task<MyActivityIndexView> GetMyActivityIndexViewAsync(ActivityFilter filter = ActivityFilter.All, int page = 1)
+        {
+            string userId = currentUser.GetRequiredUserId();
+
+            page = Math.Max(1, page);
+
+            // Retrieve the total counts.
+            int topicCount = await topicRepository.CountByCreatedByUserIdAsync(userId);
+
+            int postCount = await postRepository.CountByCreatedByUserIdAsync(userId);
+
+            int commentCount = await commentRepository.CountByCreatedByUserIdAsync(userId);
+
+            // Calculate the total count for the selected filter.
+            int totalCount = filter switch
+            {
+                ActivityFilter.Topics => topicCount,
+                ActivityFilter.Posts => postCount,
+                ActivityFilter.Comments => commentCount,
+                _ => topicCount + postCount + commentCount
+            };
+
+            // Calculate pagination.
+            int totalPages = Math.Max(1, (int)Math.Ceiling(totalCount / (double)PageSize));
+
+            page = Math.Min(page, totalPages);
+
+            int skip = (page - 1) * PageSize;
+            int take = skip + PageSize;
+
+            // Retrieve records according to the selected filter.
+            List<ActivityListItemView> activities = new List<ActivityListItemView>();
+
+            if (filter == ActivityFilter.All || filter == ActivityFilter.Topics)
+            {
+                IEnumerable<Topic> topics = await topicRepository.GetByCreatedByUserIdAsync(userId, 0, take);
+                activities.AddRange(topics.Select(MapTopic));
+            }
+
+            if (filter == ActivityFilter.All || filter == ActivityFilter.Posts)
+            {
+                IEnumerable<Post> posts = await postRepository.GetByCreatedByUserIdAsync(userId, 0, take);
+                activities.AddRange(posts.Select(MapPost));
+            }
+
+            if (filter == ActivityFilter.All || filter == ActivityFilter.Comments)
+            {
+                IEnumerable<Comment> comments = await commentRepository.GetByCreatedByUserIdAsync(userId, 0, take);
+                activities.AddRange(comments.Select(MapComment));
+            }
+
+            // Sort all retrieved activities chronologically.
+            List<ActivityListItemView> orderedActivities = activities
+                .OrderByDescending(a => a.CreatedAt)
+                .ThenByDescending(a => a.Id)
+                .ThenBy(a => a.Type)
+                .ToList();
+
+            // Apply global pagination.
+            List<ActivityListItemView> pagedActivities = orderedActivities
+                .Skip(skip)
+                .Take(PageSize)
+                .ToList();
+
+            return new MyActivityIndexView
+            {
+                Activities = pagedActivities,
+                Filter = filter,
+                CurrentPage = page,
+                TotalPages = totalPages,
+                TotalCount = totalCount
+            };
+        }
+
+        private static ActivityListItemView MapTopic(Topic topic)
+        {
+            return new ActivityListItemView
+            {
+                Id = topic.Id,
+                Type = ActivityType.Topic,
+                Title = topic.Title,
+                CreatedAt = topic.CreatedAt
+            };
+        }
+
+        private static ActivityListItemView MapPost(Post post)
+        {
+            return new ActivityListItemView
+            {
+                Id = post.Id,
+                Type = ActivityType.Post,
+                Title = post.Title,
+                ContentPreview = CreatePreview(post.Content),
+                CreatedAt = post.CreatedAt,
+                TopicId = post.TopicId,
+                ContextTitle = post.Topic?.Title ?? string.Empty
+            };
+        }
+
+        private static ActivityListItemView MapComment(Comment comment)
+        {
+            bool isReply = comment.ParentCommentId.HasValue;
+            string contextTitle;
+
+            if (isReply)
+            {
+                contextTitle = !string.IsNullOrWhiteSpace(comment.ParentComment?.Title)
+                    ? comment.ParentComment.Title
+                    : comment.ParentComment?.Content ?? string.Empty;
+            }
+            else
+            {
+                contextTitle = comment.Post?.Title ?? string.Empty;
+            }
+
+            return new ActivityListItemView
+            {
+                Id = comment.Id,
+                Type = isReply
+                    ? ActivityType.Reply
+                    : ActivityType.Comment,
+
+                Title = comment.Title,
+                ContentPreview = CreatePreview(comment.Content),
+                CreatedAt = comment.CreatedAt,
+
+                PostId = comment.PostId,
+                TopicId = comment.Post?.TopicId,
+                ParentCommentId = comment.ParentCommentId,
+
+                ContextTitle = CreatePreview(contextTitle)
+            };
+        }
+
+        private static string CreatePreview(string? content)
+        {
+            if (string.IsNullOrWhiteSpace(content))
+            {
+                return string.Empty;
+            }
+
+            content = content.Trim();
+
+            if (content.Length <= PreviewLength)
+            {
+                return content;
+            }
+
+            return content[..PreviewLength] + "...";
+        }
+    }
+}
+
+using Application.Interfaces.Services.User;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using ViewModels.MyUser;
+
+namespace OpenForum.Controllers
+{
+    [Authorize]
+    public class MyProfileController : Controller
+    {
+        private readonly IUserProfileService profileService;
+        private readonly IAccountService accountService;
+
+        public MyProfileController(
+            IUserProfileService profileService,
+            IAccountService accountService)
+        {
+            this.profileService = profileService;
+            this.accountService = accountService;
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Index()
+        {
+            MyProfilePageView model = await BuildProfilePageAsync();
+
+            return View(model);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdateProfile([Bind(Prefix = "EditProfile")] UserProfileEditView model)
+        {
+            if (!ModelState.IsValid)
+            {
+                MyProfilePageView page = await BuildProfilePageAsync(editProfile: model);
+
+                return View("Index", page);
+            }
+
+            try
+            {
+                await profileService.UpdateProfileAsync(model);
+
+                TempData["Success"] = "Profile updated successfully.";
+
+                return RedirectToAction(nameof(Index));
+            }
+            catch (InvalidOperationException ex)
+            {
+                ModelState.AddModelError(string.Empty, ex.Message);
+
+                MyProfilePageView page = await BuildProfilePageAsync(editProfile: model);
+
+                return View("Index", page);
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ChangeEmail([Bind(Prefix = "ChangeEmail")] ChangeEmailView model)
+        {
+            if (!ModelState.IsValid)
+            {
+                MyProfilePageView page = await BuildProfilePageAsync(changeEmail: model);
+
+                return View("Index", page);
+            }
+
+            try
+            {
+                await accountService.ChangeEmailAsync(model.NewEmail);
+
+                TempData["Success"] = "Email changed successfully.";
+
+                return RedirectToAction(nameof(Index));
+            }
+            catch (InvalidOperationException ex)
+            {
+                ModelState.AddModelError(string.Empty, ex.Message);
+
+                MyProfilePageView page = await BuildProfilePageAsync(changeEmail: model);
+
+                return View("Index", page);
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ChangePassword([Bind(Prefix = "ChangePassword")] ChangePasswordView model)
+        {
+            if (!ModelState.IsValid)
+            {
+                MyProfilePageView page = await BuildProfilePageAsync(changePassword: model);
+
+                return View("Index", page);
+            }
+
+            try
+            {
+                await accountService.ChangePasswordAsync(model.CurrentPassword, model.NewPassword);
+
+                TempData["Success"] = "Password changed successfully.";
+
+                return RedirectToAction(nameof(Index));
+            }
+            catch (InvalidOperationException ex)
+            {
+                ModelState.AddModelError(string.Empty, ex.Message);
+
+                MyProfilePageView page = await BuildProfilePageAsync(changePassword: model);
+
+                return View("Index", page);
+            }
+        }
+
+        //This is wrong, should put it in service.. 
+        private async Task<MyProfilePageView> BuildProfilePageAsync(UserProfileEditView? editProfile = null, ChangeEmailView? changeEmail = null, ChangePasswordView? changePassword = null)
+        {
+            MyUserProfileView profile = await profileService.GetLoggedInProfileAsync();
+
+            string email = await accountService.GetEmailAsync();
+
+            return new MyProfilePageView
+            {
+                Profile = profile,
+
+                EditProfile = editProfile ?? new UserProfileEditView
+                {
+                    FirstName = profile.FirstName,
+                    LastName = profile.LastName,
+                    Address = profile.Address,
+                    PostalCode = profile.PostalCode,
+                    City = profile.City,
+                    ProfileText = profile.ProfileText
+                },
+
+                ChangeEmail = changeEmail ?? new ChangeEmailView(),
+
+                ChangePassword = changePassword ?? new ChangePasswordView(),
+
+                CurrentEmail = email
+            };
+        }
+    }
+}
+
+
+using Application.Interfaces.Services.Features;
+using Application.Interfaces.Services.User;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using ViewModels.Friends;
+using ViewModels.PublicUserProfile;
+
+namespace OpenForum.Controllers
+{
+    public class PublicProfileController : Controller
+    {
+        private readonly IUserProfileService profileService;
+        private readonly IFriendshipService friendshipService;
+        private readonly IUserService userService;
+
+        public PublicProfileController(
+            IUserProfileService profileService,
+            IFriendshipService friendshipService,
+            IUserService userService)
+        {
+            this.profileService = profileService;
+            this.friendshipService = friendshipService;
+            this.userService = userService;
+        }
+
+        [Authorize]
+        [HttpGet]
+        public async Task<IActionResult> Index(
+            string userName,
+            string? returnUrl)
+        {
+            if (string.IsNullOrWhiteSpace(userName))
+            {
+                return BadRequest();
+            }
+
+            try
+            {
+                // Resolve the ID internally using the username.
+                string userId =
+                    await userService.GetUserIdByUsernameAsync(userName);
+
+                PublicUserProfileView profileView =
+                    await profileService.GetPublicProfileAsync(
+                        userId, userName);
+
+                UserRelationshipView relationship =
+                    await friendshipService.GetRelationshipAsync(
+                        profileView.UserId);
+
+                profileView.RelationshipStatus =
+                    relationship.RelationshipStatus;
+
+                profileView.CanSendFriendRequest =
+                    relationship.CanSendRequest;
+
+                profileView.FriendshipId =
+                    relationship.FriendshipId;
+
+                ViewData["ReturnUrl"] = Url.IsLocalUrl(returnUrl)
+                    ? returnUrl
+                    : Url.Action("Index", "Topic");
+
+                return View(profileView);
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound();
+            }
+        }
+    }
+}
+
+using Application.Interfaces.Services.User;
+using EntityModels;
+using Repository.interfaces;
+using System;
+using System.Collections.Generic;
+using System.Text;
+using ViewModels.PublicUserProfile;
+using ViewModels.MyUser;
+
+namespace Application.Services.User
+{
+    public class UserProfileService : IUserProfileService
+    {
+        private readonly IUserProfileRepository profileRepository;
+        private readonly ICurrentUserService currentUser;
+
+        public UserProfileService(
+            IUserProfileRepository profileRepository,
+            ICurrentUserService currentUser)
+        {
+            this.profileRepository = profileRepository;
+            this.currentUser = currentUser;
+        }
+
+        public async Task<MyUserProfileView> GetLoggedInProfileAsync()
+        {
+            string userId = currentUser.GetRequiredUserId();
+
+            UserProfile? profile = await profileRepository.GetByUserIdAsync(userId);
+
+            if (profile == null)
+            {
+                throw new InvalidOperationException("User profile could not be found.");
+            }
+
+            return new MyUserProfileView
+            {
+                FirstName = profile.FirstName,
+                LastName = profile.LastName,
+                Address = profile.Address,
+                PostalCode = profile.PostalCode,
+                City = profile.City,
+                ProfileText = profile.ProfileText
+            };
+        }
+
+        public async Task UpdateProfileAsync(UserProfileEditView model)
+        {
+            string userId = currentUser.GetRequiredUserId();
+
+            UserProfile? profile = await profileRepository.GetByUserIdAsync(userId);
+
+            if (profile == null)
+            {
+                throw new InvalidOperationException("User profile could not be found.");
+            }
+
+            profile.FirstName = model.FirstName;
+            profile.LastName = model.LastName;
+            profile.Address = model.Address;
+            profile.PostalCode = model.PostalCode;
+            profile.City = model.City;
+            profile.ProfileText = model.ProfileText;
+
+            await profileRepository.UpdateAsync(profile);
+        }
+
+        public async Task CreateProfileForUserAsync(string userId)
+        {
+            UserProfile profile = new UserProfile
+            {
+                UserId = userId,
+                FirstName = string.Empty,
+                LastName = string.Empty,
+                Address = null,
+                PostalCode = null,
+                City = null,
+                ProfileText= null
+            };
+
+            await profileRepository.AddAsync(profile);
+        }
+
+        public async Task<PublicUserProfileView> GetPublicProfileAsync(string userId, string userName)
+        {
+            UserProfile? profile = await profileRepository.GetByUserIdAsync(userId);
+
+            if (profile == null)
+            {
+                throw new InvalidOperationException("User profile could not be found.");
+            }
+
+            return new PublicUserProfileView
+            {
+                UserId = userId,
+                UserName = userName,
+                FirstName = profile.FirstName,
+                LastName = profile.LastName,
+                City = profile.City,
+                ProfileText = profile.ProfileText
+            };
+        }
+    }
+}
+
+
+using Application.Interfaces.Contexts;
+using Application.Interfaces.Services.User;
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace Application.Services.User
+{
+    public class CurrentUserService : ICurrentUserService
+    {
+        private readonly IUserContext userContext;
+
+        public CurrentUserService(IUserContext userContext)
+        {
+            this.userContext = userContext;
+        }
+
+        public string GetRequiredUserId()
+        {
+            string? userId = userContext.UserId;
+
+            if (!userContext.IsAuthenticated || string.IsNullOrWhiteSpace(userId))
+            {
+                throw new UnauthorizedAccessException("An authenticated user is required.");
+            }
+
+            return userId;
+        }
+
+        public string? GetUserIdOrNull()
+        {
+            string? userId = userContext.UserId;
+
+            if (!userContext.IsAuthenticated || string.IsNullOrWhiteSpace(userId))
+            {
+                return null;
+            }
+
+            return userId;
+        }
+    }
+}
+
+using Application.Interfaces.Services.User;
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace Application.Services.User
+{
+    public class AccountService : IAccountService
+    {
+        private readonly IUserService userService;
+        private readonly ICurrentUserService currentUser;
+
+        public AccountService(
+            IUserService userService,
+            ICurrentUserService currentUser)
+        {
+            this.userService = userService;
+            this.currentUser = currentUser;
+        }
+
+        public async Task<string> GetEmailAsync()
+        {
+            string userId = currentUser.GetRequiredUserId();
+
+            return await userService.GetEmailByIdAsync(userId);
+        }
+
+        public async Task ChangeEmailAsync(string newEmail)
+        {
+            string userId = currentUser.GetRequiredUserId();
+
+            await userService.ChangeEmailAsync(userId, newEmail);
+        }
+
+        public async Task ChangePasswordAsync(string currentPassword, string newPassword)
+        {
+            string userId = currentUser.GetRequiredUserId();
+
+            await userService.ChangePasswordAsync(userId, currentPassword, newPassword);
+        }
+    }
+
+}
+
+

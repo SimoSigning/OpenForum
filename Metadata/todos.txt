@@ -1,13 +1,5 @@
 Things to work through:
 
--- Order doesnt matter, aslong as it gets done eventually.
+1. Need an optimization session. There are some cases where the controllers are doing abit too much, where what it does, needs to be placed within services etc.
 
-1. Discover. The discover feature has been implemented, and its very simple, but it still deserves a debugging session, even if i for the first part did it without use of ai.
-
-2. My Activity. This has been implemented to a large degree with a shoot first, ask questions later mentality, to quicken up the process. The overall approach resonates with how i want it done. But i need proper analysis/debugging session to manifest it properly. Also the controller makes viewmodels, and i'd prefer it in the service, so i need to fix that.
-
-3. Users should be able to see eachothers profile, but not all data.
-
-5. Users should be able to send messages to each other internally, outside the normal forum. 
-
-6. Really need to handle exceptions better. They are thrown, but not handled
+2. All new features: Discover, PublicUserProfile, Friendship, Messaging --> these will need proper analysis/debugging sessions, as they have been implemented very quickly. 

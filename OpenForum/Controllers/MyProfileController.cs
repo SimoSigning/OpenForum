@@ -114,7 +114,6 @@ namespace OpenForum.Controllers
             }
         }
 
-        //This is wrong, should put it in service.. 
         private async Task<MyProfilePageView> BuildProfilePageAsync(UserProfileEditView? editProfile = null, ChangeEmailView? changeEmail = null, ChangePasswordView? changePassword = null)
         {
             MyUserProfileView profile = await profileService.GetLoggedInProfileAsync();

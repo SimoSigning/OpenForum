@@ -227,8 +227,8 @@ namespace OpenForum.Controllers
 
             try
             {
-                CommentEditView commentModel = new() //normally wouldnt do that here, but to use old functionality it becomes necessary
-                {//or does it..
+                CommentEditView commentModel = new()
+                {
                     Id = model.Id,
                     Title = model.Title,
                     Content = model.Content,
