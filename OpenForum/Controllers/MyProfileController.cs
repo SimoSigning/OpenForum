@@ -1,4 +1,5 @@
-﻿using Application.Interfaces.Services.User;
+﻿
+using Application.Interfaces.Services.User;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ViewModels.MyUser;
@@ -22,7 +23,7 @@ namespace OpenForum.Controllers
         [HttpGet]
         public async Task<IActionResult> Index()
         {
-            MyProfilePageView model = await BuildProfilePageAsync();
+            MyProfilePageView model = await profileService.GetMyProfilePageAsync();
 
             return View(model);
         }
@@ -33,7 +34,7 @@ namespace OpenForum.Controllers
         {
             if (!ModelState.IsValid)
             {
-                MyProfilePageView page = await BuildProfilePageAsync(editProfile: model);
+                MyProfilePageView page = await profileService.GetMyProfilePageAsync(editProfile: model);
 
                 return View("Index", page);
             }
@@ -50,7 +51,7 @@ namespace OpenForum.Controllers
             {
                 ModelState.AddModelError(string.Empty, ex.Message);
 
-                MyProfilePageView page = await BuildProfilePageAsync(editProfile: model);
+                MyProfilePageView page = await profileService.GetMyProfilePageAsync(editProfile: model);
 
                 return View("Index", page);
             }
@@ -62,7 +63,7 @@ namespace OpenForum.Controllers
         {
             if (!ModelState.IsValid)
             {
-                MyProfilePageView page = await BuildProfilePageAsync(changeEmail: model);
+                MyProfilePageView page = await profileService.GetMyProfilePageAsync(changeEmail: model);
 
                 return View("Index", page);
             }
@@ -79,7 +80,7 @@ namespace OpenForum.Controllers
             {
                 ModelState.AddModelError(string.Empty, ex.Message);
 
-                MyProfilePageView page = await BuildProfilePageAsync(changeEmail: model);
+                MyProfilePageView page = await profileService.GetMyProfilePageAsync(changeEmail: model);
 
                 return View("Index", page);
             }
@@ -87,11 +88,12 @@ namespace OpenForum.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ChangePassword([Bind(Prefix = "ChangePassword")] ChangePasswordView model)
+        public async Task<IActionResult> ChangePassword(
+            [Bind(Prefix = "ChangePassword")] ChangePasswordView model)
         {
             if (!ModelState.IsValid)
             {
-                MyProfilePageView page = await BuildProfilePageAsync(changePassword: model);
+                MyProfilePageView page =await profileService.GetMyProfilePageAsync(changePassword: model);
 
                 return View("Index", page);
             }
@@ -108,38 +110,10 @@ namespace OpenForum.Controllers
             {
                 ModelState.AddModelError(string.Empty, ex.Message);
 
-                MyProfilePageView page = await BuildProfilePageAsync(changePassword: model);
+                MyProfilePageView page = await profileService.GetMyProfilePageAsync(changePassword: model);
 
                 return View("Index", page);
             }
-        }
-
-        private async Task<MyProfilePageView> BuildProfilePageAsync(UserProfileEditView? editProfile = null, ChangeEmailView? changeEmail = null, ChangePasswordView? changePassword = null)
-        {
-            MyUserProfileView profile = await profileService.GetLoggedInProfileAsync();
-
-            string email = await accountService.GetEmailAsync();
-
-            return new MyProfilePageView
-            {
-                Profile = profile,
-
-                EditProfile = editProfile ?? new UserProfileEditView
-                {
-                    FirstName = profile.FirstName,
-                    LastName = profile.LastName,
-                    Address = profile.Address,
-                    PostalCode = profile.PostalCode,
-                    City = profile.City,
-                    ProfileText = profile.ProfileText
-                },
-
-                ChangeEmail = changeEmail ?? new ChangeEmailView(),
-
-                ChangePassword = changePassword ?? new ChangePasswordView(),
-
-                CurrentEmail = email
-            };
         }
     }
 }

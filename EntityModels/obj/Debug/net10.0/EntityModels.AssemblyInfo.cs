@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("EntityModels")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+cf6f328fcd16a1a250eb381f32eae2ff901d7155")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+da6d22d2d8a82de44bc2cb9664741ca10d74c43e")]
 [assembly: System.Reflection.AssemblyProductAttribute("EntityModels")]
 [assembly: System.Reflection.AssemblyTitleAttribute("EntityModels")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

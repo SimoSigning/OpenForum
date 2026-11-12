@@ -1,12 +1,9 @@
-﻿using Application.Interfaces.Services;
+﻿
+using Application.Interfaces.Services;
 using Application.Interfaces.Services.Features;
-using Application.Interfaces.Services.Forum;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using ViewModels.Comment;
 using ViewModels.MyActivity;
-using ViewModels.Post;
-using ViewModels.Topic;
 
 namespace OpenForum.Controllers
 {
@@ -14,20 +11,10 @@ namespace OpenForum.Controllers
     public class MyActivityController : Controller
     {
         private readonly IMyActivityService myActivityService;
-        private readonly ITopicService topicService;
-        private readonly IPostService postService;
-        private readonly ICommentService commentService;
 
-        public MyActivityController(
-            IMyActivityService myActivityService,
-            ITopicService topicService,
-            IPostService postService,
-            ICommentService commentService)
+        public MyActivityController(IMyActivityService myActivityService)
         {
             this.myActivityService = myActivityService;
-            this.topicService = topicService;
-            this.postService = postService;
-            this.commentService = commentService;
         }
 
         [HttpGet]
@@ -43,16 +30,10 @@ namespace OpenForum.Controllers
         {
             try
             {
-                TopicIndexView? result = await topicService.GetEditViewAsync(id);
+                ActivityTopicEditView? model = await myActivityService.GetEditTopicViewAsync(id);
 
-                if (result?.EditTopic == null)
+                if (model == null)
                     return NotFound();
-
-                ActivityTopicEditView model = new() //should correct
-                {
-                    Id = result.EditTopic.Id,
-                    Title = result.EditTopic.Title
-                };
 
                 ViewData["Filter"] = filter;
                 ViewData["Page"] = page;
@@ -73,18 +54,13 @@ namespace OpenForum.Controllers
             {
                 ViewData["Filter"] = filter;
                 ViewData["Page"] = page;
+
                 return View("EditTopic", model);
             }
 
             try
             {
-                TopicEditView topicModel = new() //normally wouldnt do that here, but to use old functionality it becomes necessary
-                {
-                    Id = model.Id,
-                    Title = model.Title
-                };
-
-                await topicService.UpdateAsync(topicModel);
+                await myActivityService.UpdateTopicAsync(model);
 
                 return RedirectToAction(nameof(Index), new { filter, page });
             }
@@ -100,7 +76,7 @@ namespace OpenForum.Controllers
         {
             try
             {
-                await topicService.DeleteAsync(id);
+                await myActivityService.DeleteTopicAsync(id);
 
                 return RedirectToAction(nameof(Index), new { filter, page });
             }
@@ -115,17 +91,10 @@ namespace OpenForum.Controllers
         {
             try
             {
-                PostIndexView? result = await postService.GetEditViewAsync(id);
+                ActivityPostEditView? model = await myActivityService.GetEditPostViewAsync(id);
 
-                if (result?.EditPost == null)
+                if (model == null)
                     return NotFound();
-
-                ActivityPostEditView model = new() //should correct
-                {
-                    Id = result.EditPost.Id,
-                    Title = result.EditPost.Title,
-                    Content = result.EditPost.Content
-                };
 
                 ViewData["Filter"] = filter;
                 ViewData["Page"] = page;
@@ -146,19 +115,13 @@ namespace OpenForum.Controllers
             {
                 ViewData["Filter"] = filter;
                 ViewData["Page"] = page;
+
                 return View("EditPost", model);
             }
 
             try
             {
-                PostEditView postModel = new() //normally wouldnt do that here, but to use old functionality it becomes necessary
-                {
-                    Id = model.Id,
-                    Title = model.Title,
-                    Content = model.Content
-                };
-
-                await postService.UpdateAsync(postModel);
+                await myActivityService.UpdatePostAsync(model);
 
                 return RedirectToAction(nameof(Index), new { filter, page });
             }
@@ -174,7 +137,7 @@ namespace OpenForum.Controllers
         {
             try
             {
-                await postService.DeleteAsync(id);
+                await myActivityService.DeletePostAsync(id);
 
                 return RedirectToAction(nameof(Index), new { filter, page });
             }
@@ -184,24 +147,16 @@ namespace OpenForum.Controllers
             }
         }
 
+
         [HttpGet]
         public async Task<IActionResult> EditComment(int id, ActivityFilter filter = ActivityFilter.All, int page = 1)
         {
             try
             {
-                CommentIndexView? result = await commentService.GetEditViewAsync(id);
+                ActivityCommentEditView? model = await myActivityService.GetEditCommentViewAsync(id);
 
-                if (result?.EditComment == null)
+                if (model == null)
                     return NotFound();
-
-                ActivityCommentEditView model = new()  //should correct
-                {
-                    Id = result.EditComment.Id,
-                    Title = result.EditComment.Title,
-                    Content = result.EditComment.Content,
-                    PostId = result.EditComment.PostId,
-                    ParentCommentId = result.EditComment.ParentCommentId
-                };
 
                 ViewData["Filter"] = filter;
                 ViewData["Page"] = page;
@@ -222,21 +177,13 @@ namespace OpenForum.Controllers
             {
                 ViewData["Filter"] = filter;
                 ViewData["Page"] = page;
+
                 return View("EditComment", model);
             }
 
             try
             {
-                CommentEditView commentModel = new()
-                {
-                    Id = model.Id,
-                    Title = model.Title,
-                    Content = model.Content,
-                    PostId = model.PostId,
-                    ParentCommentId = model.ParentCommentId
-                };
-
-                await commentService.UpdateAsync(commentModel);
+                await myActivityService.UpdateCommentAsync(model);
 
                 return RedirectToAction(nameof(Index), new { filter, page });
             }
@@ -252,7 +199,7 @@ namespace OpenForum.Controllers
         {
             try
             {
-                await commentService.DeleteAsync(id);
+                await myActivityService.DeleteCommentAsync(id);
 
                 return RedirectToAction(nameof(Index), new { filter, page });
             }

@@ -1,11 +1,11 @@
-﻿using Application.Interfaces.Services.User;
+﻿
+using Application.Interfaces.Services.Features;
+using Application.Interfaces.Services.User;
 using EntityModels;
 using Repository.interfaces;
-using System;
-using System.Collections.Generic;
-using System.Text;
-using ViewModels.PublicUserProfile;
+using ViewModels.Friends;
 using ViewModels.MyUser;
+using ViewModels.PublicUserProfile;
 
 namespace Application.Services.User
 {
@@ -13,13 +13,51 @@ namespace Application.Services.User
     {
         private readonly IUserProfileRepository profileRepository;
         private readonly ICurrentUserService currentUser;
+        private readonly IAccountService accountService;
+        private readonly IUserService userService;
+        private readonly IFriendshipService friendshipService;
 
         public UserProfileService(
             IUserProfileRepository profileRepository,
-            ICurrentUserService currentUser)
+            ICurrentUserService currentUser,
+            IAccountService accountService,
+            IUserService userService,
+            IFriendshipService friendshipService)
         {
             this.profileRepository = profileRepository;
             this.currentUser = currentUser;
+            this.accountService = accountService;
+            this.userService = userService;
+            this.friendshipService = friendshipService;
+        }
+
+        public async Task<MyProfilePageView> GetMyProfilePageAsync(UserProfileEditView? editProfile = null, ChangeEmailView? changeEmail = null, 
+            ChangePasswordView? changePassword = null)
+        {
+            MyUserProfileView profile =await GetLoggedInProfileAsync();
+
+            string email = await accountService.GetEmailAsync();
+
+            return new MyProfilePageView
+            {
+                Profile = profile,
+
+                EditProfile = editProfile ?? new UserProfileEditView
+                {
+                    FirstName = profile.FirstName,
+                    LastName = profile.LastName,
+                    Address = profile.Address,
+                    PostalCode = profile.PostalCode,
+                    City = profile.City,
+                    ProfileText = profile.ProfileText
+                },
+
+                ChangeEmail = changeEmail ?? new ChangeEmailView(),
+
+                ChangePassword = changePassword ?? new ChangePasswordView(),
+
+                CurrentEmail = email
+            };
         }
 
         public async Task<MyUserProfileView> GetLoggedInProfileAsync()
@@ -75,15 +113,38 @@ namespace Application.Services.User
                 Address = null,
                 PostalCode = null,
                 City = null,
-                ProfileText= null
+                ProfileText = null
             };
 
             await profileRepository.AddAsync(profile);
         }
 
-        public async Task<PublicUserProfileView> GetPublicProfileAsync(string userId, string userName)
+        public async Task<PublicUserProfileView> GetPublicProfilePageAsync(
+            string userName)
         {
-            UserProfile? profile = await profileRepository.GetByUserIdAsync(userId);
+            if (string.IsNullOrWhiteSpace(userName))
+            {
+                throw new ArgumentException("A username is required.", nameof(userName));
+            }
+
+            string userId = await userService.GetUserIdByUsernameAsync(userName);
+
+            PublicUserProfileView profile = await GetPublicProfileAsync(userId, userName);
+
+            UserRelationshipView relationship = await friendshipService.GetRelationshipAsync(profile.UserId);
+
+            profile.RelationshipStatus = relationship.RelationshipStatus;
+
+            profile.CanSendFriendRequest = relationship.CanSendRequest;
+
+            profile.FriendshipId = relationship.FriendshipId;
+
+            return profile;
+        }
+
+        public async Task<PublicUserProfileView> GetPublicProfileAsync(string userId,string userName)
+        {
+            UserProfile? profile =await profileRepository.GetByUserIdAsync(userId);
 
             if (profile == null)
             {

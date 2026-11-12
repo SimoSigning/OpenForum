@@ -3502,23 +3502,23 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\MisterDerp\\.nuget\\packages\\": {},
+    "C:\\Users\\simon\\.nuget\\packages\\": {},
     "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\OpenForum\\OpenForum.csproj",
+      "projectUniqueName": "C:\\Users\\simon\\source\\repos\\OpenForum\\OpenForum\\OpenForum.csproj",
       "projectName": "OpenForum",
-      "projectPath": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\OpenForum\\OpenForum.csproj",
-      "packagesPath": "C:\\Users\\MisterDerp\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\OpenForum\\obj\\",
+      "projectPath": "C:\\Users\\simon\\source\\repos\\OpenForum\\OpenForum\\OpenForum.csproj",
+      "packagesPath": "C:\\Users\\simon\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\simon\\source\\repos\\OpenForum\\OpenForum\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
       ],
       "configFilePaths": [
-        "C:\\Users\\MisterDerp\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Users\\simon\\AppData\\Roaming\\NuGet\\NuGet.Config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
@@ -3535,14 +3535,14 @@
           "framework": "net10.0",
           "targetAlias": "net10.0",
           "projectReferences": {
-            "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\Application\\Application.csproj": {
-              "projectPath": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\Application\\Application.csproj"
+            "C:\\Users\\simon\\source\\repos\\OpenForum\\Application\\Application.csproj": {
+              "projectPath": "C:\\Users\\simon\\source\\repos\\OpenForum\\Application\\Application.csproj"
             },
-            "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\Identity\\Identity.csproj": {
-              "projectPath": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\Identity\\Identity.csproj"
+            "C:\\Users\\simon\\source\\repos\\OpenForum\\Identity\\Identity.csproj": {
+              "projectPath": "C:\\Users\\simon\\source\\repos\\OpenForum\\Identity\\Identity.csproj"
             },
-            "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\ViewModels\\ViewModels.csproj": {
-              "projectPath": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\ViewModels\\ViewModels.csproj"
+            "C:\\Users\\simon\\source\\repos\\OpenForum\\ViewModels\\ViewModels.csproj": {
+              "projectPath": "C:\\Users\\simon\\source\\repos\\OpenForum\\ViewModels\\ViewModels.csproj"
             }
           }
         }
@@ -3612,7 +3612,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.401/PortableRuntimeIdentifierGraph.json",
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.402/PortableRuntimeIdentifierGraph.json",
         "packagesToPrune": {
           "Microsoft.AspNetCore": "(,10.0.32767]",
           "Microsoft.AspNetCore.Antiforgery": "(,10.0.32767]",

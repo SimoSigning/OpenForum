@@ -1,6 +1,1016 @@
-i have these controllers and corresponding services. It will be too much to do a larger scale optimization of all this in relation to
-all the possible parameters one can optimize. So i want to take one thing at a time. The first is that controllers are allowed to
-request and receive viewmodels from the services. But it is the services responsibility to build viewmodels. This pattern is currently broken some places. Is it possible for you to help adjust so this pattern becomes consistent all the way?
+i have these controllers and corresponding services. The topic, post and comment flow has already been optimized. It will be too much to do a larger scale optimization of all this in relation to all aspects to optimize. Instead i just want to focus on making the pattern of viewmodels being created in the service consistent.
+
+
+using Application.Interfaces.Services.Forum;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using ViewModels.Topic;
+
+namespace OpenForum.Controllers
+{
+    public class TopicController : Controller
+    {
+        private readonly ITopicService topicService;
+
+        public TopicController(ITopicService topicService)
+        {
+            this.topicService = topicService;
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Index(int page = 1)
+        {
+            TopicIndexView model = await topicService.GetTopicIndexViewAsync(page);
+
+            ViewData["CurrentPage"] = model.CurrentPage;
+
+            return View(model);
+        }
+
+        [Authorize]
+        [HttpGet]
+        public async Task<IActionResult> Edit(int id, int page = 1)
+        {
+            try
+            {
+                TopicIndexView? model = await topicService.GetEditViewAsync(id, page);
+
+                if (model == null)
+                    return NotFound();
+
+                ViewData["CurrentPage"] = model.CurrentPage;
+
+                return View("Index", model);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Forbid();
+            }
+        }
+
+        [Authorize]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create(TopicCreateView model, int page = 1)
+        {
+            if (!ModelState.IsValid)
+            {
+                TopicIndexView viewModel = await topicService.GetTopicIndexViewAsync(page, model);
+
+                ViewData["CurrentPage"] = viewModel.CurrentPage;
+
+                return View("Index", viewModel);
+            }
+
+            try
+            {
+                await topicService.CreateAsync(model);
+
+                return RedirectToAction(nameof(Index), new { page });
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Forbid();
+            }
+        }
+
+        [Authorize]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Update(TopicEditView model, int page = 1)
+        {
+            if (!ModelState.IsValid)
+            {
+                try
+                {
+                    TopicIndexView? viewModel = await topicService.GetEditViewAsync(model.Id, page, model);
+
+                    if (viewModel == null)
+                        return NotFound();
+
+                    ViewData["CurrentPage"] = viewModel.CurrentPage;
+
+                    return View("Index", viewModel);
+                }
+                catch (UnauthorizedAccessException)
+                {
+                    return Forbid();
+                }
+            }
+
+            try
+            {
+                await topicService.UpdateAsync(model);
+
+                return RedirectToAction(nameof(Index), new { page });
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Forbid();
+            }
+        }
+
+        [Authorize]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Delete(int id, int page = 1)
+        {
+            try
+            {
+                await topicService.DeleteAsync(id);
+
+                return RedirectToAction(nameof(Index), new { page });
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Forbid();
+            }
+        }
+    }
+}
+
+
+using Application.common.Application.Common;
+using Application.Interfaces.Contexts;
+using Application.Interfaces.Mappers.Forum;
+using Application.Interfaces.Services.Forum;
+using Application.Interfaces.Services.User;
+using EntityModels;
+using Repository.interfaces;
+using ViewModels.Topic;
+
+namespace Application.Services.Forum
+{
+    public class TopicService : ITopicService
+    {
+        private readonly ITopicRepository topicRepository;
+        private readonly ITopicMapper topicMapper;
+        private readonly ICurrentUserService currentUser;
+        private readonly IUserService userService;
+        private const int PageSize = 5;
+
+        public TopicService(
+            ITopicRepository topicRepository,
+            ITopicMapper topicMapper,
+            ICurrentUserService currentUser,
+            IUserService userService)
+        {
+            this.topicRepository = topicRepository;
+            this.topicMapper = topicMapper;
+            this.currentUser = currentUser;
+            this.userService = userService;
+        }
+
+        public async Task<TopicIndexView> GetTopicIndexViewAsync(int page = 1, TopicCreateView? createTopic = null)
+        {
+            page = Math.Max(1, page);
+
+            (IEnumerable<Topic> Items, int TotalCount) result = await topicRepository.GetPageAsync(page, PageSize);
+
+            int totalPages = Math.Max(1, (int)Math.Ceiling(result.TotalCount / (double)PageSize));
+
+            // If the requested page is beyond the last page,
+            // use the last valid page instead.
+            if (page > totalPages)
+            {
+                page = totalPages;
+                result = await topicRepository.GetPageAsync(page, PageSize);
+            }
+
+            string? userId = currentUser.GetUserIdOrNull();
+
+            List<TopicListItemView> topics = result.Items.Select(
+                topic => 
+                {
+                    TopicListItemView item = topicMapper.ToListItemView(topic);
+                    item.CreatorDisplayName = CreatorDisplayNameResolver.Resolve(userId, topic.CreatedByUserId, item.Creator);
+                    item.CanManage = userId != null && topic.CreatedByUserId == userId;
+                    return item;
+                })
+                .ToList();
+
+            return new TopicIndexView
+            {
+                Topics = topics,
+                CreateTopic = createTopic ?? new TopicCreateView(),
+                EditTopic = null,
+                CanCreate = userId != null,
+                CurrentPage = page,
+                TotalPages = totalPages
+            };
+        }
+
+        public async Task<TopicIndexView?> GetEditViewAsync(int id, int page = 1, TopicEditView? editTopic = null)
+        {
+            Topic? topic = await topicRepository.GetByIdAsync(id);
+
+            if (topic == null)
+                return null;
+
+            string userId = currentUser.GetRequiredUserId();
+
+            if (topic.CreatedByUserId != userId)
+                throw new UnauthorizedAccessException("You are not allowed to edit this topic.");
+
+            TopicIndexView viewModel = await GetTopicIndexViewAsync(page);
+
+            viewModel.EditTopic = editTopic ?? topicMapper.ToEditView(topic);
+
+            return viewModel;
+        }
+
+        public async Task CreateAsync(TopicCreateView model)
+        {
+            string userId = currentUser.GetRequiredUserId();
+
+            Topic topic = topicMapper.ToEntity(model);
+            topic.CreatedByUserId = userId;
+            topic.CreatedByUserName = await userService.GetUsernameByIdAsync(userId);
+
+            await topicRepository.AddAsync(topic);
+        }
+
+        public async Task UpdateAsync(TopicEditView model)
+        {
+            string userId = currentUser.GetRequiredUserId();
+            Topic? topic = await topicRepository.GetByIdAsync(model.Id);
+
+            if (topic == null)
+                return;
+
+            if (topic.CreatedByUserId != userId)
+                throw new UnauthorizedAccessException("You are not allowed to edit this topic.");
+
+            topic.Title = model.Title;
+
+            await topicRepository.UpdateAsync(topic);
+        }
+
+        public async Task DeleteAsync(int id)
+        {
+            string userId = currentUser.GetRequiredUserId();
+
+            Topic? topic = await topicRepository.GetByIdAsync(id);
+
+            if (topic == null)
+                return;
+
+            if (topic.CreatedByUserId != userId)
+                throw new UnauthorizedAccessException("You are not allowed to delete this topic.");
+
+            await topicRepository.DeleteAsync(id);
+        }
+
+    }
+}
+
+using Application.Interfaces.Services.Forum;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using ViewModels.Post;
+
+namespace OpenForum.Controllers
+{
+    public class PostController : Controller
+    {
+        private readonly IPostService postService;
+
+        public PostController(IPostService postService)
+        {
+            this.postService = postService;
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Details(int id, int page = 1)
+        {
+            PostIndexView? model = await postService.GetPostIndexViewAsync(id, page);
+
+            if (model == null)
+                return NotFound();
+
+            ViewData["CurrentPage"] = model.CurrentPage;
+
+            return View(model);
+        }
+
+        [Authorize]
+        [HttpGet]
+        public async Task<IActionResult> Edit(int id, int page = 1)
+        {
+            try
+            {
+                PostIndexView? model = await postService.GetEditViewAsync(id, page);
+
+                if (model == null)
+                    return NotFound();
+
+                ViewData["CurrentPage"] = model.CurrentPage;
+
+                return View("Details", model);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Forbid();
+            }
+        }
+
+        [Authorize]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create(PostCreateView model, int page = 1)
+        {
+            if (!ModelState.IsValid)
+            {
+                PostIndexView? viewModel = await postService.GetPostIndexViewAsync(model.TopicId, page, model);
+
+                if (viewModel == null)
+                    return NotFound();
+
+                ViewData["CurrentPage"] = viewModel.CurrentPage;
+
+                return View("Details", viewModel);
+            }
+
+            try
+            {
+                await postService.CreateAsync(model);
+
+                return RedirectToAction(nameof(Details), new { id = model.TopicId, page });
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Forbid();
+            }
+        }
+
+        [Authorize]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Update(PostEditView model, int page = 1)
+        {
+            if (!ModelState.IsValid)
+            {
+                try
+                {
+                    PostIndexView? viewModel =
+                        await postService.GetEditViewAsync(model.Id, page, model);
+
+                    if (viewModel == null)
+                        return NotFound();
+
+                    ViewData["CurrentPage"] = viewModel.CurrentPage;
+
+                    return View("Details", viewModel);
+                }
+                catch (UnauthorizedAccessException)
+                {
+                    return Forbid();
+                }
+            }
+
+            try
+            {
+                await postService.UpdateAsync(model);
+
+                return RedirectToAction(nameof(Details), new { id = model.TopicId, page });
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Forbid();
+            }
+        }
+
+        [Authorize]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Delete(int id, int topicId, int page = 1)
+        {
+            try
+            {
+                await postService.DeleteAsync(id);
+
+                return RedirectToAction(nameof(Details), new { id = topicId, page });
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Forbid();
+            }
+        }
+    }
+}
+
+
+using Application.common.Application.Common;
+using Application.Interfaces.Contexts;
+using Application.Interfaces.Mappers.Forum;
+using Application.Interfaces.Services.Forum;
+using Application.Interfaces.Services.User;
+using Application.Mappers;
+using EntityModels;
+using Repository.interfaces;
+using ViewModels.Post;
+using ViewModels.Topic;
+
+namespace Application.Services.Forum
+{
+
+    public class PostService : IPostService
+    {
+        private readonly IPostRepository postRepository;
+        private readonly ITopicRepository topicRepository;
+        private readonly ILikeRepository likeRepository;
+        private readonly IPostMapper postMapper;
+        private readonly ICurrentUserService currentUser;
+        private readonly IUserService userService;
+        private const int PageSize = 5;
+
+        public PostService(
+            IPostRepository postRepository,
+            ITopicRepository topicRepository,
+            ILikeRepository likeRepository,
+            IPostMapper postMapper,
+            ICurrentUserService currentUser,
+            IUserService userService)
+        {
+            this.postRepository = postRepository;
+            this.topicRepository = topicRepository;
+            this.likeRepository = likeRepository;
+            this.postMapper = postMapper;
+            this.currentUser = currentUser;
+            this.userService = userService;
+        }
+
+        public async Task<PostIndexView?> GetPostIndexViewAsync(int topicId, int page = 1, PostCreateView? createPost = null)
+        {
+            Topic? topic = await topicRepository.GetByIdAsync(topicId);
+
+            if (topic == null)
+                return null;
+
+            page = Math.Max(1, page);
+
+            (IEnumerable<Post> Items, int TotalCount) result = await postRepository.GetPageByTopicIdAsync(topicId, page, PageSize);
+
+            int totalPages = Math.Max(1, (int)Math.Ceiling(result.TotalCount / (double)PageSize));
+
+            // If the requested page is beyond the last page,
+            // use the last valid page instead.
+            if (page > totalPages)
+            {
+                page = totalPages;
+                result = await postRepository.GetPageByTopicIdAsync(topicId, page, PageSize);
+            }
+
+            string? userId = currentUser.GetUserIdOrNull();
+
+            List<Post> postItems = result.Items.ToList();
+            List<int> postIds = postItems.Select(p => p.Id).ToList();
+
+            Dictionary<int, int> likeCounts = await likeRepository.GetPostLikeCountsAsync(postIds);
+            HashSet<int> likedPostIds = userId == null ? new HashSet<int>() : (await likeRepository.GetPostIdsLikedByUserAsync(postIds, userId)).ToHashSet();
+
+            List<PostListItemView> posts = postItems.Select(post =>
+            {
+                PostListItemView item = postMapper.ToListItemView(post);
+                item.CreatorDisplayName = CreatorDisplayNameResolver.Resolve(userId, post.CreatedByUserId, item.Creator);
+                item.CanManage = userId != null && post.CreatedByUserId == userId;
+                item.LikeCount = likeCounts.GetValueOrDefault(post.Id);
+                item.IsLikedByCurrentUser = likedPostIds.Contains(post.Id);
+                item.CanLike = userId != null;
+                return item;
+            }).ToList();
+
+            return new PostIndexView
+            {
+                TopicId = topic.Id,
+                TopicTitle = topic.Title,
+                TopicCreator = topic.CreatedByUserName,
+                TopicCreatorId = topic.CreatedByUserId,
+                TopicCreatedAt = topic.CreatedAt,
+                Posts = posts,
+                CreatePost = createPost ?? new PostCreateView
+                {
+                    TopicId = topicId
+                },
+                EditPost = null,
+                CanCreate = userId != null,
+                CurrentPage = page,
+                TotalPages = totalPages
+            };
+        }
+
+        public async Task<PostIndexView?> GetEditViewAsync(int postId, int page = 1, PostEditView? editPost = null)
+        {
+            Post? post = await postRepository.GetByIdAsync(postId);
+
+            if (post == null)
+                return null;
+
+            string userId = currentUser.GetRequiredUserId();
+
+            if (post.CreatedByUserId != userId)
+                throw new UnauthorizedAccessException("You are not allowed to edit this post.");
+
+            PostIndexView? viewModel = await GetPostIndexViewAsync(post.TopicId, page);
+
+            if (viewModel == null)
+                return null;
+
+            viewModel.EditPost = editPost ?? postMapper.ToEditView(post);
+
+            return viewModel;
+        }
+
+        public async Task CreateAsync(PostCreateView model)
+        {
+            string userId = currentUser.GetRequiredUserId();
+
+            Post post = postMapper.ToEntity(model);
+            post.CreatedByUserId = userId;
+            post.CreatedByUserName = await userService.GetUsernameByIdAsync(userId);
+
+            await postRepository.AddAsync(post);
+        }
+
+        public async Task UpdateAsync(PostEditView model)
+        {
+            string userId = currentUser.GetRequiredUserId();
+            Post? post = await postRepository.GetByIdAsync(model.Id);
+
+            if (post == null)
+                return;
+
+            if (post.CreatedByUserId != userId)
+                throw new UnauthorizedAccessException("You are not allowed to edit this post.");
+
+            post.Id = model.Id;
+            post.Content = model.Content;
+
+            await postRepository.UpdateAsync(post);
+        }
+
+        public async Task DeleteAsync(int id)
+        {
+            string userId = currentUser.GetRequiredUserId();
+            Post? post = await postRepository.GetByIdAsync(id);
+
+            if (post == null)
+                return;
+
+            if (post.CreatedByUserId != userId)
+                throw new UnauthorizedAccessException("You are not allowed to delete this post.");
+
+            await likeRepository.DeleteByPostIdAsync(id);
+            await postRepository.DeleteAsync(id);
+        }
+
+    }
+}
+
+using Application.Interfaces.Services.Forum;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using ViewModels.Comment;
+
+namespace OpenForum.Controllers
+{
+    public class CommentController : Controller
+    {
+        private readonly ICommentService commentService;
+
+        public CommentController(ICommentService commentService)
+        {
+            this.commentService = commentService;
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Details(int id, int page = 1)
+        {
+            CommentIndexView? model = await commentService.GetCommentIndexViewAsync(id, page);
+
+            if (model == null)
+                return NotFound();
+
+            ViewData["CurrentPage"] = model.CurrentPage;
+
+            return View(model);
+        }
+
+        [Authorize]
+        [HttpGet]
+        public async Task<IActionResult> Edit(int id, int page = 1)
+        {
+            try
+            {
+                CommentIndexView? model = await commentService.GetEditViewAsync(id, page);
+
+                if (model == null)
+                    return NotFound();
+
+                ViewData["CurrentPage"] = model.CurrentPage;
+
+                return View("Details", model);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Forbid();
+            }
+        }
+
+        [Authorize]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create(CommentCreateView model, int page = 1)
+        {
+
+            // Only top-level comments need a title.
+            if (!model.ParentCommentId.HasValue && string.IsNullOrWhiteSpace(model.Title))
+            {
+                ModelState.AddModelError(nameof(model.Title), "A title is required for a comment.");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                CommentIndexView? invalidView = await commentService.GetCommentIndexViewAsync(model.PostId, page, model);
+
+                if (invalidView == null)
+                    return NotFound();
+
+                ViewData["CurrentPage"] = invalidView.CurrentPage;
+                ViewData["PostId"] = model.PostId;
+
+                return View("Details", invalidView);
+            }
+
+            try
+            {
+                await commentService.CreateAsync(model);
+
+                if (model.ParentCommentId.HasValue)
+                {
+                    return Redirect(Url.Action(nameof(Details), "Comment", new { id = model.PostId, page }) + $"#comment-{model.ParentCommentId.Value}");
+                }
+
+                return RedirectToAction(nameof(Details), new { id = model.PostId, page });
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Forbid();
+            }
+            catch (ArgumentException ex)
+            {
+                ModelState.AddModelError(string.Empty, ex.Message);
+
+                CommentIndexView? invalidView = await commentService.GetCommentIndexViewAsync(model.PostId, page, model);
+
+                if (invalidView == null)
+                    return NotFound();
+
+                ViewData["CurrentPage"] = invalidView.CurrentPage;
+                ViewData["PostId"] = model.PostId;
+
+                return View("Details", invalidView);
+            }
+        }
+
+        [Authorize]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Update(CommentEditView model, int page = 1)
+        {
+            if (!ModelState.IsValid)
+            {
+                try
+                {
+                    CommentIndexView? viewModel = await commentService.GetEditViewAsync(model.Id, page, model);
+
+                    if (viewModel == null)
+                        return NotFound();
+
+                    ViewData["CurrentPage"] = viewModel.CurrentPage;
+
+                    return View("Details", viewModel);
+                }
+                catch (UnauthorizedAccessException)
+                {
+                    return Forbid();
+                }
+            }
+
+            try
+            {
+                await commentService.UpdateAsync(model);
+
+                if (model.ParentCommentId.HasValue)
+                {
+                    return Redirect(Url.Action(nameof(Details), "Comment", new { id = model.PostId, page }) + $"#comment-{model.ParentCommentId.Value}");
+                }
+
+                return RedirectToAction(nameof(Details), new { id = model.PostId, page });
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Forbid();
+            }
+        }
+
+        [Authorize]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Delete(int id, int postId, int page = 1)
+        {
+            try
+            {
+                await commentService.DeleteAsync(id);
+
+                return RedirectToAction(nameof(Details), new { id = postId, page });
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Forbid();
+            }
+        }
+    }
+}
+
+
+using Application.common.Application.Common;
+using Application.Interfaces.Contexts;
+using Application.Interfaces.Mappers.Forum;
+using Application.Interfaces.Services.Forum;
+using Application.Interfaces.Services.User;
+using EntityModels;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using Repository.interfaces;
+using ViewModels.Comment;
+
+namespace Application.Services.Forum
+{
+    public class CommentService : ICommentService
+    {
+        private readonly ICommentRepository commentRepository;
+        private readonly IPostRepository postRepository;
+        private readonly ILikeRepository likeRepository;
+        private readonly ICommentMapper commentMapper;
+        private readonly ICurrentUserService currentUser;
+        private readonly IUserService userService;
+        private const int PageSize = 5;
+
+        public CommentService(
+            ICommentRepository commentRepository,
+            IPostRepository postRepository,
+            ILikeRepository likeRepository,
+            ICommentMapper commentMapper,
+            ICurrentUserService currentUser,
+            IUserService userService
+            )
+        {
+            this.commentRepository = commentRepository;
+            this.postRepository = postRepository;
+            this.likeRepository = likeRepository;
+            this.commentMapper = commentMapper;
+            this.currentUser = currentUser;
+            this.userService = userService;
+        }
+
+
+        public async Task<CommentIndexView?> GetCommentIndexViewAsync(int postId, int page = 1, CommentCreateView? createComment = null)
+        {
+            Post? post = await postRepository.GetByIdAsync(postId);
+
+            if (post == null)
+                return null;
+
+            page = Math.Max(1, page);
+
+            (IEnumerable<Comment> Items, int TotalCount) result = await commentRepository.GetPageByPostIdAsync(postId, page, PageSize);
+
+            int totalPages = (int)Math.Ceiling(result.TotalCount / (double)PageSize);
+
+            if (totalPages > 0 && page > totalPages)
+            {
+                page = totalPages;
+                result = await commentRepository.GetPageByPostIdAsync(postId, page, PageSize);
+            }
+
+            string? userId = currentUser.GetUserIdOrNull();
+
+            Dictionary<int, CommentListItemView> commentsById = result.Items.ToDictionary(
+                c => c.Id,
+                c =>
+                {
+                    CommentListItemView view = commentMapper.ToListItemView(c);
+                    view.CreatorDisplayName = CreatorDisplayNameResolver.Resolve(userId, c.CreatedByUserId, view.Creator);
+                    view.CanManage = userId != null && c.CreatedByUserId == userId;
+                    return view;
+                });
+
+            List<int> parentIds = result.Items.Select(c => c.Id).ToList();
+
+            while (parentIds.Count > 0)
+            {
+                List<Comment> replies = await commentRepository.GetRepliesByParentIdsAsync(postId, parentIds);
+                parentIds = new List<int>();
+
+                foreach (Comment reply in replies)
+                {
+                    CommentListItemView replyView = commentMapper.ToListItemView(reply);
+                    replyView.CreatorDisplayName = CreatorDisplayNameResolver.Resolve(userId,reply.CreatedByUserId, replyView.Creator);
+                    replyView.CanManage = reply.CreatedByUserId == userId;
+
+                    if (reply.ParentCommentId.HasValue && commentsById.TryGetValue(reply.ParentCommentId.Value, out CommentListItemView? parentView))
+                    {
+                        replyView.ParentTitle = !string.IsNullOrWhiteSpace(parentView.Title) ? parentView.Title : parentView.Content;
+                        replyView.ParentCreator = parentView.Creator;
+                        parentView.Replies.Add(replyView);
+                    }
+
+                    commentsById.Add(reply.Id, replyView);
+                    parentIds.Add(reply.Id);
+                }
+            }
+
+            int postLikeCount = await likeRepository.GetPostLikeCountAsync(post.Id);
+            bool isPostLikedByCurrentUser = userId != null && await likeRepository.IsPostLikedByUserAsync(post.Id, userId);
+            List<int> allCommentIds = commentsById.Keys.ToList();
+            Dictionary<int, int> likeCounts = await likeRepository.GetCommentLikeCountsAsync(allCommentIds);
+            HashSet<int> likedCommentIds = userId == null ? 
+                new HashSet<int>() : (await likeRepository.GetCommentIdsLikedByUserAsync(allCommentIds, userId)).ToHashSet();
+
+            foreach (KeyValuePair<int, CommentListItemView> entry in commentsById)
+            {
+                CommentListItemView view = entry.Value;
+                view.LikeCount = likeCounts.GetValueOrDefault(entry.Key);
+                view.IsLikedByCurrentUser = likedCommentIds.Contains(entry.Key);
+                view.CanLike = userId != null;
+            }
+
+            List<CommentListItemView> comments = result.Items.Select(c => commentsById[c.Id]).ToList();
+
+            return new CommentIndexView
+            {
+                PostId = post.Id,
+                TopicId = post.TopicId,
+                PostTitle = post.Title,
+                PostContent = post.Content,
+                PostCreator = post.CreatedByUserName,
+                PostCreatorDisplayName = CreatorDisplayNameResolver.Resolve(userId, post.CreatedByUserId, post.CreatedByUserName),
+                PostCreatorId = post.CreatedByUserId,
+                PostCreatedAt = post.CreatedAt,
+                Comments = comments,
+                CreateComment = createComment ?? new CommentCreateView
+                {
+                    PostId = postId
+                },
+                CanCreate = !string.IsNullOrEmpty(userId),
+                EditComment = null,
+                CurrentPage = page,
+                TotalPages = totalPages,
+                PostLikeCount = postLikeCount,
+                IsPostLikedByCurrentUser = isPostLikedByCurrentUser,
+                CanLikePost = userId != null,
+            };
+        }
+
+
+        public async Task<CommentIndexView?> GetEditViewAsync(int commentId, int page = 1, CommentEditView? editComment = null)
+        {
+            Comment? comment = await commentRepository.GetByIdAsync(commentId);
+
+            if (comment == null)
+                return null;
+
+            string userId = currentUser.GetRequiredUserId();
+
+            if (comment.CreatedByUserId != userId)
+            {
+                throw new UnauthorizedAccessException("You are not allowed to edit this comment.");
+            }
+
+            Post? post = await postRepository.GetByIdAsync(comment.PostId);
+
+            if (post == null)
+                return null;
+
+            CommentIndexView? viewModel = await GetCommentIndexViewAsync(post.Id, page);
+
+            if (viewModel == null)
+                return null;
+
+            viewModel.EditComment = editComment ?? commentMapper.ToEditView(comment);
+
+            return viewModel;
+        }
+
+
+        public async Task CreateAsync(CommentCreateView model)
+        {
+            string userId = currentUser.GetRequiredUserId();
+
+            if (string.IsNullOrWhiteSpace(model.Content))
+            {
+                throw new ArgumentException("Comment content is required.");
+            }
+
+            if (!model.ParentCommentId.HasValue &&
+                string.IsNullOrWhiteSpace(model.Title))
+            {
+                throw new ArgumentException("A title is required for a top-level comment.");
+            }
+
+            if (model.ParentCommentId.HasValue)
+            {
+                Comment? parent = await commentRepository.GetByIdAsync(model.ParentCommentId.Value);
+
+                if (parent == null || parent.PostId != model.PostId)
+                {
+                    throw new ArgumentException("The parent comment does not belong to this post.");
+                }
+            }
+
+            Comment comment = commentMapper.ToEntity(model);
+            comment.CreatedByUserId = userId;
+            comment.CreatedByUserName = await userService.GetUsernameByIdAsync(userId);
+
+            await commentRepository.AddAsync(comment);
+        }
+
+
+
+        public async Task UpdateAsync(CommentEditView model)
+        {
+            string userId = currentUser.GetRequiredUserId();
+            Comment? comment = await commentRepository.GetByIdAsync(model.Id);
+
+            if (comment == null)
+                return;
+
+            if (comment.CreatedByUserId != userId)
+            {
+                throw new UnauthorizedAccessException("You are not allowed to edit this comment.");
+            }
+
+            comment.Title = comment.ParentCommentId.HasValue ? string.Empty : model.Title?.Trim() ?? string.Empty;
+            comment.Content = model.Content;
+            await commentRepository.UpdateAsync(comment);
+        }
+
+        public async Task DeleteAsync(int id)
+        {
+            string userId = currentUser.GetRequiredUserId();
+            Comment? comment = await commentRepository.GetByIdAsync(id);
+
+            if (comment == null)
+                return;
+
+            if (comment.CreatedByUserId != userId)
+            {
+                throw new UnauthorizedAccessException("You are not allowed to delete this comment.");
+            }
+
+            List<Comment> comments = (await commentRepository.GetByPostIdAsync(comment.PostId)).ToList();
+
+            Dictionary<int, Comment> commentsById = comments.ToDictionary(c => c.Id);
+
+            Dictionary<int, List<Comment>> repliesByParent = comments
+                .Where(c => c.ParentCommentId.HasValue)
+                .GroupBy(c => c.ParentCommentId!.Value)
+                .ToDictionary(g => g.Key, g => g.ToList());
+
+            List<Comment> deletionOrder = new();
+
+            void AddCommentAndReplies(int commentId)
+            {
+                if (!commentsById.TryGetValue(commentId, out Comment? current))
+                    return;
+
+                deletionOrder.Add(current);
+
+                if (repliesByParent.TryGetValue(commentId, out List<Comment>? replies))
+                {
+                    foreach (Comment reply in replies)
+                    {
+                        AddCommentAndReplies(reply.Id);
+                    }
+                }
+            }
+
+            
+            AddCommentAndReplies(comment.Id);
+
+            // Mark descendants before their parents for deletion.
+            deletionOrder.Reverse();
+
+            // Delete likes belonging to the comment and all its replies.
+            List<int> commentIdsToDelete = deletionOrder.Select(c => c.Id).ToList();
+
+            await likeRepository.DeleteByCommentIdsAsync(commentIdsToDelete);
+            await commentRepository.DeleteRangeAsync(deletionOrder);
+        }
+
+    }
+}
+
 
 
 using Application.Interfaces.Services.Features;
@@ -1220,458 +2230,6 @@ namespace Application.Services.Features
             IEnumerable<Topic> topics = await topicRepository.SearchByTitleAsync(query);
 
             return topics.Select(topic => discoverMapper.ToDiscoverTopicListView(topic)).ToList();
-        }
-    }
-}
-
-using Application.Interfaces.Services;
-using Application.Interfaces.Services.Features;
-using Application.Interfaces.Services.Forum;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using ViewModels.Comment;
-using ViewModels.MyActivity;
-using ViewModels.Post;
-using ViewModels.Topic;
-
-namespace OpenForum.Controllers
-{
-    [Authorize]
-    public class MyActivityController : Controller
-    {
-        private readonly IMyActivityService myActivityService;
-        private readonly ITopicService topicService;
-        private readonly IPostService postService;
-        private readonly ICommentService commentService;
-
-        public MyActivityController(
-            IMyActivityService myActivityService,
-            ITopicService topicService,
-            IPostService postService,
-            ICommentService commentService)
-        {
-            this.myActivityService = myActivityService;
-            this.topicService = topicService;
-            this.postService = postService;
-            this.commentService = commentService;
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> Index(ActivityFilter filter = ActivityFilter.All, int page = 1)
-        {
-            MyActivityIndexView model = await myActivityService.GetMyActivityIndexViewAsync(filter, page);
-
-            return View(model);
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> EditTopic(int id, ActivityFilter filter = ActivityFilter.All, int page = 1)
-        {
-            try
-            {
-                TopicIndexView? result = await topicService.GetEditViewAsync(id);
-
-                if (result?.EditTopic == null)
-                    return NotFound();
-
-                ActivityTopicEditView model = new() //should correct
-                {
-                    Id = result.EditTopic.Id,
-                    Title = result.EditTopic.Title
-                };
-
-                ViewData["Filter"] = filter;
-                ViewData["Page"] = page;
-
-                return View(model);
-            }
-            catch (UnauthorizedAccessException)
-            {
-                return Forbid();
-            }
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> UpdateTopic(ActivityTopicEditView model, ActivityFilter filter = ActivityFilter.All, int page = 1)
-        {
-            if (!ModelState.IsValid)
-            {
-                ViewData["Filter"] = filter;
-                ViewData["Page"] = page;
-                return View("EditTopic", model);
-            }
-
-            try
-            {
-                TopicEditView topicModel = new() //normally wouldnt do that here, but to use old functionality it becomes necessary
-                {
-                    Id = model.Id,
-                    Title = model.Title
-                };
-
-                await topicService.UpdateAsync(topicModel);
-
-                return RedirectToAction(nameof(Index), new { filter, page });
-            }
-            catch (UnauthorizedAccessException)
-            {
-                return Forbid();
-            }
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteTopic(int id, ActivityFilter filter = ActivityFilter.All, int page = 1)
-        {
-            try
-            {
-                await topicService.DeleteAsync(id);
-
-                return RedirectToAction(nameof(Index), new { filter, page });
-            }
-            catch (UnauthorizedAccessException)
-            {
-                return Forbid();
-            }
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> EditPost(int id, ActivityFilter filter = ActivityFilter.All, int page = 1)
-        {
-            try
-            {
-                PostIndexView? result = await postService.GetEditViewAsync(id);
-
-                if (result?.EditPost == null)
-                    return NotFound();
-
-                ActivityPostEditView model = new() //should correct
-                {
-                    Id = result.EditPost.Id,
-                    Title = result.EditPost.Title,
-                    Content = result.EditPost.Content
-                };
-
-                ViewData["Filter"] = filter;
-                ViewData["Page"] = page;
-
-                return View(model);
-            }
-            catch (UnauthorizedAccessException)
-            {
-                return Forbid();
-            }
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> UpdatePost(ActivityPostEditView model, ActivityFilter filter = ActivityFilter.All, int page = 1)
-        {
-            if (!ModelState.IsValid)
-            {
-                ViewData["Filter"] = filter;
-                ViewData["Page"] = page;
-                return View("EditPost", model);
-            }
-
-            try
-            {
-                PostEditView postModel = new() //normally wouldnt do that here, but to use old functionality it becomes necessary
-                {
-                    Id = model.Id,
-                    Title = model.Title,
-                    Content = model.Content
-                };
-
-                await postService.UpdateAsync(postModel);
-
-                return RedirectToAction(nameof(Index), new { filter, page });
-            }
-            catch (UnauthorizedAccessException)
-            {
-                return Forbid();
-            }
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeletePost(int id, ActivityFilter filter = ActivityFilter.All, int page = 1)
-        {
-            try
-            {
-                await postService.DeleteAsync(id);
-
-                return RedirectToAction(nameof(Index), new { filter, page });
-            }
-            catch (UnauthorizedAccessException)
-            {
-                return Forbid();
-            }
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> EditComment(int id, ActivityFilter filter = ActivityFilter.All, int page = 1)
-        {
-            try
-            {
-                CommentIndexView? result = await commentService.GetEditViewAsync(id);
-
-                if (result?.EditComment == null)
-                    return NotFound();
-
-                ActivityCommentEditView model = new()  //should correct
-                {
-                    Id = result.EditComment.Id,
-                    Title = result.EditComment.Title,
-                    Content = result.EditComment.Content,
-                    PostId = result.EditComment.PostId,
-                    ParentCommentId = result.EditComment.ParentCommentId
-                };
-
-                ViewData["Filter"] = filter;
-                ViewData["Page"] = page;
-
-                return View(model);
-            }
-            catch (UnauthorizedAccessException)
-            {
-                return Forbid();
-            }
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> UpdateComment(ActivityCommentEditView model, ActivityFilter filter = ActivityFilter.All, int page = 1)
-        {
-            if (!ModelState.IsValid)
-            {
-                ViewData["Filter"] = filter;
-                ViewData["Page"] = page;
-                return View("EditComment", model);
-            }
-
-            try
-            {
-                CommentEditView commentModel = new() //normally wouldnt do that here, but to use old functionality it becomes necessary
-                {//or does it..
-                    Id = model.Id,
-                    Title = model.Title,
-                    Content = model.Content,
-                    PostId = model.PostId,
-                    ParentCommentId = model.ParentCommentId
-                };
-
-                await commentService.UpdateAsync(commentModel);
-
-                return RedirectToAction(nameof(Index), new { filter, page });
-            }
-            catch (UnauthorizedAccessException)
-            {
-                return Forbid();
-            }
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteComment(int id, ActivityFilter filter = ActivityFilter.All, int page = 1)
-        {
-            try
-            {
-                await commentService.DeleteAsync(id);
-
-                return RedirectToAction(nameof(Index), new { filter, page });
-            }
-            catch (UnauthorizedAccessException)
-            {
-                return Forbid();
-            }
-        }
-    }
-}
-
-using Application.Interfaces.Contexts;
-using Application.Interfaces.Services;
-using Application.Interfaces.Services.Features;
-using Application.Interfaces.Services.User;
-using Application.Services.User;
-using EntityModels;
-using Repository.interfaces;
-using ViewModels.MyActivity;
-
-namespace Application.Services.Features
-{
-    public class MyActivityService : IMyActivityService
-    {
-        private readonly ITopicRepository topicRepository;
-        private readonly IPostRepository postRepository;
-        private readonly ICommentRepository commentRepository;
-        private readonly ICurrentUserService currentUser;
-        private const int PageSize = 5;
-        private const int PreviewLength = 150;
-
-        public MyActivityService(
-            ITopicRepository topicRepository,
-            IPostRepository postRepository,
-            ICommentRepository commentRepository,
-            ICurrentUserService currentUser)
-        {
-            this.topicRepository = topicRepository;
-            this.postRepository = postRepository;
-            this.commentRepository = commentRepository;
-            this.currentUser = currentUser;
-        }
-
-
-        public async Task<MyActivityIndexView> GetMyActivityIndexViewAsync(ActivityFilter filter = ActivityFilter.All, int page = 1)
-        {
-            string userId = currentUser.GetRequiredUserId();
-
-            page = Math.Max(1, page);
-
-            // Retrieve the total counts.
-            int topicCount = await topicRepository.CountByCreatedByUserIdAsync(userId);
-
-            int postCount = await postRepository.CountByCreatedByUserIdAsync(userId);
-
-            int commentCount = await commentRepository.CountByCreatedByUserIdAsync(userId);
-
-            // Calculate the total count for the selected filter.
-            int totalCount = filter switch
-            {
-                ActivityFilter.Topics => topicCount,
-                ActivityFilter.Posts => postCount,
-                ActivityFilter.Comments => commentCount,
-                _ => topicCount + postCount + commentCount
-            };
-
-            // Calculate pagination.
-            int totalPages = Math.Max(1, (int)Math.Ceiling(totalCount / (double)PageSize));
-
-            page = Math.Min(page, totalPages);
-
-            int skip = (page - 1) * PageSize;
-            int take = skip + PageSize;
-
-            // Retrieve records according to the selected filter.
-            List<ActivityListItemView> activities = new List<ActivityListItemView>();
-
-            if (filter == ActivityFilter.All || filter == ActivityFilter.Topics)
-            {
-                IEnumerable<Topic> topics = await topicRepository.GetByCreatedByUserIdAsync(userId, 0, take);
-                activities.AddRange(topics.Select(MapTopic));
-            }
-
-            if (filter == ActivityFilter.All || filter == ActivityFilter.Posts)
-            {
-                IEnumerable<Post> posts = await postRepository.GetByCreatedByUserIdAsync(userId, 0, take);
-                activities.AddRange(posts.Select(MapPost));
-            }
-
-            if (filter == ActivityFilter.All || filter == ActivityFilter.Comments)
-            {
-                IEnumerable<Comment> comments = await commentRepository.GetByCreatedByUserIdAsync(userId, 0, take);
-                activities.AddRange(comments.Select(MapComment));
-            }
-
-            // Sort all retrieved activities chronologically.
-            List<ActivityListItemView> orderedActivities = activities
-                .OrderByDescending(a => a.CreatedAt)
-                .ThenByDescending(a => a.Id)
-                .ThenBy(a => a.Type)
-                .ToList();
-
-            // Apply global pagination.
-            List<ActivityListItemView> pagedActivities = orderedActivities
-                .Skip(skip)
-                .Take(PageSize)
-                .ToList();
-
-            return new MyActivityIndexView
-            {
-                Activities = pagedActivities,
-                Filter = filter,
-                CurrentPage = page,
-                TotalPages = totalPages,
-                TotalCount = totalCount
-            };
-        }
-
-        private static ActivityListItemView MapTopic(Topic topic)
-        {
-            return new ActivityListItemView
-            {
-                Id = topic.Id,
-                Type = ActivityType.Topic,
-                Title = topic.Title,
-                CreatedAt = topic.CreatedAt
-            };
-        }
-
-        private static ActivityListItemView MapPost(Post post)
-        {
-            return new ActivityListItemView
-            {
-                Id = post.Id,
-                Type = ActivityType.Post,
-                Title = post.Title,
-                ContentPreview = CreatePreview(post.Content),
-                CreatedAt = post.CreatedAt,
-                TopicId = post.TopicId,
-                ContextTitle = post.Topic?.Title ?? string.Empty
-            };
-        }
-
-        private static ActivityListItemView MapComment(Comment comment)
-        {
-            bool isReply = comment.ParentCommentId.HasValue;
-            string contextTitle;
-
-            if (isReply)
-            {
-                contextTitle = !string.IsNullOrWhiteSpace(comment.ParentComment?.Title)
-                    ? comment.ParentComment.Title
-                    : comment.ParentComment?.Content ?? string.Empty;
-            }
-            else
-            {
-                contextTitle = comment.Post?.Title ?? string.Empty;
-            }
-
-            return new ActivityListItemView
-            {
-                Id = comment.Id,
-                Type = isReply
-                    ? ActivityType.Reply
-                    : ActivityType.Comment,
-
-                Title = comment.Title,
-                ContentPreview = CreatePreview(comment.Content),
-                CreatedAt = comment.CreatedAt,
-
-                PostId = comment.PostId,
-                TopicId = comment.Post?.TopicId,
-                ParentCommentId = comment.ParentCommentId,
-
-                ContextTitle = CreatePreview(contextTitle)
-            };
-        }
-
-        private static string CreatePreview(string? content)
-        {
-            if (string.IsNullOrWhiteSpace(content))
-            {
-                return string.Empty;
-            }
-
-            content = content.Trim();
-
-            if (content.Length <= PreviewLength)
-            {
-                return content;
-            }
-
-            return content[..PreviewLength] + "...";
         }
     }
 }
