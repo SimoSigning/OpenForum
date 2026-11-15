@@ -8,20 +8,14 @@ namespace Application.Interfaces.Services.User
     {
         Task<MyUserProfileView> GetLoggedInProfileAsync();
 
-        Task<MyProfilePageView> GetMyProfilePageAsync(
-            UserProfileEditView? editProfile = null,
-            ChangeEmailView? changeEmail = null,
-            ChangePasswordView? changePassword = null);
+        Task<MyProfilePageView> GetMyProfilePageAsync(UserProfileEditView? editProfile = null, ChangeEmailView? changeEmail = null, ChangePasswordView? changePassword = null);
 
         Task UpdateProfileAsync(UserProfileEditView model);
 
         Task CreateProfileForUserAsync(string userId);
 
-        Task<PublicUserProfileView> GetPublicProfileAsync(
-            string userId,
-            string userName);
+        Task<PublicUserProfileView> GetPublicProfileAsync(string userId, string userName);
 
-        Task<PublicUserProfileView> GetPublicProfilePageAsync(
-            string userName);
+        Task<PublicUserProfileView> GetPublicProfilePageAsync(string userName);
     }
 }

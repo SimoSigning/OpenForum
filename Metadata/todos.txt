@@ -1,5 +1,12 @@
 Things to work through:
 
-1. Need an optimization session. There are some cases where the controllers are doing abit too much, where what it does, needs to be placed within services etc.
+1. streamline currentpage assignments throughout controllers. Topic should be like post
 
-2. All new features: Discover, PublicUserProfile, Friendship, Messaging --> these will need proper analysis/debugging sessions, as they have been implemented very quickly. 
+2. _CommentItem makes a viewmodel.. 
+
+3. comments in relation to reply and title not being obligated on viewmodel level, makes for interesting
+ui behavior that needs correcting
+
+4. There should be a limit to how many replies and comments can be under a post
+
+5. All new features: Discover, PublicUserProfile, Friendship, Messaging --> these will need proper analysis/debugging sessions, as they have been implemented very quickly. 

@@ -86,8 +86,7 @@ namespace OpenForum.Controllers
             {
                 try
                 {
-                    PostIndexView? viewModel =
-                        await postService.GetEditViewAsync(model.Id, page, model);
+                    PostIndexView? viewModel = await postService.GetEditViewAsync(model.Id, page, model);
 
                     if (viewModel == null)
                         return NotFound();

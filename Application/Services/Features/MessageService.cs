@@ -26,12 +26,9 @@ namespace Application.Services.Features
         {
             string userId = currentUser.GetRequiredUserId();
 
-            List<Message> messages =
-                await messageRepository.GetInboxAsync(userId);
+            List<Message> messages = await messageRepository.GetInboxAsync(userId);
 
-            Dictionary<string, string> usernames =
-                await userService.GetUsernamesByIdsAsync(
-                    messages.Select(m => m.SenderUserId));
+            Dictionary<string, string> usernames = await userService.GetUsernamesByIdsAsync(messages.Select(m => m.SenderUserId));
 
             return new InboxView
             {
@@ -55,12 +52,9 @@ namespace Application.Services.Features
         {
             string userId = currentUser.GetRequiredUserId();
 
-            List<Message> messages =
-                await messageRepository.GetSentAsync(userId);
+            List<Message> messages = await messageRepository.GetSentAsync(userId);
 
-            Dictionary<string, string> usernames =
-                await userService.GetUsernamesByIdsAsync(
-                    messages.Select(m => m.RecipientUserId));
+            Dictionary<string, string> usernames =await userService.GetUsernamesByIdsAsync(messages.Select(m => m.RecipientUserId));
 
             return new SentMessagesView
             {
@@ -68,8 +62,7 @@ namespace Application.Services.Features
                 {
                     Id = m.Id,
                     OtherUserId = m.RecipientUserId,
-                    OtherUserName = usernames.GetValueOrDefault(
-                        m.RecipientUserId, "Unknown user"),
+                    OtherUserName = usernames.GetValueOrDefault(m.RecipientUserId, "Unknown user"),
                     Subject = m.Subject,
                     BodyPreview = CreatePreview(m.Body),
                     SentAt = m.SentAt,
@@ -82,8 +75,7 @@ namespace Application.Services.Features
         {
             string userId = currentUser.GetRequiredUserId();
 
-            Message? message =
-                await messageRepository.GetByIdAsync(messageId);
+            Message? message = await messageRepository.GetByIdAsync(messageId);
 
             if (message == null)
             {
@@ -95,8 +87,7 @@ namespace Application.Services.Features
 
             if (!isRecipient && !isSender)
             {
-                throw new UnauthorizedAccessException(
-                    "You are not allowed to access this message.");
+                throw new UnauthorizedAccessException("You are not allowed to access this message.");
             }
 
             // Only mark incoming messages as read.
@@ -107,11 +98,9 @@ namespace Application.Services.Features
                 await messageRepository.UpdateAsync(message);
             }
 
-            string senderUsername =
-                await userService.GetUsernameByIdAsync(message.SenderUserId);
+            string senderUsername = await userService.GetUsernameByIdAsync(message.SenderUserId);
 
-            string recipientUsername =
-                await userService.GetUsernameByIdAsync(message.RecipientUserId);
+            string recipientUsername = await userService.GetUsernameByIdAsync(message.RecipientUserId);
 
             return new MessageDetailsView
             {
@@ -132,8 +121,7 @@ namespace Application.Services.Features
             };
         }
 
-        public async Task<ComposeMessageView> GetComposeViewAsync(
-            string recipientUserName)
+        public async Task<ComposeMessageView> GetComposeViewAsync(string recipientUserName)
         {
             string currentUserId = currentUser.GetRequiredUserId();
 
@@ -142,17 +130,14 @@ namespace Application.Services.Features
                 throw new ArgumentException("A recipient is required.");
             }
 
-            string recipientUserId =
-                await userService.GetUserIdByUsernameAsync(recipientUserName);
+            string recipientUserId = await userService.GetUserIdByUsernameAsync(recipientUserName);
 
             if (recipientUserId == currentUserId)
             {
-                throw new ArgumentException(
-                    "You cannot send a message to yourself.");
+                throw new ArgumentException("You cannot send a message to yourself.");
             }
 
-            string username =
-                await userService.GetUsernameByIdAsync(recipientUserId);
+            string username = await userService.GetUsernameByIdAsync(recipientUserId);
 
             return new ComposeMessageView
             {
@@ -161,13 +146,11 @@ namespace Application.Services.Features
             };
         }
 
-        public async Task<ComposeMessageView> GetReplyComposeViewAsync(
-            int originalMessageId)
+        public async Task<ComposeMessageView> GetReplyComposeViewAsync(int originalMessageId)
         {
             string userId = currentUser.GetRequiredUserId();
 
-            Message? originalMessage =
-                await messageRepository.GetByIdAsync(originalMessageId);
+            Message? originalMessage = await messageRepository.GetByIdAsync(originalMessageId);
 
             if (originalMessage == null)
             {
@@ -177,19 +160,15 @@ namespace Application.Services.Features
             // Only the recipient of the original message can reply.
             if (originalMessage.RecipientUserId != userId)
             {
-                throw new UnauthorizedAccessException(
-                    "You are not allowed to reply to this message.");
+                throw new UnauthorizedAccessException("You are not allowed to reply to this message.");
             }
 
             if (!await userService.UserExistsAsync(originalMessage.SenderUserId))
             {
-                throw new InvalidOperationException(
-                    "The original sender no longer exists.");
+                throw new InvalidOperationException("The original sender no longer exists.");
             }
 
-            string username =
-                await userService.GetUsernameByIdAsync(
-                    originalMessage.SenderUserId);
+            string username = await userService.GetUsernameByIdAsync(originalMessage.SenderUserId);
 
             return new ComposeMessageView
             {
@@ -220,19 +199,16 @@ namespace Application.Services.Features
                     throw new ArgumentException("Original message is required for a reply.");
                 }
 
-                Message? originalMessage =
-                    await messageRepository.GetByIdAsync(model.OriginalMessageId.Value);
+                Message? originalMessage = await messageRepository.GetByIdAsync(model.OriginalMessageId.Value);
 
                 if (originalMessage == null)
                 {
-                    throw new KeyNotFoundException(
-                        "Original message not found.");
+                    throw new KeyNotFoundException("Original message not found.");
                 }
 
                 if (originalMessage.RecipientUserId != senderUserId)
                 {
-                    throw new UnauthorizedAccessException(
-                        "You are not allowed to reply to this message.");
+                    throw new UnauthorizedAccessException("You are not allowed to reply to this message.");
                 }
 
                 recipientUserId = originalMessage.SenderUserId;
@@ -248,14 +224,11 @@ namespace Application.Services.Features
                 }
 
                 // Resolve the recipient again instead of trusting a hidden ID.
-                recipientUserId =
-                    await userService.GetUserIdByUsernameAsync(
-                        model.RecipientUserName);
+                recipientUserId = await userService.GetUserIdByUsernameAsync(model.RecipientUserName);
 
                 if (recipientUserId == senderUserId)
                 {
-                    throw new ArgumentException(
-                        "You cannot send a message to yourself.");
+                    throw new ArgumentException("You cannot send a message to yourself.");
                 }
 
                 subject = model.Subject?.Trim() ?? string.Empty;
@@ -268,8 +241,7 @@ namespace Application.Services.Features
 
             if (recipientUserId == senderUserId)
             {
-                throw new ArgumentException(
-                    "You cannot send a message to yourself.");
+                throw new ArgumentException("You cannot send a message to yourself.");
             }
 
             if (!await userService.UserExistsAsync(recipientUserId))
@@ -281,14 +253,12 @@ namespace Application.Services.Features
 
             if (body.Length > 5000)
             {
-                throw new ArgumentException(
-                    "Message body cannot exceed 5000 characters.");
+                throw new ArgumentException("Message body cannot exceed 5000 characters.");
             }
 
             if (subject.Length > 150)
             {
-                throw new ArgumentException(
-                    "Message subject cannot exceed 150 characters.");
+                throw new ArgumentException("Message subject cannot exceed 150 characters.");
             }
 
             Message message = new Message
@@ -337,9 +307,7 @@ namespace Application.Services.Features
             string subject = prefix + originalSubject;
 
             // The database allows a maximum of 150 characters.
-            return subject.Length <= 150
-                ? subject
-                : subject.Substring(0, 150);
+            return subject.Length <= 150 ? subject : subject.Substring(0, 150);
         }
     }
 }

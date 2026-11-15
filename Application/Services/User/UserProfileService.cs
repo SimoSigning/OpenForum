@@ -31,7 +31,8 @@ namespace Application.Services.User
             this.friendshipService = friendshipService;
         }
 
-        public async Task<MyProfilePageView> GetMyProfilePageAsync(UserProfileEditView? editProfile = null, ChangeEmailView? changeEmail = null, 
+        public async Task<MyProfilePageView> GetMyProfilePageAsync(UserProfileEditView? editProfile = null, 
+            ChangeEmailView? changeEmail = null, 
             ChangePasswordView? changePassword = null)
         {
             MyUserProfileView profile =await GetLoggedInProfileAsync();
@@ -119,8 +120,7 @@ namespace Application.Services.User
             await profileRepository.AddAsync(profile);
         }
 
-        public async Task<PublicUserProfileView> GetPublicProfilePageAsync(
-            string userName)
+        public async Task<PublicUserProfileView> GetPublicProfilePageAsync(string userName)
         {
             if (string.IsNullOrWhiteSpace(userName))
             {

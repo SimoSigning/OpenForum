@@ -176,8 +176,7 @@ namespace Application.Services.Forum
                 throw new ArgumentException("Comment content is required.");
             }
 
-            if (!model.ParentCommentId.HasValue &&
-                string.IsNullOrWhiteSpace(model.Title))
+            if (!model.ParentCommentId.HasValue && string.IsNullOrWhiteSpace(model.Title))
             {
                 throw new ArgumentException("A title is required for a top-level comment.");
             }

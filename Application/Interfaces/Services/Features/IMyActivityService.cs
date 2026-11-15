@@ -4,9 +4,7 @@ namespace Application.Interfaces.Services.Features
 {
     public interface IMyActivityService
     {
-        Task<MyActivityIndexView> GetMyActivityIndexViewAsync(
-            ActivityFilter filter = ActivityFilter.All,
-            int page = 1);
+        Task<MyActivityIndexView> GetMyActivityIndexViewAsync(ActivityFilter filter = ActivityFilter.All, int page = 1);
 
         // Edit ViewModels
         Task<ActivityTopicEditView?> GetEditTopicViewAsync(int id);

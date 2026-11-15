@@ -22,8 +22,6 @@ namespace OpenForum.Controllers
             if (model == null)
                 return NotFound();
 
-            ViewData["CurrentPage"] = model.CurrentPage;
-
             return View(model);
         }
 
@@ -37,8 +35,6 @@ namespace OpenForum.Controllers
 
                 if (model == null)
                     return NotFound();
-
-                ViewData["CurrentPage"] = model.CurrentPage;
 
                 return View("Details", model);
             }
@@ -54,21 +50,12 @@ namespace OpenForum.Controllers
         public async Task<IActionResult> Create(CommentCreateView model, int page = 1)
         {
 
-            // Only top-level comments need a title.
-            if (!model.ParentCommentId.HasValue && string.IsNullOrWhiteSpace(model.Title))
-            {
-                ModelState.AddModelError(nameof(model.Title), "A title is required for a comment.");
-            }
-
             if (!ModelState.IsValid)
             {
                 CommentIndexView? invalidView = await commentService.GetCommentIndexViewAsync(model.PostId, page, model);
 
                 if (invalidView == null)
                     return NotFound();
-
-                ViewData["CurrentPage"] = invalidView.CurrentPage;
-                ViewData["PostId"] = model.PostId;
 
                 return View("Details", invalidView);
             }
@@ -97,9 +84,6 @@ namespace OpenForum.Controllers
                 if (invalidView == null)
                     return NotFound();
 
-                ViewData["CurrentPage"] = invalidView.CurrentPage;
-                ViewData["PostId"] = model.PostId;
-
                 return View("Details", invalidView);
             }
         }
@@ -117,8 +101,6 @@ namespace OpenForum.Controllers
 
                     if (viewModel == null)
                         return NotFound();
-
-                    ViewData["CurrentPage"] = viewModel.CurrentPage;
 
                     return View("Details", viewModel);
                 }
