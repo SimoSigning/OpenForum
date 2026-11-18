@@ -27,6 +27,8 @@ namespace ViewModels.Comment
 
         public List<CommentListItemView> Replies { get; set; } = new();
 
+        public CommentCreateView? ReplyComment { get; set; }
+
         public int LikeCount { get; set; }
 
         public bool IsLikedByCurrentUser { get; set; }

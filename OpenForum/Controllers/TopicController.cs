@@ -1,4 +1,5 @@
-﻿using Application.Interfaces.Services.Forum;
+﻿
+using Application.Interfaces.Services.Forum;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ViewModels.Topic;
@@ -19,8 +20,6 @@ namespace OpenForum.Controllers
         {
             TopicIndexView model = await topicService.GetTopicIndexViewAsync(page);
 
-            ViewData["CurrentPage"] = model.CurrentPage;
-
             return View(model);
         }
 
@@ -34,8 +33,6 @@ namespace OpenForum.Controllers
 
                 if (model == null)
                     return NotFound();
-
-                ViewData["CurrentPage"] = model.CurrentPage;
 
                 return View("Index", model);
             }
@@ -53,8 +50,6 @@ namespace OpenForum.Controllers
             if (!ModelState.IsValid)
             {
                 TopicIndexView viewModel = await topicService.GetTopicIndexViewAsync(page, model);
-
-                ViewData["CurrentPage"] = viewModel.CurrentPage;
 
                 return View("Index", viewModel);
             }
@@ -84,8 +79,6 @@ namespace OpenForum.Controllers
 
                     if (viewModel == null)
                         return NotFound();
-
-                    ViewData["CurrentPage"] = viewModel.CurrentPage;
 
                     return View("Index", viewModel);
                 }

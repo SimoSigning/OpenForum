@@ -1,4 +1,5 @@
-﻿using Application.Interfaces.Services.Forum;
+﻿
+using Application.Interfaces.Services.Forum;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ViewModels.Post;
@@ -22,8 +23,6 @@ namespace OpenForum.Controllers
             if (model == null)
                 return NotFound();
 
-            ViewData["CurrentPage"] = model.CurrentPage;
-
             return View(model);
         }
 
@@ -37,8 +36,6 @@ namespace OpenForum.Controllers
 
                 if (model == null)
                     return NotFound();
-
-                ViewData["CurrentPage"] = model.CurrentPage;
 
                 return View("Details", model);
             }
@@ -59,8 +56,6 @@ namespace OpenForum.Controllers
 
                 if (viewModel == null)
                     return NotFound();
-
-                ViewData["CurrentPage"] = viewModel.CurrentPage;
 
                 return View("Details", viewModel);
             }
@@ -90,8 +85,6 @@ namespace OpenForum.Controllers
 
                     if (viewModel == null)
                         return NotFound();
-
-                    ViewData["CurrentPage"] = viewModel.CurrentPage;
 
                     return View("Details", viewModel);
                 }

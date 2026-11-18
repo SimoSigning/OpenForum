@@ -142,6 +142,7 @@ namespace Application.Services.Forum
                 throw new UnauthorizedAccessException("You are not allowed to edit this post.");
 
             post.Id = model.Id;
+            post.Title = model.Title;
             post.Content = model.Content;
 
             await postRepository.UpdateAsync(post);

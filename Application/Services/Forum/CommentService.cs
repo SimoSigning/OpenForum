@@ -64,8 +64,17 @@ namespace Application.Services.Forum
                 c =>
                 {
                     CommentListItemView view = commentMapper.ToListItemView(c);
+
                     view.CreatorDisplayName = CreatorDisplayNameResolver.Resolve(userId, c.CreatedByUserId, view.Creator);
+
                     view.CanManage = userId != null && c.CreatedByUserId == userId;
+
+                    view.ReplyComment = new CommentCreateView
+                    {
+                        PostId = c.PostId,
+                        ParentCommentId = c.Id
+                    };
+
                     return view;
                 });
 
@@ -79,8 +88,16 @@ namespace Application.Services.Forum
                 foreach (Comment reply in replies)
                 {
                     CommentListItemView replyView = commentMapper.ToListItemView(reply);
-                    replyView.CreatorDisplayName = CreatorDisplayNameResolver.Resolve(userId,reply.CreatedByUserId, replyView.Creator);
+
+                    replyView.CreatorDisplayName = CreatorDisplayNameResolver.Resolve(userId, reply.CreatedByUserId, replyView.Creator);
+
                     replyView.CanManage = reply.CreatedByUserId == userId;
+
+                    replyView.ReplyComment = new CommentCreateView
+                    {
+                        PostId = reply.PostId,
+                        ParentCommentId = reply.Id
+                    };
 
                     if (reply.ParentCommentId.HasValue && commentsById.TryGetValue(reply.ParentCommentId.Value, out CommentListItemView? parentView))
                     {

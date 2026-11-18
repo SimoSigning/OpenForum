@@ -141,21 +141,7 @@
         @if (ViewData["CanCreate"] is bool canReply && canReply)
         {
             <div class="collapse mt-3" id="reply-form-@Model.Id">
-                @{
-                    var replyViewData = new ViewDataDictionary(ViewData)
-                        {
-                            ["CurrentPage"] = ViewData["CurrentPage"]
-                        };
-                }
-
-                @await Html.PartialAsync(
-                    "_Reply",
-                    new ViewModels.Comment.CommentCreateView
-                    {
-                        PostId = (int)ViewData["PostId"]!,
-                        ParentCommentId = Model.Id
-                    },
-                    replyViewData)
+                @await Html.PartialAsync("_Reply", Model.ReplyComment, ViewData)
             </div>
         }
     </div>
