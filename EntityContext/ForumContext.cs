@@ -14,6 +14,9 @@ namespace EntityContext
         public DbSet<UserProfile> UserProfiles => Set<UserProfile>();
         public DbSet<Friendship> Friendships => Set<Friendship>();
         public DbSet<Message> Messages => Set<Message>();
+        public DbSet<ChatRoom> ChatRooms => Set<ChatRoom>();
+        public DbSet<ChatRoomMember> ChatRoomMembers => Set<ChatRoomMember>();
+        public DbSet<ChatMessage> ChatMessages => Set<ChatMessage>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -178,6 +181,100 @@ namespace EntityContext
                 });
             });
 
+            // Chat rooms
+            modelBuilder.Entity<ChatRoom>(entity =>
+            {
+                entity.HasKey(r => r.Id);
+
+                entity.Property(r => r.Name)
+                    .IsRequired()
+                    .HasMaxLength(100);
+
+                entity.Property(r => r.RoomType)
+                    .IsRequired();
+
+                entity.Property(r => r.CreatedByUserId)
+                    .IsRequired()
+                    .HasMaxLength(450);
+
+                entity.Property(r => r.OwnerUserId)
+                    .HasMaxLength(450);
+
+                entity.Property(r => r.CreatedAt)
+                    .IsRequired();
+
+                // A topic can only have one chatroom.
+                entity.HasIndex(r => r.TopicId)
+                    .IsUnique()
+                    .HasFilter("[TopicId] IS NOT NULL");
+
+                // Topic relationship.
+                entity.HasOne(r => r.Topic)
+                    .WithOne()
+                    .HasForeignKey<ChatRoom>(r => r.TopicId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                // Helpful when retrieving rooms by type.
+                entity.HasIndex(r => r.RoomType);
+            });
+
+            // Chat room members
+            modelBuilder.Entity<ChatRoomMember>(entity =>
+            {
+                entity.HasKey(m => m.Id);
+
+                entity.Property(m => m.UserId)
+                    .IsRequired()
+                    .HasMaxLength(450);
+
+                entity.Property(m => m.JoinedAt)
+                    .IsRequired();
+
+                entity.HasOne(m => m.ChatRoom)
+                    .WithMany(r => r.Members)
+                    .HasForeignKey(m => m.ChatRoomId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                // A user can only belong to a room once.
+                entity.HasIndex(m => new
+                {
+                    m.ChatRoomId,
+                    m.UserId
+                }).IsUnique();
+
+                // Find all rooms belonging to a user.
+                entity.HasIndex(m => m.UserId);
+            });
+
+            // Chat messages
+            modelBuilder.Entity<ChatMessage>(entity =>
+            {
+                entity.HasKey(m => m.Id);
+
+                entity.Property(m => m.SenderUserId)
+                    .IsRequired()
+                    .HasMaxLength(450);
+
+                entity.Property(m => m.Content)
+                    .IsRequired()
+                    .HasMaxLength(2000);
+
+                entity.Property(m => m.SentAt)
+                    .IsRequired();
+
+                entity.HasOne(m => m.ChatRoom)
+                    .WithMany(r => r.Messages)
+                    .HasForeignKey(m => m.ChatRoomId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                // Supports retrieving the latest messages efficiently.
+                entity.HasIndex(m => new
+                {
+                    m.ChatRoomId,
+                    m.Id
+                });
+            });
+
             SeedData(modelBuilder);
         }
         private static void SeedData(ModelBuilder modelBuilder)
@@ -217,6 +314,39 @@ namespace EntityContext
                     CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc)
                 }
             );
+
+            modelBuilder.Entity<ChatRoom>().HasData(
+                new ChatRoom
+                {
+                    Id = 1,
+                    Name = "General",
+                    RoomType = ChatRoomType.Miscellaneous,
+                    CreatedByUserId = "seed-user",
+                    OwnerUserId = null,
+                    TopicId = null,
+                    CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+                },
+                new ChatRoom
+                {
+                    Id = 2,
+                    Name = "Introductions",
+                    RoomType = ChatRoomType.Miscellaneous,
+                    CreatedByUserId = "seed-user",
+                    OwnerUserId = null,
+                    TopicId = null,
+                    CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+                },
+                new ChatRoom
+                {
+                    Id = 3,
+                    Name = "Off-topic",
+                    RoomType = ChatRoomType.Miscellaneous,
+                    CreatedByUserId = "seed-user",
+                    OwnerUserId = null,
+                    TopicId = null,
+                    CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+                }
+             );
         }
     }
 }

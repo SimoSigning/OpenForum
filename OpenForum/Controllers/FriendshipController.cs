@@ -17,6 +17,14 @@ namespace OpenForum.Controllers
         }
 
         [HttpGet]
+        public async Task<IActionResult> Index()
+        {
+            FriendsIndexView viewModel = await friendshipService.GetFriendsIndexViewAsync();
+
+            return View(viewModel);
+        }
+
+        [HttpGet]
         public async Task<IActionResult> Search(string? query, int page = 1)
         {
             UserSearchView viewModel = await friendshipService.SearchUsersAsync(query ?? string.Empty, page);
@@ -52,14 +60,6 @@ namespace OpenForum.Controllers
             }
 
             return RedirectToAction(nameof(Search), new { query });
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> Index()
-        {
-            FriendsIndexView viewModel = await friendshipService.GetFriendsIndexViewAsync();
-
-            return View(viewModel);
         }
 
         [HttpPost]

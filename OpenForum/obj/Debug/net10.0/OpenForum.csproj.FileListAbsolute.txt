@@ -249,6 +249,7 @@ C:\Users\simon\source\repos\OpenForum\OpenForum\obj\Debug\net10.0\OpenForum.genr
 C:\Users\simon\source\repos\OpenForum\OpenForum\obj\Debug\net10.0\ref\OpenForum.dll
 C:\Users\MisterDerp\source\repos\OpenForum\OpenForum\bin\Debug\net10.0\appsettings.Development.json
 C:\Users\MisterDerp\source\repos\OpenForum\OpenForum\bin\Debug\net10.0\appsettings.json
+C:\Users\MisterDerp\source\repos\OpenForum\OpenForum\bin\Debug\net10.0\libman.json
 C:\Users\MisterDerp\source\repos\OpenForum\OpenForum\bin\Debug\net10.0\OpenForum.staticwebassets.runtime.json
 C:\Users\MisterDerp\source\repos\OpenForum\OpenForum\bin\Debug\net10.0\OpenForum.staticwebassets.endpoints.json
 C:\Users\MisterDerp\source\repos\OpenForum\OpenForum\bin\Debug\net10.0\OpenForum.exe
@@ -482,8 +483,10 @@ C:\Users\MisterDerp\source\repos\OpenForum\OpenForum\obj\Debug\net10.0\compresse
 C:\Users\MisterDerp\source\repos\OpenForum\OpenForum\obj\Debug\net10.0\compressed\nezrqnk58p-{0}-muycvpuwrr-muycvpuwrr.gz
 C:\Users\MisterDerp\source\repos\OpenForum\OpenForum\obj\Debug\net10.0\compressed\v0zgfp0y55-{0}-87fc7y1x7t-87fc7y1x7t.gz
 C:\Users\MisterDerp\source\repos\OpenForum\OpenForum\obj\Debug\net10.0\compressed\yfc7ypekbg-{0}-mlv21k5csn-mlv21k5csn.gz
-C:\Users\MisterDerp\source\repos\OpenForum\OpenForum\obj\Debug\net10.0\compressed\ia77jxhiz6-{0}-ug3hzihg7m-ug3hzihg7m.gz
+C:\Users\MisterDerp\source\repos\OpenForum\OpenForum\obj\Debug\net10.0\compressed\oth36cyf3h-{0}-n6n9w5bgd9-n6n9w5bgd9.gz
 C:\Users\MisterDerp\source\repos\OpenForum\OpenForum\obj\Debug\net10.0\compressed\qnw8o7hx9i-{0}-yabxnema4m-yabxnema4m.gz
+C:\Users\MisterDerp\source\repos\OpenForum\OpenForum\obj\Debug\net10.0\compressed\f1j087j48s-{0}-c90vd7kob8-c90vd7kob8.gz
+C:\Users\MisterDerp\source\repos\OpenForum\OpenForum\obj\Debug\net10.0\compressed\ji5t2aumju-{0}-ph8q8z1bpc-ph8q8z1bpc.gz
 C:\Users\MisterDerp\source\repos\OpenForum\OpenForum\obj\Debug\net10.0\staticwebassets.build.json
 C:\Users\MisterDerp\source\repos\OpenForum\OpenForum\obj\Debug\net10.0\staticwebassets.build.json.cache
 C:\Users\MisterDerp\source\repos\OpenForum\OpenForum\obj\Debug\net10.0\staticwebassets.development.json
@@ -496,3 +499,5 @@ C:\Users\MisterDerp\source\repos\OpenForum\OpenForum\obj\Debug\net10.0\refint\Op
 C:\Users\MisterDerp\source\repos\OpenForum\OpenForum\obj\Debug\net10.0\OpenForum.pdb
 C:\Users\MisterDerp\source\repos\OpenForum\OpenForum\obj\Debug\net10.0\OpenForum.genruntimeconfig.cache
 C:\Users\MisterDerp\source\repos\OpenForum\OpenForum\obj\Debug\net10.0\ref\OpenForum.dll
+C:\Users\MisterDerp\source\repos\OpenForum\OpenForum\obj\Debug\net10.0\compressed\6vc9g74i9l-{0}-ixk9npl5sq-ixk9npl5sq.gz
+C:\Users\MisterDerp\source\repos\OpenForum\OpenForum\obj\Debug\net10.0\compressed\ia77jxhiz6-{0}-z7y5xd9cgk-z7y5xd9cgk.gz

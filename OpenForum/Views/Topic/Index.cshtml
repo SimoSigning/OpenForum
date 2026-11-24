@@ -111,6 +111,12 @@
                                     <a asp-controller="Post" asp-action="Details" asp-route-id="@topic.Id" class="btn btn-primary btn-sm">
                                         View Topic
                                     </a>
+                                    <a asp-controller="Chat"
+                                       asp-action="EnterTopicRoom"
+                                       asp-route-topicId="@topic.Id"
+                                       class="btn btn-outline-primary btn-sm">
+                                        Topic Chat
+                                    </a>
 
                                     @if (topic.CanManage)
                                     {

@@ -10,6 +10,7 @@ namespace Identity.Models
     }
 }
 
+
 using Identity.Models;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -28,30 +29,6 @@ namespace Identity.Context
         }
     }
 }
-
-using Application.Interfaces;
-using Application.Interfaces.Contexts;
-using System.Security.Claims;
-
-namespace OpenForum.Services
-{
-    public class UserContext : IUserContext
-    {
-        private readonly IHttpContextAccessor httpContextAccessor;
-
-        public UserContext(IHttpContextAccessor httpContextAccessor)
-        {
-            this.httpContextAccessor = httpContextAccessor;
-        }
-
-        public string? UserId => httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier);
-
-        public string? UserName => httpContextAccessor.HttpContext?.User?.Identity?.Name;
-
-        public bool IsAuthenticated => httpContextAccessor.HttpContext?.User?.Identity?.IsAuthenticated ?? false;
-    }
-}
-
 
 
 using Application.Interfaces.Services.User;
@@ -83,6 +60,24 @@ namespace Identity.Services
             }
 
             return username;
+        }
+
+        public async Task<string> GetUserIdByUsernameAsync(string username)
+        {
+            if (string.IsNullOrWhiteSpace(username))
+            {
+                throw new ArgumentException("A username is required.");
+            }
+
+            ApplicationUser? user =
+                await userManager.FindByNameAsync(username.Trim());
+
+            if (user == null)
+            {
+                throw new KeyNotFoundException("User not found.");
+            }
+
+            return user.Id;
         }
 
         public async Task<Dictionary<string, string>> GetUsernamesByIdsAsync(IEnumerable<string> userIds)
@@ -188,6 +183,31 @@ namespace Identity.Services
     }
 }
 
+
+using Application.Interfaces;
+using Application.Interfaces.Contexts;
+using System.Security.Claims;
+
+namespace OpenForum.Services
+{
+    public class UserContext : IUserContext
+    {
+        private readonly IHttpContextAccessor httpContextAccessor;
+
+        public UserContext(IHttpContextAccessor httpContextAccessor)
+        {
+            this.httpContextAccessor = httpContextAccessor;
+        }
+
+        public string? UserId => httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        public string? UserName => httpContextAccessor.HttpContext?.User?.Identity?.Name;
+
+        public bool IsAuthenticated => httpContextAccessor.HttpContext?.User?.Identity?.IsAuthenticated ?? false;
+    }
+}
+
+
 using Application.Interfaces.Contexts;
 using Application.Interfaces.Services.User;
 using System;
@@ -231,15 +251,60 @@ namespace Application.Services.User
     }
 }
 
-
 using Application.Interfaces.Services.User;
-using EntityModels;
-using Repository.interfaces;
 using System;
 using System.Collections.Generic;
 using System.Text;
-using ViewModels.PublicUserProfile;
+
+namespace Application.Services.User
+{
+    public class AccountService : IAccountService
+    {
+        private readonly IUserService userService;
+        private readonly ICurrentUserService currentUser;
+
+        public AccountService(
+            IUserService userService,
+            ICurrentUserService currentUser)
+        {
+            this.userService = userService;
+            this.currentUser = currentUser;
+        }
+
+        public async Task<string> GetEmailAsync()
+        {
+            string userId = currentUser.GetRequiredUserId();
+
+            return await userService.GetEmailByIdAsync(userId);
+        }
+
+        public async Task ChangeEmailAsync(string newEmail)
+        {
+            string userId = currentUser.GetRequiredUserId();
+
+            await userService.ChangeEmailAsync(userId, newEmail);
+        }
+
+        public async Task ChangePasswordAsync(string currentPassword, string newPassword)
+        {
+            string userId = currentUser.GetRequiredUserId();
+
+            await userService.ChangePasswordAsync(userId, currentPassword, newPassword);
+        }
+    }
+
+}
+
+
+
+
+using Application.Interfaces.Services.Features;
+using Application.Interfaces.Services.User;
+using EntityModels;
+using Repository.interfaces;
+using ViewModels.Friends;
 using ViewModels.MyUser;
+using ViewModels.PublicUserProfile;
 
 namespace Application.Services.User
 {
@@ -247,13 +312,52 @@ namespace Application.Services.User
     {
         private readonly IUserProfileRepository profileRepository;
         private readonly ICurrentUserService currentUser;
+        private readonly IAccountService accountService;
+        private readonly IUserService userService;
+        private readonly IFriendshipService friendshipService;
 
         public UserProfileService(
             IUserProfileRepository profileRepository,
-            ICurrentUserService currentUser)
+            ICurrentUserService currentUser,
+            IAccountService accountService,
+            IUserService userService,
+            IFriendshipService friendshipService)
         {
             this.profileRepository = profileRepository;
             this.currentUser = currentUser;
+            this.accountService = accountService;
+            this.userService = userService;
+            this.friendshipService = friendshipService;
+        }
+
+        public async Task<MyProfilePageView> GetMyProfilePageAsync(UserProfileEditView? editProfile = null, 
+            ChangeEmailView? changeEmail = null, 
+            ChangePasswordView? changePassword = null)
+        {
+            MyUserProfileView profile =await GetLoggedInProfileAsync();
+
+            string email = await accountService.GetEmailAsync();
+
+            return new MyProfilePageView
+            {
+                Profile = profile,
+
+                EditProfile = editProfile ?? new UserProfileEditView
+                {
+                    FirstName = profile.FirstName,
+                    LastName = profile.LastName,
+                    Address = profile.Address,
+                    PostalCode = profile.PostalCode,
+                    City = profile.City,
+                    ProfileText = profile.ProfileText
+                },
+
+                ChangeEmail = changeEmail ?? new ChangeEmailView(),
+
+                ChangePassword = changePassword ?? new ChangePasswordView(),
+
+                CurrentEmail = email
+            };
         }
 
         public async Task<MyUserProfileView> GetLoggedInProfileAsync()
@@ -309,15 +413,37 @@ namespace Application.Services.User
                 Address = null,
                 PostalCode = null,
                 City = null,
-                ProfileText= null
+                ProfileText = null
             };
 
             await profileRepository.AddAsync(profile);
         }
 
-        public async Task<PublicUserProfileView> GetPublicProfileAsync(string userId, string userName)
+        public async Task<PublicUserProfileView> GetPublicProfilePageAsync(string userName)
         {
-            UserProfile? profile = await profileRepository.GetByUserIdAsync(userId);
+            if (string.IsNullOrWhiteSpace(userName))
+            {
+                throw new ArgumentException("A username is required.", nameof(userName));
+            }
+
+            string userId = await userService.GetUserIdByUsernameAsync(userName);
+
+            PublicUserProfileView profile = await GetPublicProfileAsync(userId, userName);
+
+            UserRelationshipView relationship = await friendshipService.GetRelationshipAsync(profile.UserId);
+
+            profile.RelationshipStatus = relationship.RelationshipStatus;
+
+            profile.CanSendFriendRequest = relationship.CanSendRequest;
+
+            profile.FriendshipId = relationship.FriendshipId;
+
+            return profile;
+        }
+
+        public async Task<PublicUserProfileView> GetPublicProfileAsync(string userId,string userName)
+        {
+            UserProfile? profile =await profileRepository.GetByUserIdAsync(userId);
 
             if (profile == null)
             {
@@ -338,49 +464,28 @@ namespace Application.Services.User
 }
 
 
-using Application.Interfaces.Services.User;
-using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Application.Services.User
+namespace EntityModels
 {
-    public class AccountService : IAccountService
+    public class UserProfile
     {
-        private readonly IUserService userService;
-        private readonly ICurrentUserService currentUser;
+        public int Id { get; set; }
 
-        public AccountService(
-            IUserService userService,
-            ICurrentUserService currentUser)
-        {
-            this.userService = userService;
-            this.currentUser = currentUser;
-        }
+        public string UserId { get; set; } = null!;
 
-        public async Task<string> GetEmailAsync()
-        {
-            string userId = currentUser.GetRequiredUserId();
+        public string? FirstName { get; set; }
 
-            return await userService.GetEmailByIdAsync(userId);
-        }
+        public string? LastName { get; set; }
 
-        public async Task ChangeEmailAsync(string newEmail)
-        {
-            string userId = currentUser.GetRequiredUserId();
+        public string? Address { get; set; }
 
-            await userService.ChangeEmailAsync(userId, newEmail);
-        }
+        public string? PostalCode { get; set; }
 
-        public async Task ChangePasswordAsync(string currentPassword, string newPassword)
-        {
-            string userId = currentUser.GetRequiredUserId();
+        public string? City { get; set; }
 
-            await userService.ChangePasswordAsync(userId, currentPassword, newPassword);
-        }
+        public string? ProfileText { get; set; }
     }
-
 }
+
 
 
 using Application.Interfaces.Services.User;
@@ -407,7 +512,7 @@ namespace OpenForum.Controllers
         [HttpGet]
         public async Task<IActionResult> Index()
         {
-            MyProfilePageView model = await BuildProfilePageAsync();
+            MyProfilePageView model = await profileService.GetMyProfilePageAsync();
 
             return View(model);
         }
@@ -418,7 +523,7 @@ namespace OpenForum.Controllers
         {
             if (!ModelState.IsValid)
             {
-                MyProfilePageView page = await BuildProfilePageAsync(editProfile: model);
+                MyProfilePageView page = await profileService.GetMyProfilePageAsync(editProfile: model);
 
                 return View("Index", page);
             }
@@ -435,7 +540,7 @@ namespace OpenForum.Controllers
             {
                 ModelState.AddModelError(string.Empty, ex.Message);
 
-                MyProfilePageView page = await BuildProfilePageAsync(editProfile: model);
+                MyProfilePageView page = await profileService.GetMyProfilePageAsync(editProfile: model);
 
                 return View("Index", page);
             }
@@ -447,7 +552,7 @@ namespace OpenForum.Controllers
         {
             if (!ModelState.IsValid)
             {
-                MyProfilePageView page = await BuildProfilePageAsync(changeEmail: model);
+                MyProfilePageView page = await profileService.GetMyProfilePageAsync(changeEmail: model);
 
                 return View("Index", page);
             }
@@ -464,7 +569,7 @@ namespace OpenForum.Controllers
             {
                 ModelState.AddModelError(string.Empty, ex.Message);
 
-                MyProfilePageView page = await BuildProfilePageAsync(changeEmail: model);
+                MyProfilePageView page = await profileService.GetMyProfilePageAsync(changeEmail: model);
 
                 return View("Index", page);
             }
@@ -472,11 +577,12 @@ namespace OpenForum.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ChangePassword([Bind(Prefix = "ChangePassword")] ChangePasswordView model)
+        public async Task<IActionResult> ChangePassword(
+            [Bind(Prefix = "ChangePassword")] ChangePasswordView model)
         {
             if (!ModelState.IsValid)
             {
-                MyProfilePageView page = await BuildProfilePageAsync(changePassword: model);
+                MyProfilePageView page =await profileService.GetMyProfilePageAsync(changePassword: model);
 
                 return View("Index", page);
             }
@@ -493,49 +599,19 @@ namespace OpenForum.Controllers
             {
                 ModelState.AddModelError(string.Empty, ex.Message);
 
-                MyProfilePageView page = await BuildProfilePageAsync(changePassword: model);
+                MyProfilePageView page = await profileService.GetMyProfilePageAsync(changePassword: model);
 
                 return View("Index", page);
             }
-        }
-
-        //This is wrong, should put it in service.. 
-        private async Task<MyProfilePageView> BuildProfilePageAsync(UserProfileEditView? editProfile = null, ChangeEmailView? changeEmail = null, ChangePasswordView? changePassword = null)
-        {
-            MyUserProfileView profile = await profileService.GetLoggedInProfileAsync();
-
-            string email = await accountService.GetEmailAsync();
-
-            return new MyProfilePageView
-            {
-                Profile = profile,
-
-                EditProfile = editProfile ?? new UserProfileEditView
-                {
-                    FirstName = profile.FirstName,
-                    LastName = profile.LastName,
-                    Address = profile.Address,
-                    PostalCode = profile.PostalCode,
-                    City = profile.City,
-                    ProfileText = profile.ProfileText
-                },
-
-                ChangeEmail = changeEmail ?? new ChangeEmailView(),
-
-                ChangePassword = changePassword ?? new ChangePasswordView(),
-
-                CurrentEmail = email
-            };
         }
     }
 }
 
 
-using Application.Interfaces.Services.Features;
+
 using Application.Interfaces.Services.User;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using ViewModels.Friends;
 using ViewModels.PublicUserProfile;
 
 namespace OpenForum.Controllers
@@ -543,42 +619,34 @@ namespace OpenForum.Controllers
     public class PublicProfileController : Controller
     {
         private readonly IUserProfileService profileService;
-        private readonly IFriendshipService friendshipService;
 
-        public PublicProfileController(
-            IUserProfileService profileService,
-            IFriendshipService friendshipService)
+        public PublicProfileController(IUserProfileService profileService)
         {
             this.profileService = profileService;
-            this.friendshipService = friendshipService;
         }
-
 
         [Authorize]
         [HttpGet]
-        public async Task<IActionResult> Index(string userId, string userName, string? returnUrl)
+        public async Task<IActionResult> Index(string userName, string? returnUrl)
         {
-            if (string.IsNullOrWhiteSpace(userId) || string.IsNullOrWhiteSpace(userName))
+            if (string.IsNullOrWhiteSpace(userName))
             {
                 return BadRequest();
             }
 
-            PublicUserProfileView profileView = await profileService.GetPublicProfileAsync(userId, userName);
+            try
+            {
+                PublicUserProfileView model = await profileService.GetPublicProfilePageAsync(userName);
 
-            if (profileView == null)
+                ViewData["ReturnUrl"] = Url.IsLocalUrl(returnUrl) ? returnUrl : Url.Action("Index", "Topic");
+
+                return View(model);
+            }
+            catch (KeyNotFoundException)
+            {
                 return NotFound();
-
-            UserRelationshipView relationship = await friendshipService.GetRelationshipAsync(profileView.UserId);
-
-            profileView.RelationshipStatus = relationship.RelationshipStatus;
-            profileView.CanSendFriendRequest = relationship.CanSendRequest;
-            profileView.FriendshipId = relationship.FriendshipId;
-
-            // Only allow local return URLs to prevent open redirects.
-            ViewData["ReturnUrl"] = Url.IsLocalUrl(returnUrl) ? returnUrl : Url.Action("Index", "Topic");
-
-            return View(profileView);
+            }
         }
-
     }
 }
+

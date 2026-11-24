@@ -3,6 +3,9 @@ using Application.Interfaces.Contexts;
 using Application.Interfaces.Mappers.Forum;
 using Application.Interfaces.Services.Forum;
 using Application.Interfaces.Services.User;
+using Application.Interfaces.Services.Features;
+using EntityContext;
+using Microsoft.EntityFrameworkCore;
 using EntityModels;
 using Repository.interfaces;
 using ViewModels.Topic;
@@ -15,18 +18,24 @@ namespace Application.Services.Forum
         private readonly ITopicMapper topicMapper;
         private readonly ICurrentUserService currentUser;
         private readonly IUserService userService;
+        private readonly ForumContext context;
+        private readonly IChatService chatService;
         private const int PageSize = 5;
 
         public TopicService(
             ITopicRepository topicRepository,
             ITopicMapper topicMapper,
             ICurrentUserService currentUser,
-            IUserService userService)
+            IUserService userService,
+            ForumContext context,
+            IChatService chatService)
         {
             this.topicRepository = topicRepository;
             this.topicMapper = topicMapper;
             this.currentUser = currentUser;
             this.userService = userService;
+            this.context = context;
+            this.chatService = chatService;
         }
 
         public async Task<TopicIndexView> GetTopicIndexViewAsync(int page = 1, TopicCreateView? createTopic = null)
@@ -93,9 +102,27 @@ namespace Application.Services.Forum
 
             Topic topic = topicMapper.ToEntity(model);
             topic.CreatedByUserId = userId;
-            topic.CreatedByUserName = await userService.GetUsernameByIdAsync(userId);
+            topic.CreatedByUserName =
+                await userService.GetUsernameByIdAsync(userId);
 
-            await topicRepository.AddAsync(topic);
+            await using var transaction =
+                await context.Database.BeginTransactionAsync();
+
+            try
+            {
+                // Save the topic first so it receives its database ID.
+                await topicRepository.AddAsync(topic);
+
+                // Create its chatroom and add the creator as the first member.
+                await chatService.GetOrCreateTopicRoomAsync(topic.Id);
+
+                await transaction.CommitAsync();
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
         }
 
         public async Task UpdateAsync(TopicEditView model)

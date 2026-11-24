@@ -16,6 +16,7 @@ using Identity.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
+using OpenForum.Hubs;
 using OpenForum.Services;
 using Repository;
 using Repository.interfaces;
@@ -79,6 +80,8 @@ builder.Services.AddScoped<IUserProfileRepository, UserProfileRepository>();
 builder.Services.AddScoped<ILikeRepository, LikeRepository>();
 builder.Services.AddScoped<IFriendshipRepository, FriendshipRepository>();
 builder.Services.AddScoped<IMessageRepository, MessageRepository>();
+builder.Services.AddScoped<IChatRepository, ChatRepository>();
+
 
 // Register mappers
 // Forum
@@ -105,6 +108,9 @@ builder.Services.AddScoped<IDiscoverService, DiscoverService>();
 builder.Services.AddScoped<IMyActivityService, MyActivityService>();
 builder.Services.AddScoped<IFriendshipService, FriendshipService>();
 builder.Services.AddScoped<IMessageService, MessageService>();
+builder.Services.AddScoped<IChatService, ChatService>();
+
+builder.Services.AddSignalR();
 
 var app = builder.Build();
 
@@ -131,6 +137,8 @@ app.UseAuthorization();
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Topic}/{action=Index}/{id?}");
+
+app.MapHub<ChatHub>("/chatHub");
 
 app.MapRazorPages();
 

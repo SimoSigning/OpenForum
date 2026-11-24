@@ -1,0 +1,187 @@
+﻿<!-- /Views/Chat/Room.cshtml-->
+@model ViewModels.Chat.ChatRoomView
+
+@{
+    ViewData["Title"] = Model.Name;
+}
+
+<div class="container-fluid py-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+            <h1 class="h3 mb-1">@Model.Name</h1>
+
+            <p class="text-muted mb-0">
+                <span id="roomMemberCount">@Model.MemberCount</span> members
+            </p>
+        </div>
+
+        <div class="d-flex gap-2">
+
+            @if (Model.RoomType == "Private")
+            {
+                <button type="button"
+                        class="btn btn-outline-primary btn-sm"
+                        id="inviteFriendsButton">
+                    Invite friends
+                </button>
+            }
+
+            <button type="button"
+                    class="btn btn-outline-danger btn-sm"
+                    id="leaveRoomButton">
+                Leave room
+            </button>
+
+            <a asp-action="Index"
+               class="btn btn-outline-secondary btn-sm">
+                Back to chats
+            </a>
+
+        </div>
+
+    </div>
+
+    <!-- Room members -->
+    <div class="card shadow-sm mb-3">
+
+        <div class="card-header">
+            <h2 class="h6 mb-0">Members</h2>
+        </div>
+
+        <div class="card-body">
+
+            <div id="roomMembersLoading" class="text-muted">
+                Loading members...
+            </div>
+
+            <div id="roomMembersList" class="d-flex flex-wrap gap-2">
+            </div>
+
+        </div>
+
+    </div>
+
+    @if (Model.RoomType == "Private")
+    {
+        <div class="modal fade"
+             id="inviteFriendsModal"
+             tabindex="-1"
+             aria-labelledby="inviteFriendsModalLabel"
+             aria-hidden="true">
+
+            <div class="modal-dialog">
+                <div class="modal-content">
+
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="inviteFriendsModalLabel">
+                            Invite friends
+                        </h5>
+
+                        <button type="button"
+                                class="btn-close"
+                                data-bs-dismiss="modal"
+                                aria-label="Close">
+                        </button>
+                    </div>
+
+                    <div class="modal-body">
+
+                        <div id="inviteFriendsLoading" class="text-muted">
+                            Loading friends...
+                        </div>
+
+                        <div id="inviteFriendsEmpty" class="text-muted d-none">
+                            You have no friends available to invite.
+                        </div>
+
+                        <div id="inviteFriendsList" class="list-group">
+                        </div>
+
+                        <div id="inviteFriendsError"
+                             class="alert alert-danger d-none mt-3">
+                        </div>
+
+                        <div id="inviteFriendsSuccess"
+                             class="alert alert-success d-none mt-3">
+                            Friend successfully invited.
+                        </div>
+
+                    </div>
+
+                    <div class="modal-footer">
+
+                        <button type="button"
+                                class="btn btn-secondary"
+                                data-bs-dismiss="modal">
+                            Close
+                        </button>
+
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    }
+
+    <div id="chatError"
+         class="alert alert-danger d-none">
+    </div>
+
+<!-- Messages -->
+<div class="card shadow-sm mb-3">
+    <div class="card-body">
+
+        <div id="messagesLoading" class="text-muted">
+            Loading messages...
+        </div>
+
+        <div id="messagesContainer"
+             class="d-flex flex-column overflow-auto pb-3"
+             style="height: 400px; min-height: 0;">
+
+        </div>
+
+        <!-- Message input -->
+        <form id="messageForm">
+
+            @Html.AntiForgeryToken()
+
+            <div class="input-group">
+
+                <textarea id="messageInput"
+                          class="form-control"
+                          rows="2"
+                          maxlength="2000"
+                          placeholder="Write a message..."
+                          required></textarea>
+
+                <button type="submit"
+                        id="sendMessageButton"
+                        class="btn btn-primary">
+                    Send
+                </button>
+
+            </div>
+
+            <small class="text-muted">
+                Maximum 2000 characters.
+            </small>
+
+        </form>
+
+    </div>
+</div>
+
+</div>
+
+@section Scripts {
+    <script>
+        window.chatRoomId = @Model.Id;
+        window.chatCurrentUserId =
+            @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.CurrentUserId));
+    </script>
+
+    <script src="~/js/chat-room.js" asp-append-version="true"></script>
+}

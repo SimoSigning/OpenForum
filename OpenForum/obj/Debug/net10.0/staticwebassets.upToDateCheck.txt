@@ -1,4 +1,12 @@
+C:\Users\MisterDerp\source\repos\OpenForum\OpenForum\wwwroot\js\chat-room.js
+C:\Users\MisterDerp\source\repos\OpenForum\OpenForum\wwwroot\lib\signalr\signalr.js
 C:\Users\MisterDerp\source\repos\OpenForum\OpenForum\wwwroot\css\forum.css
+C:\Users\MisterDerp\source\repos\OpenForum\OpenForum\wwwroot\lib\signalr\signalr.min.js
+C:\Users\MisterDerp\source\repos\OpenForum\OpenForum\wwwroot\js\chat-index.js
 C:\Users\MisterDerp\source\repos\OpenForum\OpenForum\wwwroot\js\likes.js
 wwwroot\css\forum.css
+wwwroot\js\chat-index.js
+wwwroot\js\chat-room.js
 wwwroot\js\likes.js
+wwwroot\lib\signalr\signalr.js
+wwwroot\lib\signalr\signalr.min.js

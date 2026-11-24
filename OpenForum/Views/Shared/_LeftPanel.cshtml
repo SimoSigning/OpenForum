@@ -9,6 +9,12 @@
             @await Component.InvokeAsync("UnreadMessages")
         </a>
 
+        <a asp-controller="Chat"
+           asp-action="Index"
+           class="left-panel-link">
+           Chat
+        </a>
+
         <a asp-controller="Friendship"
            asp-action="Index"
            class="left-panel-link">

@@ -3,6 +3,8 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
+#pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
+
 namespace EntityContext.Migrations
 {
     /// <inheritdoc />
@@ -84,6 +86,30 @@ namespace EntityContext.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "ChatRooms",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Name = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    RoomType = table.Column<int>(type: "int", nullable: false),
+                    CreatedByUserId = table.Column<string>(type: "nvarchar(450)", maxLength: 450, nullable: false),
+                    OwnerUserId = table.Column<string>(type: "nvarchar(450)", maxLength: 450, nullable: true),
+                    TopicId = table.Column<int>(type: "int", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ChatRooms", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ChatRooms_Topics_TopicId",
+                        column: x => x.TopicId,
+                        principalTable: "Topics",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Posts",
                 columns: table => new
                 {
@@ -103,6 +129,49 @@ namespace EntityContext.Migrations
                         name: "FK_Posts_Topics_TopicId",
                         column: x => x.TopicId,
                         principalTable: "Topics",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ChatMessages",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    ChatRoomId = table.Column<int>(type: "int", nullable: false),
+                    SenderUserId = table.Column<string>(type: "nvarchar(450)", maxLength: 450, nullable: false),
+                    Content = table.Column<string>(type: "nvarchar(2000)", maxLength: 2000, nullable: false),
+                    SentAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ChatMessages", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ChatMessages_ChatRooms_ChatRoomId",
+                        column: x => x.ChatRoomId,
+                        principalTable: "ChatRooms",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ChatRoomMembers",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    ChatRoomId = table.Column<int>(type: "int", nullable: false),
+                    UserId = table.Column<string>(type: "nvarchar(450)", maxLength: 450, nullable: false),
+                    JoinedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ChatRoomMembers", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ChatRoomMembers_ChatRooms_ChatRoomId",
+                        column: x => x.ChatRoomId,
+                        principalTable: "ChatRooms",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -167,6 +236,16 @@ namespace EntityContext.Migrations
                 });
 
             migrationBuilder.InsertData(
+                table: "ChatRooms",
+                columns: new[] { "Id", "CreatedAt", "CreatedByUserId", "Name", "OwnerUserId", "RoomType", "TopicId" },
+                values: new object[,]
+                {
+                    { 1, new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "seed-user", "General", null, 2, null },
+                    { 2, new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "seed-user", "Introductions", null, 2, null },
+                    { 3, new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "seed-user", "Off-topic", null, 2, null }
+                });
+
+            migrationBuilder.InsertData(
                 table: "Topics",
                 columns: new[] { "Id", "CreatedAt", "CreatedByUserId", "CreatedByUserName", "Title" },
                 values: new object[] { 1, new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "seed-user", "", "Welcome to the forum" });
@@ -180,6 +259,34 @@ namespace EntityContext.Migrations
                 table: "Comments",
                 columns: new[] { "Id", "Content", "CreatedAt", "CreatedByUserId", "CreatedByUserName", "ParentCommentId", "PostId", "Title" },
                 values: new object[] { 1, "First comment!", new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "seed-user", "", null, 1, "" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ChatMessages_ChatRoomId_Id",
+                table: "ChatMessages",
+                columns: new[] { "ChatRoomId", "Id" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ChatRoomMembers_ChatRoomId_UserId",
+                table: "ChatRoomMembers",
+                columns: new[] { "ChatRoomId", "UserId" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ChatRoomMembers_UserId",
+                table: "ChatRoomMembers",
+                column: "UserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ChatRooms_RoomType",
+                table: "ChatRooms",
+                column: "RoomType");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ChatRooms_TopicId",
+                table: "ChatRooms",
+                column: "TopicId",
+                unique: true,
+                filter: "[TopicId] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Comments_ParentCommentId",
@@ -247,6 +354,12 @@ namespace EntityContext.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
+                name: "ChatMessages");
+
+            migrationBuilder.DropTable(
+                name: "ChatRoomMembers");
+
+            migrationBuilder.DropTable(
                 name: "Friendships");
 
             migrationBuilder.DropTable(
@@ -257,6 +370,9 @@ namespace EntityContext.Migrations
 
             migrationBuilder.DropTable(
                 name: "UserProfiles");
+
+            migrationBuilder.DropTable(
+                name: "ChatRooms");
 
             migrationBuilder.DropTable(
                 name: "Comments");
