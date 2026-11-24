@@ -2,6 +2,10 @@
 using Application.Interfaces.Services.Features;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
+using OpenForum.Hubs;
+using OpenForum.Services;
+using System.Security.Claims;
 using ViewModels.Chat;
 
 namespace OpenForum.Controllers
@@ -10,10 +14,17 @@ namespace OpenForum.Controllers
     public class ChatController : Controller
     {
         private readonly IChatService chatService;
+        private readonly IHubContext<ChatHub> chatHub;
+        private readonly ChatConnectionTracker connectionTracker;
 
-        public ChatController(IChatService chatService)
+        public ChatController(
+            IChatService chatService,
+            IHubContext<ChatHub> chatHub,
+            ChatConnectionTracker connectionTracker)
         {
             this.chatService = chatService;
+            this.chatHub = chatHub;
+            this.connectionTracker = connectionTracker;
         }
 
         // --------------------------------
@@ -272,7 +283,34 @@ namespace OpenForum.Controllers
         {
             try
             {
+                // Identify the authenticated user.
+                string? userId = User.FindFirstValue(
+                    ClaimTypes.NameIdentifier);
+
+                if (string.IsNullOrEmpty(userId))
+                    return Forbid();
+
+                // First remove the user's database membership.
                 await chatService.LeaveRoomAsync(roomId);
+
+                // Find every active SignalR connection belonging to this user.
+                IReadOnlyList<string> connections =
+                    connectionTracker.GetConnections(userId);
+
+                string groupName = ChatHub.GetGroupName(roomId);
+
+                foreach (string connectionId in connections)
+                {
+                    // Remove the connection from the SignalR group.
+                    await chatHub.Groups.RemoveFromGroupAsync(
+                        connectionId,
+                        groupName);
+
+                    // Also update our connection tracker.
+                    connectionTracker.RemoveRoom(
+                        connectionId,
+                        roomId);
+                }
 
                 return Ok();
             }
@@ -289,6 +327,7 @@ namespace OpenForum.Controllers
                 return BadRequest(new { error = ex.Message });
             }
         }
+
 
         // --------------------------------
         // Topic rooms

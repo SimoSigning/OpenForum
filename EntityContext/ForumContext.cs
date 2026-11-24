@@ -184,6 +184,30 @@ namespace EntityContext
             // Chat rooms
             modelBuilder.Entity<ChatRoom>(entity =>
             {
+                entity.ToTable("ChatRooms", table =>
+                table.HasCheckConstraint(
+                    "CK_ChatRooms_ValidRoomConfiguration",
+                    """
+                    (
+                        [RoomType] = 1
+                        AND [TopicId] IS NULL
+                        AND [OwnerUserId] IS NOT NULL
+                    )
+                    OR
+                    (
+                        [RoomType] = 2
+                        AND [TopicId] IS NULL
+                        AND [OwnerUserId] IS NULL
+                    )
+                    OR
+                    (
+                        [RoomType] = 3
+                        AND [TopicId] IS NOT NULL
+                        AND [OwnerUserId] IS NULL
+                    )
+                    """
+                ));
+
                 entity.HasKey(r => r.Id);
 
                 entity.Property(r => r.Name)
@@ -218,6 +242,8 @@ namespace EntityContext
                 entity.HasIndex(r => r.RoomType);
             });
 
+
+
             // Chat room members
             modelBuilder.Entity<ChatRoomMember>(entity =>
             {
@@ -229,6 +255,9 @@ namespace EntityContext
 
                 entity.Property(m => m.JoinedAt)
                     .IsRequired();
+
+                entity.Property(m => m.LastVisitedAt)
+                    .IsRequired(false);
 
                 entity.HasOne(m => m.ChatRoom)
                     .WithMany(r => r.Members)

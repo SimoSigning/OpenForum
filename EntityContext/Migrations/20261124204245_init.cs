@@ -101,6 +101,7 @@ namespace EntityContext.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_ChatRooms", x => x.Id);
+                    table.CheckConstraint("CK_ChatRooms_ValidRoomConfiguration", "(\r\n    [RoomType] = 1\r\n    AND [TopicId] IS NULL\r\n    AND [OwnerUserId] IS NOT NULL\r\n)\r\nOR\r\n(\r\n    [RoomType] = 2\r\n    AND [TopicId] IS NULL\r\n    AND [OwnerUserId] IS NULL\r\n)\r\nOR\r\n(\r\n    [RoomType] = 3\r\n    AND [TopicId] IS NOT NULL\r\n    AND [OwnerUserId] IS NULL\r\n)");
                     table.ForeignKey(
                         name: "FK_ChatRooms_Topics_TopicId",
                         column: x => x.TopicId,
@@ -163,7 +164,8 @@ namespace EntityContext.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     ChatRoomId = table.Column<int>(type: "int", nullable: false),
                     UserId = table.Column<string>(type: "nvarchar(450)", maxLength: 450, nullable: false),
-                    JoinedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    JoinedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    LastVisitedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
                 constraints: table =>
                 {

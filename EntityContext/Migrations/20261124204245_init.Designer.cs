@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EntityContext.Migrations
 {
     [DbContext(typeof(ForumContext))]
-    [Migration("20261124131340_init")]
+    [Migration("20261124204245_init")]
     partial class init
     {
         /// <inheritdoc />
@@ -95,7 +95,10 @@ namespace EntityContext.Migrations
                         .IsUnique()
                         .HasFilter("[TopicId] IS NOT NULL");
 
-                    b.ToTable("ChatRooms");
+                    b.ToTable("ChatRooms", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_ChatRooms_ValidRoomConfiguration", "(\r\n    [RoomType] = 1\r\n    AND [TopicId] IS NULL\r\n    AND [OwnerUserId] IS NOT NULL\r\n)\r\nOR\r\n(\r\n    [RoomType] = 2\r\n    AND [TopicId] IS NULL\r\n    AND [OwnerUserId] IS NULL\r\n)\r\nOR\r\n(\r\n    [RoomType] = 3\r\n    AND [TopicId] IS NOT NULL\r\n    AND [OwnerUserId] IS NULL\r\n)");
+                        });
 
                     b.HasData(
                         new
@@ -136,6 +139,9 @@ namespace EntityContext.Migrations
                         .HasColumnType("int");
 
                     b.Property<DateTime>("JoinedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("LastVisitedAt")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("UserId")

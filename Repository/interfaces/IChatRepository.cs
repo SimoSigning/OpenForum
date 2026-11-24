@@ -19,11 +19,15 @@ namespace Repository.interfaces
 
         Task CreateRoomWithMembersAsync(ChatRoom room, IEnumerable<ChatRoomMember> members);
 
-        Task LeaveRoomAsync(int roomId, string userId, string? newOwnerUserId, bool deleteRoom);
+        Task LeaveRoomAsync(int roomId, string userId);
 
         Task<string?> GetTopicTitleAsync(int topicId);
 
         Task<bool> TopicExistsAsync(int topicId);
+
+        Task<int> GetUnseenPrivateRoomCountAsync(string userId);
+
+        Task MarkRoomAsVisitedAsync(int roomId, string userId);
 
         // Membership
         Task<ChatRoomMember?> GetMembershipAsync(int roomId, string userId);

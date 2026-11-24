@@ -10,6 +10,8 @@
 
         public DateTime JoinedAt { get; set; } = DateTime.UtcNow;
 
+        public DateTime? LastVisitedAt { get; set; }
+
         public ChatRoom ChatRoom { get; set; } = null!;
     }
 }

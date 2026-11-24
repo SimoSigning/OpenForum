@@ -86,9 +86,19 @@ namespace Application.Services.Features
                     });
                 }
             }
-            else
+            else if (room.RoomType == ChatRoomType.Miscellaneous)
+            {
+                await JoinMiscellaneousRoomAsync(roomId);
+            }
+            else if (room.RoomType == ChatRoomType.Private)
             {
                 await EnsureMembershipAsync(roomId, userId);
+
+                await chatRepository.MarkRoomAsVisitedAsync(roomId, userId);
+            }
+            else
+            {
+                throw new InvalidOperationException("Unsupported chat room type.");
             }
 
             IEnumerable<ChatRoomMember> members =
@@ -361,54 +371,61 @@ namespace Application.Services.Features
             });
         }
 
-
-
-        public async Task LeaveRoomAsync(int roomId)
+        public async Task RemoveTemporaryMembershipAsync(int roomId, string userId)
         {
-            string userId = currentUser.GetRequiredUserId();
+            if (string.IsNullOrWhiteSpace(userId))
+                return;
 
-            ChatRoom room = await GetRoomOrThrowAsync(roomId);
+            // The room might have been deleted while the user was disconnected.
+            ChatRoom? room =
+                await chatRepository.GetRoomByIdAsync(roomId);
+
+            if (room == null)
+                return;
+
+            // Never automatically remove private-room membership.
+            if (room.RoomType != ChatRoomType.Miscellaneous &&
+                room.RoomType != ChatRoomType.Topic)
+            {
+                return;
+            }
 
             ChatRoomMember? membership =
                 await chatRepository.GetMembershipAsync(roomId, userId);
 
             if (membership == null)
-                throw new InvalidOperationException(
-                    "You are not a member of this room.");
+                return;
 
-            IEnumerable<ChatRoomMember> members =
-                await chatRepository.GetMembersAsync(roomId);
-
-            List<ChatRoomMember> remainingMembers = members
-                .Where(m => m.UserId != userId)
-                .OrderBy(m => m.JoinedAt)
-                .ThenBy(m => m.UserId, StringComparer.Ordinal)
-                .ToList();
-
-            // Only private rooms are deleted when their final
-            // member leaves.
-            bool deleteRoom =
-                room.RoomType == ChatRoomType.Private &&
-                remainingMembers.Count == 0;
-
-            string? newOwnerUserId = null;
-
-            // Ownership only applies to private rooms.
-            if (room.RoomType == ChatRoomType.Private &&
-                !deleteRoom &&
-                room.OwnerUserId == userId)
-            {
-                newOwnerUserId = remainingMembers[0].UserId;
-            }
-
-            await chatRepository.LeaveRoomAsync(
-                roomId,
-                userId,
-                newOwnerUserId,
-                deleteRoom);
+            await chatRepository.RemoveMemberAsync(membership);
         }
 
+        public async Task LeaveRoomAsync(int roomId)
+        {
+            string userId = currentUser.GetRequiredUserId();
 
+            await chatRepository.LeaveRoomAsync(roomId, userId);
+        }
+
+        public async Task<int> GetUnseenPrivateRoomCountAsync()
+        {
+            string userId = currentUser.GetRequiredUserId();
+
+            return await chatRepository.GetUnseenPrivateRoomCountAsync(userId);
+        }
+
+        public async Task MarkRoomAsVisitedAsync(int roomId)
+        {
+            string userId = currentUser.GetRequiredUserId();
+
+            ChatRoom room = await GetRoomOrThrowAsync(roomId);
+
+            if (room.RoomType != ChatRoomType.Private)
+                return;
+
+            await EnsureMembershipAsync(roomId, userId);
+
+            await chatRepository.MarkRoomAsVisitedAsync(roomId, userId);
+        }
 
         // --------------------------------
         // Topic rooms
@@ -540,10 +557,9 @@ namespace Application.Services.Features
                 SentAt = DateTime.UtcNow
             };
 
-            await chatRepository.AddMessageAsync(message);
+            string username = await userService.GetUsernameByIdAsync(userId);
 
-            string username =
-                await userService.GetUsernameByIdAsync(userId);
+            await chatRepository.AddMessageAsync(message);
 
             return new ChatMessageView
             {

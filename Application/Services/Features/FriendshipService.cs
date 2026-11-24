@@ -140,6 +140,13 @@ namespace Application.Services.Features
             return await friendshipRepository.GetIncomingPendingRequestsAsync(currentUserId);
         }
 
+        public async Task<int> GetIncomingPendingRequestCountAsync()
+        {
+            string currentUserId = currentUserService.GetRequiredUserId();
+
+            return await friendshipRepository.GetIncomingPendingRequestCountAsync(currentUserId);
+        }
+
         private async Task<Friendship> GetFriendshipOrThrowAsync(int id)
         {
             Friendship? friendship = await friendshipRepository.GetByIdAsync(id);

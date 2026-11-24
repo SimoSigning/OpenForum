@@ -43,6 +43,14 @@ namespace Repository
                 .ToListAsync();
         }
 
+        public async Task<int> GetIncomingPendingRequestCountAsync(string userId)
+        {
+            return await context.Friendships
+                .CountAsync(f =>
+                    f.AddresseeUserId == userId &&
+                    f.Status == FriendshipStatus.Pending);
+        }
+
         public async Task<IEnumerable<Friendship>> GetAcceptedForUserAsync(string userId)
         {
             return await context.Friendships

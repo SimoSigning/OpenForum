@@ -1,577 +1,237 @@
-OpenForum – Technical Handover
-Topic Chatroom Integration
+# OpenForum Chat System — Session Handover
 
-Date: 24 November 2026
-Project: OpenForum (ASP.NET Core MVC, Entity Framework Core, SignalR)
+## 1. Project context
 
-1. Project overview
+We are reviewing and improving the chat functionality in an ASP.NET Core forum application called OpenForum.
 
-OpenForum is an ASP.NET Core MVC forum application.
+The goal is to work through an existing prioritized improvement list, fixing genuine issues without unnecessary refactoring.
 
-The application currently contains functionality for:
+**Important working preferences:**
+- Work through the priorities in order.
+- Address one issue at a time.
+- Keep changes focused and explain why a change is necessary.
+- Do not refactor working code just for stylistic reasons.
+- Avoid theoretical edge cases unless they represent a meaningful practical problem.
+- Do not reopen issues that have already been reviewed and closed.
+- Keep the process efficient. The user prefers practical progress over lengthy discussions.
 
-Forum topics.
-Posts and comments.
-User profiles.
-Friendships.
-Private messaging.
-Chatrooms using SignalR.
-Private chatrooms between friends.
-Community (miscellaneous) chatrooms.
+## 2. Room types and access rules
 
-The current development task is integrating chatrooms with the existing topic functionality.
+There are three chatroom types:
 
-The objective is to give every forum topic its own associated chatroom.
+| Room type | Access |
+|---|---|
+| Topic | Any authenticated forum user |
+| Miscellaneous | Any authenticated forum user |
+| Private | Invited members only |
 
-This handover describes the current implementation and the next development steps. Do not assume that functionality not explicitly described here has already been implemented.
+These access rules are intentional and must be preserved.
 
-2. Existing chatroom architecture
+## 3. Original prioritized roadmap
 
-The application uses three chatroom types:
+1. SignalR authorization and membership synchronization
+2. Transactions and data consistency
+3. Database optimization
+4. ChatService cleanup
+5. ChatRepository cleanup
+6. SignalR JavaScript improvements
+7. Frontend cleanup
+8. Models and ViewModels
+9. Controllers and error handling
+10. Topic integration and final cleanup
 
-csharp
-public enum ChatRoomType
-{
-    Private = 1,
-    Miscellaneous = 2,
-    Topic = 3
+### Current roadmap status
+
+**Priority 1 — Completed**
+
+Authorization and membership synchronization were reviewed and tested.
+
+Key changes:
+- Topic rooms automatically add authenticated users as members when they enter.
+- Miscellaneous rooms allow authenticated users to join.
+- Private rooms require existing membership.
+- `GetRoomAsync()` handles these room types explicitly.
+- SignalR group membership is checked through the service before joining.
+- A `ChatConnectionTracker` singleton tracks a user's active SignalR connections.
+- When a user leaves a room, all their tracked connections are removed from that room's SignalR group.
+
+The user tested leaving a private room with two browser tabs open. Both tabs stopped receiving messages, while another member continued receiving messages.
+
+One known limitation: the connection tracker is in-memory and therefore intended for a single-server deployment. A multi-server deployment would require shared connection tracking.
+
+**Priority 2 — Reviewed and closed**
+
+Transactions and data consistency were reviewed. Relevant changes:
+
+- `LeaveRoomAsync()` now performs membership removal, private-room deletion, and ownership transfer inside a Serializable transaction.
+- If the owner leaves, ownership transfers to the earliest remaining member, ordered by `JoinedAt` and then `UserId`.
+- If the final member leaves, the private room is deleted.
+- Message retention keeps the latest 100 messages. The transaction isolation level was changed from Serializable to the default isolation level.
+- `CreateRoomWithMembersAsync()` handles transaction ownership and detaches entities from EF Core tracking after failure.
+- A database check constraint enforces valid room configurations:
+  - Private: `TopicId IS NULL`, `OwnerUserId IS NOT NULL`
+  - Miscellaneous: `TopicId IS NULL`, `OwnerUserId IS NULL`
+  - Topic: `TopicId IS NOT NULL`, `OwnerUserId IS NULL`
+- The user created and applied the migration for this constraint and tested room operations.
+- The unique index on `(ChatRoomId, UserId)` protects against duplicate memberships. The repository's original `AddMemberAsync()` was retained rather than adding unnecessary duplicate-key exception handling.
+- Username lookup in `SendMessageAsync()` was moved before message persistence to avoid saving a message and then failing during username lookup.
+- Private-room creation and friend invitation flows were reviewed. No further changes were considered necessary.
+
+The user tested private-room leaving, ownership transfer, final-member deletion, and normal topic-room reuse.
+
+**Priority 3 — Skipped**
+
+Database optimization was deliberately skipped. Do not bring it back up unless the user asks.
+
+**Priority 4 — ChatService cleanup: Closed**
+
+The complete ChatService was reviewed.
+
+- Similar friend retrieval methods serve distinct purposes and were kept separate.
+- No meaningful cleanup was identified.
+- The user did not want an unnecessary interface review.
+
+No further changes recommended.
+
+**Priority 5 — ChatRepository cleanup: Under review**
+
+The complete current repository was reviewed.
+
+Conclusions so far:
+- Overall repository structure is good.
+- No major refactoring is recommended.
+- Tracked entity queries should not automatically be converted to `AsNoTracking()`.
+- The `LeaveRoomAsync()` implementation was deliberately left unchanged because its ownership-transfer behavior was tested and works correctly.
+- The transaction ownership logic in `CreateRoomWithMembersAsync()` is appropriate.
+- Message retention logic was reviewed.
+- The user was asked whether `UpdateRoomAsync()` is referenced anywhere in the project. That question has not yet been answered.
+
+The next session should briefly resolve that question if Priority 5 is still being pursued. If the method is used, keep it. If it is genuinely unused, consider removing it from both the repository and interface. Do not expand the review unnecessarily.
+
+## 4. Priority 6 — SignalR JavaScript improvements
+
+The user provided the complete current versions of:
+- `chat-index.js`
+- `chat-room.js`
+- `ChatHub`
+- `ChatController`
+
+These were reviewed.
+
+### General assessment
+
+The implementation is generally in good shape:
+- SignalR uses automatic reconnection.
+- Message history and incoming SignalR messages are deduplicated using a `Map`.
+- The client limits displayed messages to 100.
+- Message content is rendered using `textContent`, avoiding HTML injection.
+- The Hub validates room access through `chatService.GetRoomAsync()` before adding a connection to the group.
+- Messages are validated and persisted through `chatService.SendMessageAsync()`.
+- The Controller handles room membership and removes all tracked user connections when leaving a room.
+- Anti-forgery validation is applied to the relevant POST actions.
+
+### One potential issue identified — Not yet changed
+
+In `chat-room.js`, the client checks whether the SignalR connection is connected, but does not separately track whether the user successfully joined the room's SignalR group.
+
+Current initialization:
+
+```javascript
+await connectToChat();
+
+if (connection.state === signalR.HubConnectionState.Connected) {
+    await loadMessages();
 }
+```
 
+Current connection setup:
 
-The three types have different purposes.
+```javascript
+try {
+    await connection.start();
 
-Type	Purpose	Ownership
-Private	Chats created by users for themselves and invited friends	Has an owner
-Miscellaneous	General community chatrooms	No owner
-Topic	Chatrooms associated with forum topics	No owner
-Chatroom entity relationships
+    await connection.invoke("JoinRoom", roomId);
 
-The ForumContext contains:
+    clearError();
 
-ChatRooms
-ChatRoomMembers
-ChatMessages
-
-The relevant EF Core configuration currently includes:
-
-csharp
-modelBuilder.Entity<ChatRoom>(entity =>
-{
-    entity.HasKey(r => r.Id);
-
-    entity.Property(r => r.Name)
-        .IsRequired()
-        .HasMaxLength(100);
-
-    entity.Property(r => r.RoomType)
-        .IsRequired();
-
-    entity.Property(r => r.CreatedByUserId)
-        .IsRequired()
-        .HasMaxLength(450);
-
-    entity.Property(r => r.OwnerUserId)
-        .HasMaxLength(450);
-
-    entity.Property(r => r.CreatedAt)
-        .IsRequired();
-
-    entity.HasIndex(r => r.TopicId)
-        .IsUnique()
-        .HasFilter("[TopicId] IS NOT NULL");
-
-    entity.HasOne(r => r.Topic)
-        .WithOne()
-        .HasForeignKey<ChatRoom>(r => r.TopicId)
-        .OnDelete(DeleteBehavior.Cascade);
-
-    entity.HasIndex(r => r.RoomType);
-});
-
-
-The existing relationships for memberships and messages also use cascade deletion.
-
-This is important because deleting a topic should automatically delete its associated chatroom, memberships and messages.
-
-Verify the actual database migration and foreign-key configuration before relying on cascade deletion.
-
-3. Existing chat functionality
-
-Chat functionality is already implemented and working.
-
-Chat index
-
-Location:
-
-Views/Chat/Index.cshtml
-
-The page displays:
-
-Your private chats.
-A button to create private chats.
-Community chatrooms.
-
-It uses:
-
-wwwroot/js/chat-index.js
-
-The JavaScript retrieves rooms through:
-
-javascript
-fetch("/Chat/MyRooms");
-fetch("/Chat/MiscellaneousRooms");
-
-
-Community rooms can be joined using:
-
-javascript
-fetch("/Chat/JoinRoom", {
-    method: "POST",
-    ...
-});
-
-
-Users who are already members can open the room directly.
-
-The community/miscellaneous room functionality has been seeded and tested. It currently works as intended.
-
-Chatroom view
-
-Location:
-
-Views/Chat/Room.cshtml
-
-JavaScript:
-
-wwwroot/js/chat-room.js
-
-The room view already supports:
-
-Loading existing messages.
-Sending messages.
-Receiving messages through SignalR.
-Automatic reconnection.
-Displaying room members.
-Inviting friends in private rooms.
-Leaving rooms.
-
-The leave button is already implemented:
-
-HTML
-<button type="button"
-        class="btn btn-outline-danger btn-sm"
-        id="leaveRoomButton">
-    Leave room
-</button>
-
-
-The JavaScript sends a POST request to:
-
-/Chat/LeaveRoom
-
-The user is redirected to / after successfully leaving.
-
-Do not reimplement the leave functionality. It already exists.
-
-SignalR
-
-The existing chat uses:
-
-javascript
-new signalR.HubConnectionBuilder()
-    .withUrl("/chatHub")
-    .withAutomaticReconnect()
-    .build();
-
-
-Messages are received through:
-
-javascript
-connection.on("ReceiveMessage", message => {
-    addMessage(message);
-});
-
-
-Rooms are joined through:
-
-javascript
-await connection.invoke("JoinRoom", roomId);
-
-
-Messages are sent through:
-
-javascript
-await connection.invoke(
-    "SendMessage",
-    roomId,
-    content
-);
-
-
-Topic chatrooms should reuse this infrastructure. No separate messaging infrastructure is necessary.
-
-4. Existing leave-room implementation
-
-The current LeaveRoomAsync implementation has already been updated.
-
-It is important to use this version as the reference, rather than older versions of the method.
-
-csharp
-public async Task LeaveRoomAsync(int roomId)
-{
-    string userId = currentUser.GetRequiredUserId();
-
-    ChatRoom room = await GetRoomOrThrowAsync(roomId);
-
-    ChatRoomMember? membership =
-        await chatRepository.GetMembershipAsync(roomId, userId);
-
-    if (membership == null)
-        throw new InvalidOperationException(
-            "You are not a member of this room.");
-
-    IEnumerable<ChatRoomMember> members =
-        await chatRepository.GetMembersAsync(roomId);
-
-    List<ChatRoomMember> remainingMembers = members
-        .Where(m => m.UserId != userId)
-        .OrderBy(m => m.JoinedAt)
-        .ThenBy(m => m.UserId, StringComparer.Ordinal)
-        .ToList();
-
-    // Only private rooms are deleted when their final
-    // member leaves.
-    bool deleteRoom =
-        room.RoomType == ChatRoomType.Private &&
-        remainingMembers.Count == 0;
-
-    string? newOwnerUserId = null;
-
-    // Ownership only applies to private rooms.
-    if (room.RoomType == ChatRoomType.Private &&
-        !deleteRoom &&
-        room.OwnerUserId == userId)
-    {
-        newOwnerUserId = remainingMembers[0].UserId;
-    }
-
-    await chatRepository.LeaveRoomAsync(
-        roomId,
-        userId,
-        newOwnerUserId,
-        deleteRoom);
+} catch (error) {
+    showError("Could not connect to the chatroom.");
+    sendMessageButton.disabled = true;
 }
+```
 
+The concern is that `connection.start()` may succeed while `JoinRoom` fails. The connection would still be connected, but the user would not have joined the room group.
 
-The intended behaviour is:
+The previous assistant proposed introducing:
 
-Private rooms: ownership is transferred when necessary, and the room is deleted when its final member leaves.
-Miscellaneous rooms: users can leave, but the room remains.
-Topic rooms: users can leave, but the room remains.
+```javascript
+let isRoomJoined = false;
+```
 
-Topic rooms have no owners.
+and using it to track successful room membership separately from connection state. It also proposed updating reconnection handling, initialization, and the message submission check.
 
-No changes to this method should be necessary for topic chat functionality.
+**Important: The user explicitly chose not to pursue this change in the current session.**
 
-5. Existing topic architecture
+Do not immediately launch into that change in the new session. The user wants to close the current session because it has become lengthy and memory-heavy. Reassess whether this is worth addressing when Priority 6 resumes. Keep it focused if it is pursued.
 
-Topics are managed independently through the forum layer.
+## 5. Current JavaScript implementation
 
-Topic controller
+The user supplied the full code in the previous session. The important structural details are:
 
-Location:
+### `chat-index.js`
+- Loads private rooms using `/Chat/MyRooms`.
+- Loads miscellaneous rooms using `/Chat/MiscellaneousRooms`.
+- Allows users to join miscellaneous rooms through `/Chat/JoinRoom`.
+- Loads friends through `/Chat/Friends`.
+- Creates private rooms through `/Chat/CreatePrivateRoom`.
+- Uses anti-forgery tokens for POST requests.
 
-Controllers/TopicController.cs
+### `chat-room.js`
+- Loads room messages through `/Chat/Messages`.
+- Connects to `/chatHub`.
+- Handles `ReceiveMessage`.
+- Uses automatic SignalR reconnection.
+- Supports sending messages.
+- Loads room members.
+- Supports inviting friends.
+- Supports leaving a room.
+- Redirects after successfully leaving.
 
-The controller uses:
+### `ChatHub`
+- Has `[Authorize]`.
+- Tracks connections in `OnConnectedAsync()` and `OnDisconnectedAsync()`.
+- Uses `JoinRoom()` to validate access before adding the connection to the SignalR group.
+- Uses `SendMessage()` to persist and broadcast messages.
+- Has a public static `GetGroupName()` helper.
 
-csharp
-private readonly ITopicService topicService;
+### `ChatController`
+- Handles room retrieval, creation, joining, leaving, invitations, and topic-room access.
+- Uses `IHubContext<ChatHub>` and `ChatConnectionTracker` to remove all of a user's active connections from a room when they leave.
 
+## 6. How to continue
 
-Its main actions are:
+Continue with the original roadmap, without reopening completed priorities.
 
-Index
-Edit
-Create
-Update
-Delete
-Topic service
+Suggested next steps:
 
-Location:
+1. Resolve whether `UpdateRoomAsync()` in `ChatRepository` is used, then close Priority 5.
+2. Continue Priority 6, reviewing the JavaScript and SignalR integration for meaningful issues only.
+3. Once Priority 6 is closed, move to Priority 7 — Frontend cleanup.
+4. Continue through the remaining roadmap in order.
 
-Application/Services/Forum/TopicService.cs
+**Do not revisit database optimization (Priority 3).**
 
-Dependencies currently include:
+## 7. Most important instruction
 
-csharp
-private readonly ITopicRepository topicRepository;
-private readonly ITopicMapper topicMapper;
-private readonly ICurrentUserService currentUser;
-private readonly IUserService userService;
+The user wants a practical, controlled review — not a broad rewrite.
 
+When reviewing code:
+- Identify the actual issue.
+- Explain its practical consequence.
+- Propose the smallest reasonable fix.
+- Wait for the user to apply and test it before moving on.
+- Preserve working behavior and previously tested decisions.
 
-Topic creation currently looks like this:
+Avoid introducing abstractions, defensive code, or concurrency handling without a demonstrated need.
 
-csharp
-public async Task CreateAsync(TopicCreateView model)
-{
-    string userId = currentUser.GetRequiredUserId();
-
-    Topic topic = topicMapper.ToEntity(model);
-    topic.CreatedByUserId = userId;
-    topic.CreatedByUserName = await userService.GetUsernameByIdAsync(userId);
-
-    await topicRepository.AddAsync(topic);
-}
-
-
-Topic deletion currently looks like this:
-
-csharp
-public async Task DeleteAsync(int id)
-{
-    string userId = currentUser.GetRequiredUserId();
-
-    Topic? topic = await topicRepository.GetByIdAsync(id);
-
-    if (topic == null)
-        return;
-
-    if (topic.CreatedByUserId != userId)
-        throw new UnauthorizedAccessException("You are not allowed to delete this topic.");
-
-    await topicRepository.DeleteAsync(id);
-}
-
-Topic index view
-
-Location:
-
-Views/Topic/Index.cshtml
-
-Topics are displayed using:
-
-cshtml
-@foreach (ViewModels.Topic.TopicListItemView topic in Model.Topics)
-
-
-Each topic currently has:
-
-A link to view the topic.
-An edit button for its creator.
-A delete button for its creator.
-
-The view already has access to:
-
-csharp
-@topic.Id
-@topic.Title
-
-
-The intended addition is a button for entering the associated topic chatroom.
-
-6. Desired topic chatroom functionality
-
-Every newly created topic should automatically receive one associated chatroom.
-
-The intended workflow is:
-
-Creating a topic
-User creates a topic.
-Topic is saved.
-An associated ChatRoom is created.
-The chatroom receives:
-RoomType = ChatRoomType.Topic
-TopicId = topic.Id
-Name = topic.Title
-OwnerUserId = null
-The topic and chatroom are persisted consistently.
-
-The chatroom should not have an owner. The topic creator should not receive special chatroom permissions.
-
-Important: CreatedByUserId is required by the current database configuration. Inspect the existing ChatRoom model and room creation code before deciding what value to assign for system-created topic rooms. Do not arbitrarily use "system" without checking the application's constraints.
-
-Entering a topic chatroom
-
-A user should be able to enter a topic chatroom directly from the topic listing.
-
-The proposed button is:
-
-cshtml
-<a asp-controller="Chat"
-   asp-action="EnterTopicRoom"
-   asp-route-topicId="@topic.Id"
-   class="btn btn-outline-primary btn-sm">
-    Topic chat
-</a>
-
-
-The new action should:
-
-Retrieve the chatroom associated with the supplied topic ID.
-Verify that the topic/chatroom exists.
-Check whether the current user is already a member.
-If not, add the user as a member.
-Redirect to the existing OpenRoom action.
-
-This should follow the same general behaviour as joining miscellaneous rooms.
-
-Do not trust a client-supplied room ID or membership status without validating it server-side.
-
-Leaving a topic chatroom
-
-Already implemented.
-
-The existing leave button in Room.cshtml applies to topic rooms as well.
-
-No special topic-specific leave functionality is required.
-
-Deleting a topic
-
-Deleting a topic should automatically delete:
-
-Its associated chatroom.
-All chatroom memberships.
-All chat messages belonging to that chatroom.
-
-The existing EF Core cascade relationships should handle this.
-
-Verify that the database migration actually reflects the configured cascade relationship.
-
-7. Architectural recommendation
-
-The previous discussion considered two approaches.
-
-Option A: Inject IChatService into TopicService
-
-Proposed dependency:
-
-csharp
-private readonly IChatService chatService;
-
-
-Add a method to IChatService:
-
-csharp
-Task CreateTopicRoomAsync(int topicId, string topicTitle);
-
-
-Then coordinate topic and chatroom creation in TopicService.CreateAsync.
-
-This is the recommended starting approach for the current architecture.
-
-Option B: Introduce a dedicated orchestration service
-
-This would coordinate topic creation/deletion and chatroom creation/deletion.
-
-It provides greater separation between services but introduces additional abstraction.
-
-For the current scope, Option A is preferable unless inspection of the existing architecture reveals a reason to choose otherwise.
-
-Transaction handling
-
-This is an important consideration.
-
-Creating a topic and its chatroom should be atomic.
-
-If topic creation succeeds but chatroom creation fails, the application should not leave behind a topic without its associated chatroom.
-
-Inspect how repositories share their EF Core DbContext and whether they already support transactions.
-
-Prefer a shared database transaction or an appropriate unit-of-work implementation rather than introducing unnecessary transaction infrastructure.
-
-For deletion, the database cascade relationship should handle the associated chatroom automatically.
-
-8. Next development step
-
-Before writing implementation code, inspect the existing chatroom creation and repository functionality.
-
-The following files were requested but have not yet been provided:
-
-EntityModels/ChatRoom.cs
-Application/Interfaces/Services/Chat/IChatService.cs (use the actual project path)
-Application/Services/Chat/ChatService.cs
-Repository/interfaces/IChatRepository.cs
-Repository/ChatRepository.cs
-Repository/interfaces/ITopicRepository.cs
-Repository/TopicRepository.cs
-
-The exact paths may differ.
-
-The next ChatGPT session should request these files and inspect them before proposing implementation changes.
-
-In particular, establish:
-
-How existing chatrooms are created.
-How memberships are added.
-How repository methods persist changes.
-Whether repositories share the same ForumContext.
-How miscellaneous room joining currently works.
-Whether topic chatrooms can be retrieved through an existing repository method.
-9. Recommended implementation order
-
-Work incrementally and verify each step.
-
-Step 1 – Inspect existing implementation
-
-Read the files listed in section 8.
-
-Do not assume old implementations or invent repository methods.
-
-Step 2 – Implement topic chatroom creation
-
-Add the necessary IChatService method and implementation.
-
-Integrate it into TopicService.CreateAsync.
-
-Ensure the operation is transactional.
-
-Step 3 – Verify deletion
-
-Verify the topic-to-chatroom cascade relationship in the database.
-
-If the migration is correct, no explicit chatroom deletion call should be necessary in TopicService.
-
-Step 4 – Implement entering topic chatrooms
-
-Add an EnterTopicRoom action to ChatController.
-
-Reuse existing membership and room-opening functionality.
-
-Step 5 – Update the topic listing
-
-Add the topic chat button to Views/Topic/Index.cshtml.
-
-Step 6 – Test
-
-Test the following scenarios:
-
-Create a topic and verify that its chatroom is created.
-Create another topic and verify that it receives a separate chatroom.
-Enter a topic chatroom as a non-member.
-Enter the same chatroom again as an existing member.
-Send and receive messages.
-Leave the topic chatroom.
-Re-enter the topic chatroom.
-Delete a topic and verify that its chatroom, memberships and messages are deleted.
-Verify that private and miscellaneous chatrooms continue working.
-10. Important development conventions
-
-A few things should be respected throughout the implementation:
-
-Follow the existing layered architecture.
-Do not put database logic in controllers.
-Do not duplicate existing chatroom functionality.
-Reuse existing repository and service methods where appropriate.
-Keep ownership exclusive to private rooms.
-Topic rooms must remain available when their members leave.
-Do not introduce unnecessary abstractions.
-Preserve existing SignalR functionality.
-Use asynchronous methods consistently.
-Respect existing authorization and antiforgery conventions.
-Inspect the actual current implementation before suggesting replacements.
-
-Current stopping point: Community chatrooms are seeded and working. Private chatrooms work. The leave-room functionality has been implemented and updated. Topic chatrooms have not yet been integrated into topic creation or the topic listing.
-
-Immediate next task: Inspect the existing chatroom and topic repository/service files, then implement automatic topic chatroom creation and the endpoint for entering topic chatrooms.
+The objective is to finish improving the existing chat system, not to redesign it.

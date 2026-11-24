@@ -1,3 +1,78 @@
+namespace EntityModels
+{
+    public class ChatRoom
+    {
+        public int Id { get; set; }
+
+        public string Name { get; set; } = string.Empty;
+
+        public ChatRoomType RoomType { get; set; }
+
+        public string CreatedByUserId { get; set; } = null!;
+
+        public string? OwnerUserId { get; set; }
+
+        public int? TopicId { get; set; }
+
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        public ICollection<ChatRoomMember> Members { get; set; } = new List<ChatRoomMember>();
+
+        public ICollection<ChatMessage> Messages { get; set; } = new List<ChatMessage>();
+
+        public Topic? Topic { get; set; }
+    }
+}
+
+namespace EntityModels
+{
+    public class ChatRoomMember
+    {
+        public int Id { get; set; }
+
+        public int ChatRoomId { get; set; }
+
+        public string UserId { get; set; } = null!;
+
+        public DateTime JoinedAt { get; set; } = DateTime.UtcNow;
+
+        public ChatRoom ChatRoom { get; set; } = null!;
+    }
+}
+
+namespace EntityModels
+{
+    public class ChatMessage
+    {
+        public long Id { get; set; }
+
+        public int ChatRoomId { get; set; }
+
+        public string SenderUserId { get; set; } = null!;
+
+        public string Content { get; set; } = string.Empty;
+
+        public DateTime SentAt { get; set; } = DateTime.UtcNow;
+
+        public ChatRoom ChatRoom { get; set; } = null!;
+    }
+}
+
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace EntityModels
+{
+    public enum ChatRoomType
+    {
+        Private = 1,
+        Miscellaneous = 2,
+        Topic = 3
+    }
+}
+
+
 using EntityModels;
 using Microsoft.EntityFrameworkCore;
 
@@ -184,6 +259,30 @@ namespace EntityContext
             // Chat rooms
             modelBuilder.Entity<ChatRoom>(entity =>
             {
+                entity.ToTable("ChatRooms", table =>
+                table.HasCheckConstraint(
+                    "CK_ChatRooms_ValidRoomConfiguration",
+                    """
+                    (
+                        [RoomType] = 1
+                        AND [TopicId] IS NULL
+                        AND [OwnerUserId] IS NOT NULL
+                    )
+                    OR
+                    (
+                        [RoomType] = 2
+                        AND [TopicId] IS NULL
+                        AND [OwnerUserId] IS NULL
+                    )
+                    OR
+                    (
+                        [RoomType] = 3
+                        AND [TopicId] IS NOT NULL
+                        AND [OwnerUserId] IS NULL
+                    )
+                    """
+                ));
+
                 entity.HasKey(r => r.Id);
 
                 entity.Property(r => r.Name)
@@ -217,6 +316,8 @@ namespace EntityContext
                 // Helpful when retrieving rooms by type.
                 entity.HasIndex(r => r.RoomType);
             });
+
+
 
             // Chat room members
             modelBuilder.Entity<ChatRoomMember>(entity =>
@@ -351,81 +452,6 @@ namespace EntityContext
     }
 }
 
-
-namespace EntityModels
-{
-    public class ChatRoom
-    {
-        public int Id { get; set; }
-
-        public string Name { get; set; } = string.Empty;
-
-        public ChatRoomType RoomType { get; set; }
-
-        public string CreatedByUserId { get; set; } = null!;
-
-        public string? OwnerUserId { get; set; }
-
-        public int? TopicId { get; set; }
-
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-
-        public ICollection<ChatRoomMember> Members { get; set; } = new List<ChatRoomMember>();
-
-        public ICollection<ChatMessage> Messages { get; set; } = new List<ChatMessage>();
-
-        public Topic? Topic { get; set; }
-    }
-}
-
-namespace EntityModels
-{
-    public class ChatMessage
-    {
-        public long Id { get; set; }
-
-        public int ChatRoomId { get; set; }
-
-        public string SenderUserId { get; set; } = null!;
-
-        public string Content { get; set; } = string.Empty;
-
-        public DateTime SentAt { get; set; } = DateTime.UtcNow;
-
-        public ChatRoom ChatRoom { get; set; } = null!;
-    }
-}
-
-namespace EntityModels
-{
-    public class ChatRoomMember
-    {
-        public int Id { get; set; }
-
-        public int ChatRoomId { get; set; }
-
-        public string UserId { get; set; } = null!;
-
-        public DateTime JoinedAt { get; set; } = DateTime.UtcNow;
-
-        public ChatRoom ChatRoom { get; set; } = null!;
-    }
-}
-
-using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace EntityModels
-{
-    public enum ChatRoomType
-    {
-        Private = 1,
-        Miscellaneous = 2,
-        Topic = 3
-    }
-}
-
 using EntityContext;
 using EntityModels;
 using Microsoft.EntityFrameworkCore;
@@ -497,6 +523,8 @@ namespace Repository
             ChatRoom room,
             IEnumerable<ChatRoomMember> members)
         {
+            List<ChatRoomMember> memberList = members.ToList();
+
             bool ownsTransaction =
                 context.Database.CurrentTransaction == null;
 
@@ -508,7 +536,7 @@ namespace Repository
             {
                 context.ChatRooms.Add(room);
 
-                foreach (ChatRoomMember member in members)
+                foreach (ChatRoomMember member in memberList)
                 {
                     room.Members.Add(member);
                 }
@@ -522,9 +550,25 @@ namespace Repository
             }
             catch
             {
-                if (ownsTransaction && transaction != null)
+                try
                 {
-                    await transaction.RollbackAsync();
+                    if (ownsTransaction && transaction != null)
+                    {
+                        await transaction.RollbackAsync();
+                    }
+                }
+                finally
+                {
+                    // Remove the failed room and its members
+                    // from EF Core's change tracker.
+                    foreach (ChatRoomMember member in memberList)
+                    {
+                        context.Entry(member).State =
+                            EntityState.Detached;
+                    }
+
+                    context.Entry(room).State =
+                        EntityState.Detached;
                 }
 
                 throw;
@@ -532,14 +576,11 @@ namespace Repository
         }
 
 
-        public async Task LeaveRoomAsync(
-            int roomId,
-            string userId,
-            string? newOwnerUserId,
-            bool deleteRoom)
+        public async Task LeaveRoomAsync(int roomId, string userId)
         {
             await using var transaction =
-                await context.Database.BeginTransactionAsync();
+                await context.Database.BeginTransactionAsync(
+                    System.Data.IsolationLevel.Serializable);
 
             try
             {
@@ -558,29 +599,32 @@ namespace Repository
                     throw new InvalidOperationException(
                         "You are not a member of this chat room.");
 
-                if (deleteRoom)
+                List<ChatRoomMember> remainingMembers =
+                    await context.ChatRoomMembers
+                        .Where(m =>
+                            m.ChatRoomId == roomId &&
+                            m.UserId != userId)
+                        .ToListAsync();
+
+                // Only private rooms are deleted when their final
+                // member leaves.
+                if (room.RoomType == ChatRoomType.Private &&
+                    remainingMembers.Count == 0)
                 {
                     context.ChatRooms.Remove(room);
                 }
                 else
                 {
+                    // Transfer ownership if the current owner leaves.
                     if (room.RoomType == ChatRoomType.Private &&
                         room.OwnerUserId == userId)
                     {
-                        if (string.IsNullOrWhiteSpace(newOwnerUserId))
-                            throw new InvalidOperationException(
-                                "A new owner must be specified.");
+                        ChatRoomMember newOwner = remainingMembers
+                            .OrderBy(m => m.JoinedAt)
+                            .ThenBy(m => m.UserId, StringComparer.Ordinal)
+                            .First();
 
-                        bool newOwnerIsMember =
-                            await context.ChatRoomMembers.AnyAsync(m =>
-                                m.ChatRoomId == roomId &&
-                                m.UserId == newOwnerUserId);
-
-                        if (!newOwnerIsMember)
-                            throw new InvalidOperationException(
-                                "The new owner must be a remaining room member.");
-
-                        room.OwnerUserId = newOwnerUserId;
+                        room.OwnerUserId = newOwner.UserId;
                     }
 
                     context.ChatRoomMembers.Remove(member);
@@ -664,7 +708,8 @@ namespace Repository
 
         public async Task AddMessageAsync(ChatMessage message)
         {
-            await using var transaction = await context.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
+            await using var transaction =
+                await context.Database.BeginTransactionAsync();
 
             try
             {
@@ -796,9 +841,18 @@ namespace Application.Services.Features
                     });
                 }
             }
-            else
+            else if (room.RoomType == ChatRoomType.Miscellaneous)
+            {
+                await JoinMiscellaneousRoomAsync(roomId);
+            }
+            else if (room.RoomType == ChatRoomType.Private)
             {
                 await EnsureMembershipAsync(roomId, userId);
+            }
+            else
+            {
+                throw new InvalidOperationException(
+                    "Unsupported chat room type.");
             }
 
             IEnumerable<ChatRoomMember> members =
@@ -1071,51 +1125,41 @@ namespace Application.Services.Features
             });
         }
 
-
-
-        public async Task LeaveRoomAsync(int roomId)
+        public async Task RemoveTemporaryMembershipAsync(
+    int roomId,
+    string userId)
         {
-            string userId = currentUser.GetRequiredUserId();
+            if (string.IsNullOrWhiteSpace(userId))
+                return;
 
-            ChatRoom room = await GetRoomOrThrowAsync(roomId);
+            // The room might have been deleted while the user was disconnected.
+            ChatRoom? room =
+                await chatRepository.GetRoomByIdAsync(roomId);
+
+            if (room == null)
+                return;
+
+            // Never automatically remove private-room membership.
+            if (room.RoomType != ChatRoomType.Miscellaneous &&
+                room.RoomType != ChatRoomType.Topic)
+            {
+                return;
+            }
 
             ChatRoomMember? membership =
                 await chatRepository.GetMembershipAsync(roomId, userId);
 
             if (membership == null)
-                throw new InvalidOperationException(
-                    "You are not a member of this room.");
+                return;
 
-            IEnumerable<ChatRoomMember> members =
-                await chatRepository.GetMembersAsync(roomId);
+            await chatRepository.RemoveMemberAsync(membership);
+        }
 
-            List<ChatRoomMember> remainingMembers = members
-                .Where(m => m.UserId != userId)
-                .OrderBy(m => m.JoinedAt)
-                .ThenBy(m => m.UserId, StringComparer.Ordinal)
-                .ToList();
+        public async Task LeaveRoomAsync(int roomId)
+        {
+            string userId = currentUser.GetRequiredUserId();
 
-            // Only private rooms are deleted when their final
-            // member leaves.
-            bool deleteRoom =
-                room.RoomType == ChatRoomType.Private &&
-                remainingMembers.Count == 0;
-
-            string? newOwnerUserId = null;
-
-            // Ownership only applies to private rooms.
-            if (room.RoomType == ChatRoomType.Private &&
-                !deleteRoom &&
-                room.OwnerUserId == userId)
-            {
-                newOwnerUserId = remainingMembers[0].UserId;
-            }
-
-            await chatRepository.LeaveRoomAsync(
-                roomId,
-                userId,
-                newOwnerUserId,
-                deleteRoom);
+            await chatRepository.LeaveRoomAsync(roomId, userId);
         }
 
 
@@ -1250,10 +1294,9 @@ namespace Application.Services.Features
                 SentAt = DateTime.UtcNow
             };
 
-            await chatRepository.AddMessageAsync(message);
+            string username = await userService.GetUsernameByIdAsync(userId);
 
-            string username =
-                await userService.GetUsernameByIdAsync(userId);
+            await chatRepository.AddMessageAsync(message);
 
             return new ChatMessageView
             {
@@ -1330,7 +1373,6 @@ namespace Application.Services.Features
     }
 }
 
-
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -1402,6 +1444,7 @@ namespace ViewModels.Chat
     }
 }
 
+
 namespace ViewModels.Chat
 {
     public class ChatFriendView
@@ -1417,6 +1460,10 @@ namespace ViewModels.Chat
 using Application.Interfaces.Services.Features;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
+using OpenForum.Hubs;
+using OpenForum.Services;
+using System.Security.Claims;
 using ViewModels.Chat;
 
 namespace OpenForum.Controllers
@@ -1425,10 +1472,17 @@ namespace OpenForum.Controllers
     public class ChatController : Controller
     {
         private readonly IChatService chatService;
+        private readonly IHubContext<ChatHub> chatHub;
+        private readonly ChatConnectionTracker connectionTracker;
 
-        public ChatController(IChatService chatService)
+        public ChatController(
+            IChatService chatService,
+            IHubContext<ChatHub> chatHub,
+            ChatConnectionTracker connectionTracker)
         {
             this.chatService = chatService;
+            this.chatHub = chatHub;
+            this.connectionTracker = connectionTracker;
         }
 
         // --------------------------------
@@ -1687,7 +1741,34 @@ namespace OpenForum.Controllers
         {
             try
             {
+                // Identify the authenticated user.
+                string? userId = User.FindFirstValue(
+                    ClaimTypes.NameIdentifier);
+
+                if (string.IsNullOrEmpty(userId))
+                    return Forbid();
+
+                // First remove the user's database membership.
                 await chatService.LeaveRoomAsync(roomId);
+
+                // Find every active SignalR connection belonging to this user.
+                IReadOnlyList<string> connections =
+                    connectionTracker.GetConnections(userId);
+
+                string groupName = ChatHub.GetGroupName(roomId);
+
+                foreach (string connectionId in connections)
+                {
+                    // Remove the connection from the SignalR group.
+                    await chatHub.Groups.RemoveFromGroupAsync(
+                        connectionId,
+                        groupName);
+
+                    // Also update our connection tracker.
+                    connectionTracker.RemoveRoom(
+                        connectionId,
+                        roomId);
+                }
 
                 return Ok();
             }
@@ -1704,6 +1785,7 @@ namespace OpenForum.Controllers
                 return BadRequest(new { error = ex.Message });
             }
         }
+
 
         // --------------------------------
         // Topic rooms
@@ -1754,10 +1836,11 @@ namespace OpenForum.Controllers
     }
 }
 
+
 using Application.Interfaces.Services.Features;
-using Application.Interfaces.Services.User;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
+using OpenForum.Services;
 
 namespace OpenForum.Hubs
 {
@@ -1765,10 +1848,54 @@ namespace OpenForum.Hubs
     public class ChatHub : Hub
     {
         private readonly IChatService chatService;
+        private readonly ChatConnectionTracker connectionTracker;
 
-        public ChatHub(IChatService chatService)
+        public ChatHub(
+            IChatService chatService,
+            ChatConnectionTracker connectionTracker)
         {
             this.chatService = chatService;
+            this.connectionTracker = connectionTracker;
+        }
+
+        public override async Task OnConnectedAsync()
+        {
+            string? userId = Context.UserIdentifier;
+
+            if (!string.IsNullOrEmpty(userId))
+            {
+                connectionTracker.AddConnection(
+                    userId,
+                    Context.ConnectionId);
+            }
+
+            await base.OnConnectedAsync();
+        }
+
+        public override async Task OnDisconnectedAsync(Exception? exception)
+        {
+            string? userId = Context.UserIdentifier;
+
+            if (!string.IsNullOrEmpty(userId))
+            {
+                // Atomically remove this connection and find rooms
+                // where this was the user's last active connection.
+                var roomsToCleanUp =
+                    connectionTracker.RemoveConnectionAndGetLastRooms(
+                        userId,
+                        Context.ConnectionId);
+
+                foreach (var roomId in roomsToCleanUp)
+                {
+                    // The service will only remove membership from
+                    // Miscellaneous and Topic rooms.
+                    await chatService.RemoveTemporaryMembershipAsync(
+                        roomId,
+                        userId);
+                }
+            }
+
+            await base.OnDisconnectedAsync(exception);
         }
 
         public async Task JoinRoom(int roomId)
@@ -1776,19 +1903,35 @@ namespace OpenForum.Hubs
             if (roomId <= 0)
                 throw new ArgumentException("Invalid room ID.");
 
-            // GetRoomAsync verifies membership and authorization.
             await chatService.GetRoomAsync(roomId);
 
-            await Groups.AddToGroupAsync(
-                Context.ConnectionId,
-                GetGroupName(roomId));
+            connectionTracker.AddRoom(Context.ConnectionId, roomId);
+
+            try
+            {
+                await Groups.AddToGroupAsync(
+                    Context.ConnectionId,
+                    GetGroupName(roomId));
+            }
+            catch
+            {
+                connectionTracker.RemoveRoom(Context.ConnectionId, roomId);
+                throw;
+            }
         }
 
         public async Task LeaveRoom(int roomId)
         {
+            if (roomId <= 0)
+                throw new ArgumentException("Invalid room ID.");
+
             await Groups.RemoveFromGroupAsync(
                 Context.ConnectionId,
                 GetGroupName(roomId));
+
+            connectionTracker.RemoveRoom(
+                Context.ConnectionId,
+                roomId);
         }
 
         public async Task SendMessage(int roomId, string content)
@@ -1796,7 +1939,6 @@ namespace OpenForum.Hubs
             if (roomId <= 0)
                 throw new ArgumentException("Invalid room ID.");
 
-            // The service validates membership, content and persistence.
             var message = await chatService.SendMessageAsync(
                 roomId,
                 content);
@@ -1805,12 +1947,165 @@ namespace OpenForum.Hubs
                 .SendAsync("ReceiveMessage", message);
         }
 
-        private static string GetGroupName(int roomId)
+        public static string GetGroupName(int roomId)
         {
             return $"chatroom_{roomId}";
         }
     }
 }
+
+
+
+using System.Collections.Concurrent;
+
+public class ChatConnectionTracker
+{
+    private readonly object _lock = new();
+
+    // User ID -> connection IDs
+    private readonly Dictionary<string, HashSet<string>> _userConnections = new();
+
+    // Connection ID -> joined room IDs
+    private readonly Dictionary<string, HashSet<int>> _connectionRooms = new();
+
+    public List<string> GetConnections(string userId)
+    {
+        lock (_lock)
+        {
+            return _userConnections.TryGetValue(userId, out var connections)
+                ? connections.ToList()
+                : new List<string>();
+        }
+    }
+
+    public void AddConnection(string userId, string connectionId)
+    {
+        lock (_lock)
+        {
+            if (!_userConnections.TryGetValue(userId, out var connections))
+            {
+                connections = new HashSet<string>();
+                _userConnections[userId] = connections;
+            }
+
+            connections.Add(connectionId);
+
+            if (!_connectionRooms.ContainsKey(connectionId))
+            {
+                _connectionRooms[connectionId] = new HashSet<int>();
+            }
+        }
+    }
+
+    public void RemoveConnection(string userId, string connectionId)
+    {
+        lock (_lock)
+        {
+            if (_userConnections.TryGetValue(userId, out var connections))
+            {
+                connections.Remove(connectionId);
+
+                if (connections.Count == 0)
+                {
+                    _userConnections.Remove(userId);
+                }
+            }
+
+            _connectionRooms.Remove(connectionId);
+        }
+    }
+
+    public List<int> RemoveConnectionAndGetLastRooms(
+    string userId,
+    string connectionId)
+    {
+        lock (_lock)
+        {
+            var joinedRooms = _connectionRooms.TryGetValue(
+                connectionId,
+                out var rooms)
+                    ? rooms.ToList()
+                    : new List<int>();
+
+            _connectionRooms.Remove(connectionId);
+
+            if (!_userConnections.TryGetValue(userId, out var connections))
+                return joinedRooms;
+
+            connections.Remove(connectionId);
+
+            if (connections.Count == 0)
+            {
+                _userConnections.Remove(userId);
+                return joinedRooms;
+            }
+
+            // Only return rooms that no remaining connection for this user
+            // is currently joined to.
+            return joinedRooms
+                .Where(roomId => !connections.Any(otherConnectionId =>
+                    _connectionRooms.TryGetValue(
+                        otherConnectionId,
+                        out var otherRooms)
+                    && otherRooms.Contains(roomId)))
+                .ToList();
+        }
+    }
+
+    public void AddRoom(string connectionId, int roomId)
+    {
+        lock (_lock)
+        {
+            if (!_connectionRooms.TryGetValue(connectionId, out var rooms))
+            {
+                rooms = new HashSet<int>();
+                _connectionRooms[connectionId] = rooms;
+            }
+
+            rooms.Add(roomId);
+        }
+    }
+
+    public void RemoveRoom(string connectionId, int roomId)
+    {
+        lock (_lock)
+        {
+            if (_connectionRooms.TryGetValue(connectionId, out var rooms))
+            {
+                rooms.Remove(roomId);
+            }
+        }
+    }
+
+    public List<int> GetRooms(string connectionId)
+    {
+        lock (_lock)
+        {
+            return _connectionRooms.TryGetValue(connectionId, out var rooms)
+                ? rooms.ToList()
+                : new List<int>();
+        }
+    }
+
+    public bool HasOtherConnectionInRoom(
+        string userId,
+        string connectionId,
+        int roomId)
+    {
+        lock (_lock)
+        {
+            if (!_userConnections.TryGetValue(userId, out var connections))
+                return false;
+
+            return connections
+                .Where(id => id != connectionId)
+                .Any(id =>
+                    _connectionRooms.TryGetValue(id, out var rooms)
+                    && rooms.Contains(roomId));
+        }
+    }
+}
+
 
 //chat-index.js
 document.addEventListener("DOMContentLoaded", () => {
@@ -2125,7 +2420,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 
-//chat-room.js
+
 document.addEventListener("DOMContentLoaded", async () => {
 
     const roomId = window.chatRoomId;
@@ -2153,6 +2448,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const messages = new Map();
 
     let connection = null;
+    let isPageLeaving = false;
 
     // --------------------------------
     // Error handling
@@ -2172,68 +2468,68 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Message rendering
     // --------------------------------
 
-function renderMessages() {
+    function renderMessages() {
 
-    const sortedMessages = Array.from(messages.values())
-        .sort((a, b) =>
-            new Date(a.sentAt) - new Date(b.sentAt)
-        );
+        const sortedMessages = Array.from(messages.values())
+            .sort((a, b) =>
+                new Date(a.sentAt) - new Date(b.sentAt)
+            );
 
-    // Keep the client-side message limit bounded.
-    while (sortedMessages.length > MAX_MESSAGES) {
-        const oldestMessage = sortedMessages.shift();
-        messages.delete(oldestMessage.id);
+        // Keep the client-side message limit bounded.
+        while (sortedMessages.length > MAX_MESSAGES) {
+            const oldestMessage = sortedMessages.shift();
+            messages.delete(oldestMessage.id);
+        }
+
+        messagesContainer.replaceChildren();
+
+        sortedMessages.forEach(message => {
+
+            // Determine ownership for the currently logged-in user.
+            const isOwnMessage =
+                message.senderUserId === window.chatCurrentUserId;
+
+            const messageElement = document.createElement("div");
+
+            messageElement.className =
+                isOwnMessage
+                    ? "align-self-start bg-primary text-white rounded p-3"
+                    : "align-self-end bg-light border rounded p-3";
+
+            messageElement.style.maxWidth = "75%";
+
+            const sender = document.createElement("strong");
+            sender.className = "d-block small mb-1";
+            sender.textContent = message.senderUsername;
+
+            const content = document.createElement("div");
+            content.style.whiteSpace = "pre-wrap";
+            content.style.overflowWrap = "anywhere";
+            content.textContent = message.content;
+
+            const timestamp = document.createElement("small");
+
+            timestamp.className =
+                isOwnMessage
+                    ? "d-block mt-2 text-white-50"
+                    : "d-block mt-2 text-muted";
+
+            const sentAt = new Date(message.sentAt);
+
+            timestamp.textContent = sentAt.toLocaleString();
+
+            messageElement.append(
+                sender,
+                content,
+                timestamp
+            );
+
+            messagesContainer.appendChild(messageElement);
+        });
+
+        messagesContainer.scrollTop =
+            messagesContainer.scrollHeight;
     }
-
-    messagesContainer.replaceChildren();
-
-    sortedMessages.forEach(message => {
-
-        // Determine ownership for the currently logged-in user.
-        const isOwnMessage =
-            message.senderUserId === window.chatCurrentUserId;
-
-        const messageElement = document.createElement("div");
-
-        messageElement.className =
-            isOwnMessage
-                ? "align-self-start bg-primary text-white rounded p-3"
-                : "align-self-end bg-light border rounded p-3";
-
-        messageElement.style.maxWidth = "75%";
-
-        const sender = document.createElement("strong");
-        sender.className = "d-block small mb-1";
-        sender.textContent = message.senderUsername;
-
-        const content = document.createElement("div");
-        content.style.whiteSpace = "pre-wrap";
-        content.style.overflowWrap = "anywhere";
-        content.textContent = message.content;
-
-        const timestamp = document.createElement("small");
-
-        timestamp.className =
-            isOwnMessage
-                ? "d-block mt-2 text-white-50"
-                : "d-block mt-2 text-muted";
-
-        const sentAt = new Date(message.sentAt);
-
-        timestamp.textContent = sentAt.toLocaleString();
-
-        messageElement.append(
-            sender,
-            content,
-            timestamp
-        );
-
-        messagesContainer.appendChild(messageElement);
-    });
-
-    messagesContainer.scrollTop =
-        messagesContainer.scrollHeight;
-}
 
     function addMessage(message) {
 
@@ -2270,8 +2566,11 @@ function renderMessages() {
             messagesLoading.classList.add("d-none");
 
         } catch (error) {
-            showError(error.message);
-            messagesLoading.classList.add("d-none");
+
+            if (!isPageLeaving) {
+                showError(error.message);
+                messagesLoading.classList.add("d-none");
+            }
         }
     }
 
@@ -2281,38 +2580,68 @@ function renderMessages() {
 
     async function connectToChat() {
 
+        // Do not create another connection while leaving the page.
+        if (isPageLeaving)
+            return;
+
+        // Avoid creating a duplicate connection.
+        if (connection &&
+            connection.state !== signalR.HubConnectionState.Disconnected) {
+            return;
+        }
+
         connection = new signalR.HubConnectionBuilder()
             .withUrl("/chatHub")
-            .withAutomaticReconnect() 
+            .withAutomaticReconnect()
             .build();
 
         // Receive messages from other users.
         connection.on("ReceiveMessage", message => {
-            addMessage(message);
+            if (!isPageLeaving) {
+                addMessage(message);
+            }
         });
 
         connection.onreconnecting(() => {
+
+            if (isPageLeaving)
+                return;
+
             showError("Connection lost. Reconnecting...");
             sendMessageButton.disabled = true;
         });
 
         connection.onreconnected(async () => {
 
+            if (isPageLeaving)
+                return;
+
             clearError();
 
             try {
                 await connection.invoke("JoinRoom", roomId);
+
+                if (isPageLeaving)
+                    return;
 
                 await loadMessages();
 
                 sendMessageButton.disabled = false;
 
             } catch (error) {
-                showError("Could not rejoin the chatroom.");
+
+                if (!isPageLeaving) {
+                    showError("Could not rejoin the chatroom.");
+                    sendMessageButton.disabled = true;
+                }
             }
         });
 
         connection.onclose(() => {
+
+            if (isPageLeaving)
+                return;
+
             showError(
                 "Connection to the chatroom was lost. Please refresh the page."
             );
@@ -2321,17 +2650,63 @@ function renderMessages() {
         });
 
         try {
+
             await connection.start();
+
+            // The page may have started unloading while connecting.
+            if (isPageLeaving) {
+                await connection.stop();
+                return;
+            }
 
             await connection.invoke("JoinRoom", roomId);
 
             clearError();
 
         } catch (error) {
-            showError("Could not connect to the chatroom.");
-            sendMessageButton.disabled = true;
+
+            if (!isPageLeaving) {
+                showError("Could not connect to the chatroom.");
+                sendMessageButton.disabled = true;
+            }
         }
     }
+
+    // --------------------------------
+    // Page lifecycle
+    // --------------------------------
+
+    // Stop SignalR when the user navigates away or closes the page.
+    // This allows the server's OnDisconnectedAsync to run.
+    window.addEventListener("pagehide", () => {
+
+        isPageLeaving = true;
+
+        if (connection) {
+            connection.stop().catch(() => {
+                // The connection may already have stopped.
+            });
+        }
+    });
+
+    // If the browser restores the page from its back-forward cache,
+    // establish a fresh SignalR connection.
+    window.addEventListener("pageshow", async event => {
+
+        if (!event.persisted)
+            return;
+
+        isPageLeaving = false;
+
+        await connectToChat();
+
+        if (connection &&
+            connection.state === signalR.HubConnectionState.Connected) {
+
+            await loadMessages();
+            await loadRoomMembers();
+        }
+    });
 
     // --------------------------------
     // Send messages
@@ -2340,6 +2715,9 @@ function renderMessages() {
     messageForm.addEventListener("submit", async event => {
 
         event.preventDefault();
+
+        if (isPageLeaving)
+            return;
 
         clearError();
 
@@ -2363,6 +2741,7 @@ function renderMessages() {
         sendMessageButton.disabled = true;
 
         try {
+
             await connection.invoke(
                 "SendMessage",
                 roomId,
@@ -2373,9 +2752,13 @@ function renderMessages() {
             messageInput.focus();
 
         } catch (error) {
+
             showError("Could not send your message.");
+
         } finally {
+
             sendMessageButton.disabled =
+                !connection ||
                 connection.state !== signalR.HubConnectionState.Connected;
         }
     });
@@ -2424,7 +2807,9 @@ function renderMessages() {
 
         } catch (error) {
 
-            showError(error.message);
+            if (!isPageLeaving) {
+                showError(error.message);
+            }
 
         } finally {
 
@@ -2510,7 +2895,6 @@ function renderMessages() {
                     button.textContent = "Invite";
 
                     button.addEventListener("click", async () => {
-
                         await inviteFriend(friend.userId, button);
                     });
 
@@ -2566,6 +2950,9 @@ function renderMessages() {
                     );
                 }
 
+                inviteFriendsSuccess.textContent =
+                    "Friend successfully invited.";
+
                 inviteFriendsSuccess.classList.remove("d-none");
 
                 await loadRoomMembers();
@@ -2573,6 +2960,8 @@ function renderMessages() {
 
                 inviteFriendsSuccess.textContent =
                     "Friend successfully invited.";
+
+                inviteFriendsSuccess.classList.remove("d-none");
 
             } catch (error) {
 
@@ -2591,7 +2980,6 @@ function renderMessages() {
         });
     }
 
-    
     // --------------------------------
     // Leave room
     // --------------------------------
@@ -2664,7 +3052,6 @@ function renderMessages() {
         });
     }
 
-
     // --------------------------------
     // Initialize chat
     // --------------------------------
@@ -2676,13 +3063,15 @@ function renderMessages() {
 
     await connectToChat();
 
-    if (connection.state === signalR.HubConnectionState.Connected) {
+    if (connection &&
+        connection.state === signalR.HubConnectionState.Connected) {
+
         await loadMessages();
+        await loadRoomMembers();
     }
 
-    await loadRoomMembers();
-
 });
+
 
 <!-- /Views/Chat/Index.cshtml-->
 @{
@@ -2843,7 +3232,6 @@ function renderMessages() {
 @section Scripts {
     <script src="~/js/chat-index.js" asp-append-version="true"></script>
 }
-
 
 
 <!-- /Views/Chat/Room.cshtml-->
@@ -3035,491 +3423,235 @@ function renderMessages() {
 }
 
 
-using Application.common.Application.Common;
-using Application.Interfaces.Contexts;
-using Application.Interfaces.Mappers.Forum;
-using Application.Interfaces.Services.Forum;
-using Application.Interfaces.Services.User;
-using Application.Interfaces.Services.Features;
-using EntityContext;
-using Microsoft.EntityFrameworkCore;
-using EntityModels;
-using Repository.interfaces;
-using ViewModels.Topic;
-
-namespace Application.Services.Forum
-{
-    public class TopicService : ITopicService
-    {
-        private readonly ITopicRepository topicRepository;
-        private readonly ITopicMapper topicMapper;
-        private readonly ICurrentUserService currentUser;
-        private readonly IUserService userService;
-        private readonly ForumContext context;
-        private readonly IChatService chatService;
-        private const int PageSize = 5;
-
-        public TopicService(
-            ITopicRepository topicRepository,
-            ITopicMapper topicMapper,
-            ICurrentUserService currentUser,
-            IUserService userService,
-            ForumContext context,
-            IChatService chatService)
-        {
-            this.topicRepository = topicRepository;
-            this.topicMapper = topicMapper;
-            this.currentUser = currentUser;
-            this.userService = userService;
-            this.context = context;
-            this.chatService = chatService;
-        }
-
-        public async Task<TopicIndexView> GetTopicIndexViewAsync(int page = 1, TopicCreateView? createTopic = null)
-        {
-            page = Math.Max(1, page);
-
-            (IEnumerable<Topic> Items, int TotalCount) result = await topicRepository.GetPageAsync(page, PageSize);
-
-            int totalPages = Math.Max(1, (int)Math.Ceiling(result.TotalCount / (double)PageSize));
-
-            // If the requested page is beyond the last page,
-            // use the last valid page instead.
-            if (page > totalPages)
-            {
-                page = totalPages;
-                result = await topicRepository.GetPageAsync(page, PageSize);
-            }
-
-            string? userId = currentUser.GetUserIdOrNull();
-
-            List<TopicListItemView> topics = result.Items.Select(
-                topic => 
-                {
-                    TopicListItemView item = topicMapper.ToListItemView(topic);
-                    item.CreatorDisplayName = CreatorDisplayNameResolver.Resolve(userId, topic.CreatedByUserId, item.Creator);
-                    item.CanManage = userId != null && topic.CreatedByUserId == userId;
-                    return item;
-                })
-                .ToList();
-
-            return new TopicIndexView
-            {
-                Topics = topics,
-                CreateTopic = createTopic ?? new TopicCreateView(),
-                EditTopic = null,
-                CanCreate = userId != null,
-                CurrentPage = page,
-                TotalPages = totalPages
-            };
-        }
-
-        public async Task<TopicIndexView?> GetEditViewAsync(int id, int page = 1, TopicEditView? editTopic = null)
-        {
-            Topic? topic = await topicRepository.GetByIdAsync(id);
-
-            if (topic == null)
-                return null;
-
-            string userId = currentUser.GetRequiredUserId();
-
-            if (topic.CreatedByUserId != userId)
-                throw new UnauthorizedAccessException("You are not allowed to edit this topic.");
-
-            TopicIndexView viewModel = await GetTopicIndexViewAsync(page);
-
-            viewModel.EditTopic = editTopic ?? topicMapper.ToEditView(topic);
-
-            return viewModel;
-        }
-
-        public async Task CreateAsync(TopicCreateView model)
-        {
-            string userId = currentUser.GetRequiredUserId();
-
-            Topic topic = topicMapper.ToEntity(model);
-            topic.CreatedByUserId = userId;
-            topic.CreatedByUserName =
-                await userService.GetUsernameByIdAsync(userId);
-
-            await using var transaction =
-                await context.Database.BeginTransactionAsync();
-
-            try
-            {
-                // Save the topic first so it receives its database ID.
-                await topicRepository.AddAsync(topic);
-
-                // Create its chatroom and add the creator as the first member.
-                await chatService.GetOrCreateTopicRoomAsync(topic.Id);
-
-                await transaction.CommitAsync();
-            }
-            catch
-            {
-                await transaction.RollbackAsync();
-                throw;
-            }
-        }
-
-        public async Task UpdateAsync(TopicEditView model)
-        {
-            string userId = currentUser.GetRequiredUserId();
-            Topic? topic = await topicRepository.GetByIdAsync(model.Id);
-
-            if (topic == null)
-                return;
-
-            if (topic.CreatedByUserId != userId)
-                throw new UnauthorizedAccessException("You are not allowed to edit this topic.");
-
-            topic.Title = model.Title;
-
-            await topicRepository.UpdateAsync(topic);
-        }
-
-        public async Task DeleteAsync(int id)
-        {
-            string userId = currentUser.GetRequiredUserId();
-
-            Topic? topic = await topicRepository.GetByIdAsync(id);
-
-            if (topic == null)
-                return;
-
-            if (topic.CreatedByUserId != userId)
-                throw new UnauthorizedAccessException("You are not allowed to delete this topic.");
-
-            await topicRepository.DeleteAsync(id);
-        }
-
-    }
-}
-
-
-
-using Application.Interfaces.Services.Forum;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using ViewModels.Topic;
-
-namespace OpenForum.Controllers
-{
-    public class TopicController : Controller
-    {
-        private readonly ITopicService topicService;
-
-        public TopicController(ITopicService topicService)
-        {
-            this.topicService = topicService;
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> Index(int page = 1)
-        {
-            TopicIndexView model = await topicService.GetTopicIndexViewAsync(page);
-
-            return View(model);
-        }
-
-        [Authorize]
-        [HttpGet]
-        public async Task<IActionResult> Edit(int id, int page = 1)
-        {
-            try
-            {
-                TopicIndexView? model = await topicService.GetEditViewAsync(id, page);
-
-                if (model == null)
-                    return NotFound();
-
-                return View("Index", model);
-            }
-            catch (UnauthorizedAccessException)
-            {
-                return Forbid();
-            }
-        }
-
-        [Authorize]
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(TopicCreateView model, int page = 1)
-        {
-            if (!ModelState.IsValid)
-            {
-                TopicIndexView viewModel = await topicService.GetTopicIndexViewAsync(page, model);
-
-                return View("Index", viewModel);
-            }
-
-            try
-            {
-                await topicService.CreateAsync(model);
-
-                return RedirectToAction(nameof(Index), new { page });
-            }
-            catch (UnauthorizedAccessException)
-            {
-                return Forbid();
-            }
-        }
-
-        [Authorize]
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Update(TopicEditView model, int page = 1)
-        {
-            if (!ModelState.IsValid)
-            {
-                try
-                {
-                    TopicIndexView? viewModel = await topicService.GetEditViewAsync(model.Id, page, model);
-
-                    if (viewModel == null)
-                        return NotFound();
-
-                    return View("Index", viewModel);
-                }
-                catch (UnauthorizedAccessException)
-                {
-                    return Forbid();
-                }
-            }
-
-            try
-            {
-                await topicService.UpdateAsync(model);
-
-                return RedirectToAction(nameof(Index), new { page });
-            }
-            catch (UnauthorizedAccessException)
-            {
-                return Forbid();
-            }
-        }
-
-        [Authorize]
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Delete(int id, int page = 1)
-        {
-            try
-            {
-                await topicService.DeleteAsync(id);
-
-                return RedirectToAction(nameof(Index), new { page });
-            }
-            catch (UnauthorizedAccessException)
-            {
-                return Forbid();
-            }
-        }
-    }
-}
-
-
-@model ViewModels.Topic.TopicIndexView
-
-@{
-    ViewData["Title"] = "Topics";
-    ViewData["CurrentPage"] = Model.CurrentPage;
-}
-
-<div class="row justify-content-left">
-    <div class="col-12 col-lg-10">
-        <div class="mb-4">
-            <h1 class="mb-1">
-                Forum Topics
-            </h1>
-
-            <p class="text-muted mb-0">
-                Browse discussions and find topics that interest you.
-            </p>
-        </div>
-
-        @if (Model.CanCreate)
-        {
-            <div id="createTopicCard" class="card shadow-sm mb-4 @(Model.EditTopic != null ? "d-none" : "")">
-                <div class="card-header bg-body-tertiary">
-                    <h2 class="h5 mb-0">Create Topic</h2>
-                </div>
-                <div class="card-body">
-                    @await Html.PartialAsync("_Create", Model.CreateTopic)
-                </div>
-            </div>
-        }
-
-        @if (Model.EditTopic != null)
-        {
-            <div id="editTopicCard" class="card shadow-sm mb-4">
-                <div class="card-header bg-body-tertiary">
-                    <h2 class="h5 mb-0">Edit Topic</h2>
-                </div>
-                <div class="card-body">
-                    @await Html.PartialAsync("_Edit", Model.EditTopic)
-                </div>
-            </div>
-        }
-
-        <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2 mb-3">
-            <div>
-                <h2 class="h4 mb-1">
-                    Existing Topics
-                </h2>
-
-                <p class="text-muted mb-0">
-                    Browse the community discussions.
-                </p>
-            </div>
-
-            <span class="badge bg-secondary rounded-pill align-self-start align-self-sm-center">
-                @Model.Topics.Count() @(Model.Topics.Count() == 1 ? "topic" : "topics")
-            </span>
-        </div>
-
-        @if (!Model.Topics.Any())
-        {
-            <div class="card shadow-sm">
-                <div class="card-body text-center py-5">
-                    <h3 class="h5 mb-2">
-                        No topics yet
-                    </h3>
-
-                    <p class="text-muted mb-0">
-                        There are no topics to display right now.
-                        @if (Model.CanCreate)
-                        {
-                            <span>Use the form above to start a new discussion.</span>
-                        }
-                    </p>
-                </div>
-            </div>
-        }
-        else
-        {
-            <div class="d-flex flex-column gap-3">
-                @foreach (ViewModels.Topic.TopicListItemView topic in Model.Topics)
-                {
-                    <div class="card shadow-sm">
-                        <div class="card-body">
-                            <div class="d-flex flex-column flex-md-row justify-content-between gap-3">
-                                <div class="flex-grow-1">
-                                    <h3 class="h5 mb-2">
-                                        @topic.Title
-                                    </h3>
-
-                                    <div class="d-flex flex-wrap align-items-center gap-2 text-muted small">
-                                        <span>
-                                            By
-                                            <strong class="text-body">
-                                                <a asp-controller="PublicProfile"
-                                                   asp-action="Index"
-                                                   asp-route-userId="@topic.CreatorUserId"
-                                                   asp-route-userName="@topic.Creator"
-                                                   asp-route-returnUrl="@(Context.Request.Path + Context.Request.QueryString)"
-                                                   class="text-decoration-none text-body">
-                                                    @topic.CreatorDisplayName
-                                                </a>
-                                            </strong>
-                                        </span>
-                                        <span aria-hidden="true">&middot;</span>
-                                        <span>@topic.CreatedAt</span>
-                                    </div>
-                                </div>
-
-                                <div class="d-flex flex-wrap align-items-start gap-2">
-                                    <a asp-controller="Post" asp-action="Details" asp-route-id="@topic.Id" class="btn btn-primary btn-sm">
-                                        View Topic
-                                    </a>
-                                    <a asp-controller="Chat"
-                                       asp-action="EnterTopicRoom"
-                                       asp-route-topicId="@topic.Id"
-                                       class="btn btn-outline-primary btn-sm">
-                                        Topic Chat
-                                    </a>
-
-                                    @if (topic.CanManage)
-                                    {
-                                        <a asp-action="Edit" asp-route-id="@topic.Id" asp-route-page="@Model.CurrentPage" class="btn btn-outline-secondary btn-sm">
-                                            Edit
-                                        </a>
-
-                                        <form asp-action="Delete" method="post" onsubmit="return confirm('Are you sure you want to delete this topic?');">
-                                            <input type="hidden" name="id" value="@topic.Id" />
-                                            <input type="hidden" name="page" value="@Model.CurrentPage" />
-                                            <button type="submit" class="btn btn-outline-danger btn-sm">
-                                                Delete
-                                            </button>
-                                        </form>
-                                    }
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                }
-            </div>
-        }
-
-        @if (Model.TotalPages > 1)
-        {
-            <nav aria-label="Topic pagination" class="mt-4">
-                <ul class="pagination justify-content-left flex-wrap">
-                    <li class="page-item @(Model.CurrentPage <= 1 ? "disabled" : "")">
-                        @if (Model.CurrentPage > 1)
-                        {
-                            <a class="page-link" asp-action="Index" asp-route-page="@(Model.CurrentPage - 1)">
-                                Previous
-                            </a>
-                        }
-                        else
-                        {
-                            <span class="page-link">Previous</span>
-                        }
-                    </li>
-
-                    @for (int pageNumber = 1; pageNumber <= Model.TotalPages; pageNumber++)
+----- the _layout and _leftpanel:
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - OpenForum</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+          rel="stylesheet">
+
+    <link rel="stylesheet" href="~/css/forum.css" asp-append-version="true" />
+</head>
+
+<body class="bg-light">
+
+    <!-- Header -->
+    <header class="bg-dark text-white py-3">
+        <div class="container-fluid px-4">
+
+            <div class="d-flex flex-column flex-sm-row
+                        justify-content-between align-items-sm-center gap-3">
+
+                <h1 class="h2 mb-0 text-nowrap">
+                    <a asp-controller="Topic"
+                       asp-action="Index"
+                       class="text-white text-decoration-none">
+                        OpenForum
+                    </a>
+                </h1>
+
+                <div class="d-flex flex-wrap align-items-center gap-2">
+
+                    @if (User.Identity?.IsAuthenticated ?? false)
                     {
-                        <li class="page-item @(pageNumber == Model.CurrentPage ? "active" : "")">
-                            <a class="page-link" asp-action="Index" asp-route-page="@pageNumber" aria-current="@(pageNumber == Model.CurrentPage ? "page" : null)">
-                                @pageNumber
-                            </a>
-                        </li>
+                        <span class="text-white-50 small me-1">
+                            Welcome @User.Identity.Name
+                        </span>
+
+                        <a asp-controller="MyProfile"
+                           asp-action="Index"
+                           class="btn btn-outline-light btn-sm">
+                            Edit profile
+                        </a>
+
+                        <form asp-area="Identity"
+                              asp-page="/Account/Logout"
+                              method="post"
+                              class="d-inline">
+
+                            <button type="submit"
+                                    class="btn btn-outline-light btn-sm">
+                                Logout
+                            </button>
+                        </form>
+                    }
+                    else
+                    {
+                        <a asp-area="Identity"
+                           asp-page="/Account/Login"
+                           class="btn btn-outline-light btn-sm">
+                            Login
+                        </a>
+
+                        <a asp-area="Identity"
+                           asp-page="/Account/Register"
+                           class="btn btn-light btn-sm">
+                            Register
+                        </a>
                     }
 
-                    <li class="page-item @(Model.CurrentPage >= Model.TotalPages ? "disabled" : "")">
-                        @if (Model.CurrentPage < Model.TotalPages)
-                        {
-                            <a class="page-link" asp-action="Index" asp-route-page="@(Model.CurrentPage + 1)">
-                                Next
-                            </a>
-                        }
-                        else
-                        {
-                            <span class="page-link">Next</span>
-                        }
-                    </li>
-                </ul>
-            </nav>
-        }
+                </div>
+            </div>
+        </div>
+    </header>
+
+
+    <div class="page-layout">
+
+        <aside class="left-panel">
+            @await Html.PartialAsync("_LeftPanel")
+        </aside>
+
+        <main class="main-content">
+            @RenderBody()
+        </main>
+
+        <aside class="right-panel">
+            @await Html.PartialAsync("_RightPanel")
+        </aside>
+
     </div>
+
+
+    <!-- Footer -->
+    <footer class="site-footer bg-dark text-white-50">
+        <div class="container-fluid px-4 text-center">
+            <small>
+                &copy; @DateTime.Now.Year OpenForum. All rights reserved.
+            </small>
+        </div>
+    </footer>
+
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js">
+    </script>
+
+    <script src="~/lib/signalr/signalr.js"></script>
+
+    <script src="~/js/likes.js" asp-append-version="true"></script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+
+
+    <!-- Likes modal -->
+    <div class="modal fade" id="likersModal" tabindex="-1"
+         aria-labelledby="likersModalLabel" aria-hidden="true">
+
+        <div class="modal-dialog modal-dialog-centered">
+
+            <div class="modal-content">
+
+                <div class="modal-header">
+                    <h5 class="modal-title" id="likersModalLabel">
+                        People who liked this
+                    </h5>
+
+                    <button type="button" class="btn-close"
+                            data-bs-dismiss="modal"
+                            aria-label="Close">
+                    </button>
+                </div>
+
+                <div class="modal-body">
+
+                    <p id="likersLoading" class="d-none">
+                        Loading likes...
+                    </p>
+
+                    <p id="likersError" class="text-danger d-none">
+                        Could not load likes. Please try again.
+                    </p>
+
+                    <p id="likersEmpty" class="d-none">
+                        No likes yet.
+                    </p>
+
+                    <ul id="likersList"
+                        class="list-group list-group-flush">
+                    </ul>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
+
+@if (User.Identity?.IsAuthenticated ?? false)
+{
+    <div class="left-panel-menu">
+
+        <a asp-controller="Message"
+           asp-action="Inbox"
+           class="left-panel-link">
+            Messages
+            @await Component.InvokeAsync("UnreadMessages")
+        </a>
+
+        <a asp-controller="Chat"
+           asp-action="Index"
+           class="left-panel-link">
+           Chat
+        </a>
+
+        <a asp-controller="Friendship"
+           asp-action="Index"
+           class="left-panel-link">
+            Friends
+        </a>
+
+        <a asp-controller="Friendship"
+           asp-action="Search"
+           class="left-panel-link">
+            Search users
+        </a>
+
+        <a asp-controller="MyActivity"
+           asp-action="Index"
+           class="left-panel-link">
+            My activity
+        </a>
+
+    </div>
+}
+
+<div class="left-panel-menu">
+    <a asp-controller="Misc"
+       asp-action="About"
+       class="left-panel-link">
+        About
+    </a>
 </div>
-<script>
-    document.addEventListener("DOMContentLoaded", function () {
-        const createTopicCard = document.getElementById("createTopicCard");
-        const editTopicCard = document.getElementById("editTopicCard");
-        const cancelEditTopic = document.getElementById("cancelEditTopic");
 
-        if (cancelEditTopic) {
-            cancelEditTopic.addEventListener("click", function () {
-                if (editTopicCard) {
-                    editTopicCard.classList.add("d-none");
-                }
+using Application.Interfaces.Services.Features;
+using Microsoft.AspNetCore.Mvc;
 
-                if (createTopicCard) {
-                    createTopicCard.classList.remove("d-none");
-                }
-            });
+namespace OpenForum.ViewComponents
+{
+    public class UnreadMessagesViewComponent : ViewComponent
+    {
+        private readonly IMessageService messageService;
+
+        public UnreadMessagesViewComponent(
+            IMessageService messageService)
+        {
+            this.messageService = messageService;
         }
-    });
-</script>
+
+        public async Task<IViewComponentResult> InvokeAsync()
+        {
+            int unreadCount =
+                await messageService.GetUnreadCountAsync();
+
+            return View(unreadCount);
+        }
+    }
+}
+
+

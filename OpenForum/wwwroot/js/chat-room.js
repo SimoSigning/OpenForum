@@ -1,4 +1,4 @@
-﻿//chat-room.js
+﻿
 document.addEventListener("DOMContentLoaded", async () => {
 
     const roomId = window.chatRoomId;
@@ -26,6 +26,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const messages = new Map();
 
     let connection = null;
+    let isPageLeaving = false;
 
     // --------------------------------
     // Error handling
@@ -45,68 +46,68 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Message rendering
     // --------------------------------
 
-function renderMessages() {
+    function renderMessages() {
 
-    const sortedMessages = Array.from(messages.values())
-        .sort((a, b) =>
-            new Date(a.sentAt) - new Date(b.sentAt)
-        );
+        const sortedMessages = Array.from(messages.values())
+            .sort((a, b) =>
+                new Date(a.sentAt) - new Date(b.sentAt)
+            );
 
-    // Keep the client-side message limit bounded.
-    while (sortedMessages.length > MAX_MESSAGES) {
-        const oldestMessage = sortedMessages.shift();
-        messages.delete(oldestMessage.id);
+        // Keep the client-side message limit bounded.
+        while (sortedMessages.length > MAX_MESSAGES) {
+            const oldestMessage = sortedMessages.shift();
+            messages.delete(oldestMessage.id);
+        }
+
+        messagesContainer.replaceChildren();
+
+        sortedMessages.forEach(message => {
+
+            // Determine ownership for the currently logged-in user.
+            const isOwnMessage =
+                message.senderUserId === window.chatCurrentUserId;
+
+            const messageElement = document.createElement("div");
+
+            messageElement.className =
+                isOwnMessage
+                    ? "align-self-start bg-primary text-white rounded p-3"
+                    : "align-self-end bg-light border rounded p-3";
+
+            messageElement.style.maxWidth = "75%";
+
+            const sender = document.createElement("strong");
+            sender.className = "d-block small mb-1";
+            sender.textContent = message.senderUsername;
+
+            const content = document.createElement("div");
+            content.style.whiteSpace = "pre-wrap";
+            content.style.overflowWrap = "anywhere";
+            content.textContent = message.content;
+
+            const timestamp = document.createElement("small");
+
+            timestamp.className =
+                isOwnMessage
+                    ? "d-block mt-2 text-white-50"
+                    : "d-block mt-2 text-muted";
+
+            const sentAt = new Date(message.sentAt);
+
+            timestamp.textContent = sentAt.toLocaleString();
+
+            messageElement.append(
+                sender,
+                content,
+                timestamp
+            );
+
+            messagesContainer.appendChild(messageElement);
+        });
+
+        messagesContainer.scrollTop =
+            messagesContainer.scrollHeight;
     }
-
-    messagesContainer.replaceChildren();
-
-    sortedMessages.forEach(message => {
-
-        // Determine ownership for the currently logged-in user.
-        const isOwnMessage =
-            message.senderUserId === window.chatCurrentUserId;
-
-        const messageElement = document.createElement("div");
-
-        messageElement.className =
-            isOwnMessage
-                ? "align-self-start bg-primary text-white rounded p-3"
-                : "align-self-end bg-light border rounded p-3";
-
-        messageElement.style.maxWidth = "75%";
-
-        const sender = document.createElement("strong");
-        sender.className = "d-block small mb-1";
-        sender.textContent = message.senderUsername;
-
-        const content = document.createElement("div");
-        content.style.whiteSpace = "pre-wrap";
-        content.style.overflowWrap = "anywhere";
-        content.textContent = message.content;
-
-        const timestamp = document.createElement("small");
-
-        timestamp.className =
-            isOwnMessage
-                ? "d-block mt-2 text-white-50"
-                : "d-block mt-2 text-muted";
-
-        const sentAt = new Date(message.sentAt);
-
-        timestamp.textContent = sentAt.toLocaleString();
-
-        messageElement.append(
-            sender,
-            content,
-            timestamp
-        );
-
-        messagesContainer.appendChild(messageElement);
-    });
-
-    messagesContainer.scrollTop =
-        messagesContainer.scrollHeight;
-}
 
     function addMessage(message) {
 
@@ -143,8 +144,11 @@ function renderMessages() {
             messagesLoading.classList.add("d-none");
 
         } catch (error) {
-            showError(error.message);
-            messagesLoading.classList.add("d-none");
+
+            if (!isPageLeaving) {
+                showError(error.message);
+                messagesLoading.classList.add("d-none");
+            }
         }
     }
 
@@ -154,38 +158,68 @@ function renderMessages() {
 
     async function connectToChat() {
 
+        // Do not create another connection while leaving the page.
+        if (isPageLeaving)
+            return;
+
+        // Avoid creating a duplicate connection.
+        if (connection &&
+            connection.state !== signalR.HubConnectionState.Disconnected) {
+            return;
+        }
+
         connection = new signalR.HubConnectionBuilder()
             .withUrl("/chatHub")
-            .withAutomaticReconnect() 
+            .withAutomaticReconnect()
             .build();
 
         // Receive messages from other users.
         connection.on("ReceiveMessage", message => {
-            addMessage(message);
+            if (!isPageLeaving) {
+                addMessage(message);
+            }
         });
 
         connection.onreconnecting(() => {
+
+            if (isPageLeaving)
+                return;
+
             showError("Connection lost. Reconnecting...");
             sendMessageButton.disabled = true;
         });
 
         connection.onreconnected(async () => {
 
+            if (isPageLeaving)
+                return;
+
             clearError();
 
             try {
                 await connection.invoke("JoinRoom", roomId);
+
+                if (isPageLeaving)
+                    return;
 
                 await loadMessages();
 
                 sendMessageButton.disabled = false;
 
             } catch (error) {
-                showError("Could not rejoin the chatroom.");
+
+                if (!isPageLeaving) {
+                    showError("Could not rejoin the chatroom.");
+                    sendMessageButton.disabled = true;
+                }
             }
         });
 
         connection.onclose(() => {
+
+            if (isPageLeaving)
+                return;
+
             showError(
                 "Connection to the chatroom was lost. Please refresh the page."
             );
@@ -194,17 +228,63 @@ function renderMessages() {
         });
 
         try {
+
             await connection.start();
+
+            // The page may have started unloading while connecting.
+            if (isPageLeaving) {
+                await connection.stop();
+                return;
+            }
 
             await connection.invoke("JoinRoom", roomId);
 
             clearError();
 
         } catch (error) {
-            showError("Could not connect to the chatroom.");
-            sendMessageButton.disabled = true;
+
+            if (!isPageLeaving) {
+                showError("Could not connect to the chatroom.");
+                sendMessageButton.disabled = true;
+            }
         }
     }
+
+    // --------------------------------
+    // Page lifecycle
+    // --------------------------------
+
+    // Stop SignalR when the user navigates away or closes the page.
+    // This allows the server's OnDisconnectedAsync to run.
+    window.addEventListener("pagehide", () => {
+
+        isPageLeaving = true;
+
+        if (connection) {
+            connection.stop().catch(() => {
+                // The connection may already have stopped.
+            });
+        }
+    });
+
+    // If the browser restores the page from its back-forward cache,
+    // establish a fresh SignalR connection.
+    window.addEventListener("pageshow", async event => {
+
+        if (!event.persisted)
+            return;
+
+        isPageLeaving = false;
+
+        await connectToChat();
+
+        if (connection &&
+            connection.state === signalR.HubConnectionState.Connected) {
+
+            await loadMessages();
+            await loadRoomMembers();
+        }
+    });
 
     // --------------------------------
     // Send messages
@@ -213,6 +293,9 @@ function renderMessages() {
     messageForm.addEventListener("submit", async event => {
 
         event.preventDefault();
+
+        if (isPageLeaving)
+            return;
 
         clearError();
 
@@ -236,6 +319,7 @@ function renderMessages() {
         sendMessageButton.disabled = true;
 
         try {
+
             await connection.invoke(
                 "SendMessage",
                 roomId,
@@ -246,9 +330,13 @@ function renderMessages() {
             messageInput.focus();
 
         } catch (error) {
+
             showError("Could not send your message.");
+
         } finally {
+
             sendMessageButton.disabled =
+                !connection ||
                 connection.state !== signalR.HubConnectionState.Connected;
         }
     });
@@ -297,7 +385,9 @@ function renderMessages() {
 
         } catch (error) {
 
-            showError(error.message);
+            if (!isPageLeaving) {
+                showError(error.message);
+            }
 
         } finally {
 
@@ -383,7 +473,6 @@ function renderMessages() {
                     button.textContent = "Invite";
 
                     button.addEventListener("click", async () => {
-
                         await inviteFriend(friend.userId, button);
                     });
 
@@ -439,6 +528,9 @@ function renderMessages() {
                     );
                 }
 
+                inviteFriendsSuccess.textContent =
+                    "Friend successfully invited.";
+
                 inviteFriendsSuccess.classList.remove("d-none");
 
                 await loadRoomMembers();
@@ -446,6 +538,8 @@ function renderMessages() {
 
                 inviteFriendsSuccess.textContent =
                     "Friend successfully invited.";
+
+                inviteFriendsSuccess.classList.remove("d-none");
 
             } catch (error) {
 
@@ -464,7 +558,6 @@ function renderMessages() {
         });
     }
 
-    
     // --------------------------------
     // Leave room
     // --------------------------------
@@ -537,7 +630,6 @@ function renderMessages() {
         });
     }
 
-
     // --------------------------------
     // Initialize chat
     // --------------------------------
@@ -549,10 +641,11 @@ function renderMessages() {
 
     await connectToChat();
 
-    if (connection.state === signalR.HubConnectionState.Connected) {
-        await loadMessages();
-    }
+    if (connection &&
+        connection.state === signalR.HubConnectionState.Connected) {
 
-    await loadRoomMembers();
+        await loadMessages();
+        await loadRoomMembers();
+    }
 
 });

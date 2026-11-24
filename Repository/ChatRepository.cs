@@ -69,6 +69,8 @@ namespace Repository
             ChatRoom room,
             IEnumerable<ChatRoomMember> members)
         {
+            List<ChatRoomMember> memberList = members.ToList();
+
             bool ownsTransaction =
                 context.Database.CurrentTransaction == null;
 
@@ -80,7 +82,7 @@ namespace Repository
             {
                 context.ChatRooms.Add(room);
 
-                foreach (ChatRoomMember member in members)
+                foreach (ChatRoomMember member in memberList)
                 {
                     room.Members.Add(member);
                 }
@@ -94,9 +96,25 @@ namespace Repository
             }
             catch
             {
-                if (ownsTransaction && transaction != null)
+                try
                 {
-                    await transaction.RollbackAsync();
+                    if (ownsTransaction && transaction != null)
+                    {
+                        await transaction.RollbackAsync();
+                    }
+                }
+                finally
+                {
+                    // Remove the failed room and its members
+                    // from EF Core's change tracker.
+                    foreach (ChatRoomMember member in memberList)
+                    {
+                        context.Entry(member).State =
+                            EntityState.Detached;
+                    }
+
+                    context.Entry(room).State =
+                        EntityState.Detached;
                 }
 
                 throw;
@@ -104,14 +122,11 @@ namespace Repository
         }
 
 
-        public async Task LeaveRoomAsync(
-            int roomId,
-            string userId,
-            string? newOwnerUserId,
-            bool deleteRoom)
+        public async Task LeaveRoomAsync(int roomId, string userId)
         {
             await using var transaction =
-                await context.Database.BeginTransactionAsync();
+                await context.Database.BeginTransactionAsync(
+                    System.Data.IsolationLevel.Serializable);
 
             try
             {
@@ -130,29 +145,32 @@ namespace Repository
                     throw new InvalidOperationException(
                         "You are not a member of this chat room.");
 
-                if (deleteRoom)
+                List<ChatRoomMember> remainingMembers =
+                    await context.ChatRoomMembers
+                        .Where(m =>
+                            m.ChatRoomId == roomId &&
+                            m.UserId != userId)
+                        .ToListAsync();
+
+                // Only private rooms are deleted when their final
+                // member leaves.
+                if (room.RoomType == ChatRoomType.Private &&
+                    remainingMembers.Count == 0)
                 {
                     context.ChatRooms.Remove(room);
                 }
                 else
                 {
+                    // Transfer ownership if the current owner leaves.
                     if (room.RoomType == ChatRoomType.Private &&
                         room.OwnerUserId == userId)
                     {
-                        if (string.IsNullOrWhiteSpace(newOwnerUserId))
-                            throw new InvalidOperationException(
-                                "A new owner must be specified.");
+                        ChatRoomMember newOwner = remainingMembers
+                            .OrderBy(m => m.JoinedAt)
+                            .ThenBy(m => m.UserId, StringComparer.Ordinal)
+                            .First();
 
-                        bool newOwnerIsMember =
-                            await context.ChatRoomMembers.AnyAsync(m =>
-                                m.ChatRoomId == roomId &&
-                                m.UserId == newOwnerUserId);
-
-                        if (!newOwnerIsMember)
-                            throw new InvalidOperationException(
-                                "The new owner must be a remaining room member.");
-
-                        room.OwnerUserId = newOwnerUserId;
+                        room.OwnerUserId = newOwner.UserId;
                     }
 
                     context.ChatRoomMembers.Remove(member);
@@ -182,6 +200,27 @@ namespace Repository
         {
             return await context.Topics
                 .AnyAsync(t => t.Id == topicId);
+        }
+
+        public async Task<int> GetUnseenPrivateRoomCountAsync(string userId)
+        {
+            return await context.ChatRoomMembers
+                .CountAsync(m =>
+                    m.UserId == userId &&
+                    m.ChatRoom.RoomType == ChatRoomType.Private &&
+                    m.LastVisitedAt == null);
+        }
+
+        public async Task MarkRoomAsVisitedAsync(int roomId, string userId)
+        {
+            await context.ChatRoomMembers
+                .Where(m =>
+                    m.ChatRoomId == roomId &&
+                    m.UserId == userId)
+                .ExecuteUpdateAsync(setters =>
+                    setters.SetProperty(
+                        m => m.LastVisitedAt,
+                        DateTime.UtcNow));
         }
 
         // -------------------------
@@ -236,7 +275,8 @@ namespace Repository
 
         public async Task AddMessageAsync(ChatMessage message)
         {
-            await using var transaction = await context.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
+            await using var transaction =
+                await context.Database.BeginTransactionAsync();
 
             try
             {

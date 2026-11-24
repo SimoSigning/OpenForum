@@ -3,140 +3,56 @@
   "WorkspaceRootPath": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{4E8ED199-50A4-6D22-F320-E112A27B83DE}|OpenForum\\OpenForum.csproj|c:\\users\\misterderp\\source\\repos\\openforum\\openforum\\views\\chat\\room.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
-      "RelativeMoniker": "D:0:0:{4E8ED199-50A4-6D22-F320-E112A27B83DE}|OpenForum\\OpenForum.csproj|solutionrelative:openforum\\views\\chat\\room.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\Identity\\Migrations\\20261124204334_init.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Identity\\Migrations\\20261124204334_init.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{4E8ED199-50A4-6D22-F320-E112A27B83DE}|OpenForum\\OpenForum.csproj|c:\\users\\misterderp\\source\\repos\\openforum\\openforum\\views\\chat\\index.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
-      "RelativeMoniker": "D:0:0:{4E8ED199-50A4-6D22-F320-E112A27B83DE}|OpenForum\\OpenForum.csproj|solutionrelative:openforum\\views\\chat\\index.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{4E8ED199-50A4-6D22-F320-E112A27B83DE}|OpenForum\\OpenForum.csproj|c:\\users\\misterderp\\source\\repos\\openforum\\openforum\\wwwroot\\js\\chat-room.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
-      "RelativeMoniker": "D:0:0:{4E8ED199-50A4-6D22-F320-E112A27B83DE}|OpenForum\\OpenForum.csproj|solutionrelative:openforum\\wwwroot\\js\\chat-room.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{4E8ED199-50A4-6D22-F320-E112A27B83DE}|OpenForum\\OpenForum.csproj|c:\\users\\misterderp\\source\\repos\\openforum\\openforum\\wwwroot\\css\\forum.css||{A5401142-F49D-43DB-90B1-F57BA349E55C}",
-      "RelativeMoniker": "D:0:0:{4E8ED199-50A4-6D22-F320-E112A27B83DE}|OpenForum\\OpenForum.csproj|solutionrelative:openforum\\wwwroot\\css\\forum.css||{A5401142-F49D-43DB-90B1-F57BA349E55C}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{D61D7824-DEBB-40F3-BA47-3D46BC7E2EA8}|Application\\Application.csproj|c:\\users\\misterderp\\source\\repos\\openforum\\application\\services\\features\\chatservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{D61D7824-DEBB-40F3-BA47-3D46BC7E2EA8}|Application\\Application.csproj|solutionrelative:application\\services\\features\\chatservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{55936537-3749-C7DC-F15C-3531E8498743}|ViewModels\\ViewModels.csproj|c:\\users\\misterderp\\source\\repos\\openforum\\viewmodels\\chat\\chatroomview.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{55936537-3749-C7DC-F15C-3531E8498743}|ViewModels\\ViewModels.csproj|solutionrelative:viewmodels\\chat\\chatroomview.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{4E8ED199-50A4-6D22-F320-E112A27B83DE}|OpenForum\\OpenForum.csproj|c:\\users\\misterderp\\source\\repos\\openforum\\openforum\\controllers\\chatcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{4E8ED199-50A4-6D22-F320-E112A27B83DE}|OpenForum\\OpenForum.csproj|solutionrelative:openforum\\controllers\\chatcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{CE8F3387-4CAB-64ED-80E3-18319C5DCD81}|Repository\\Repository.csproj|c:\\users\\misterderp\\source\\repos\\openforum\\repository\\chatrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{CE8F3387-4CAB-64ED-80E3-18319C5DCD81}|Repository\\Repository.csproj|solutionrelative:repository\\chatrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{4E8ED199-50A4-6D22-F320-E112A27B83DE}|OpenForum\\OpenForum.csproj|c:\\users\\misterderp\\source\\repos\\openforum\\openforum\\wwwroot\\js\\chat-index.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
-      "RelativeMoniker": "D:0:0:{4E8ED199-50A4-6D22-F320-E112A27B83DE}|OpenForum\\OpenForum.csproj|solutionrelative:openforum\\wwwroot\\js\\chat-index.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\Identity\\Migrations\\20261124131425_init.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Identity\\Migrations\\20261124131425_init.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\EntityContext\\Migrations\\20261124131340_init.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:EntityContext\\Migrations\\20261124131340_init.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{D61D7824-DEBB-40F3-BA47-3D46BC7E2EA8}|Application\\Application.csproj|c:\\users\\misterderp\\source\\repos\\openforum\\application\\services\\forum\\topicservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{D61D7824-DEBB-40F3-BA47-3D46BC7E2EA8}|Application\\Application.csproj|solutionrelative:application\\services\\forum\\topicservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{4E8ED199-50A4-6D22-F320-E112A27B83DE}|OpenForum\\OpenForum.csproj|c:\\users\\misterderp\\source\\repos\\openforum\\openforum\\views\\topic\\index.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
-      "RelativeMoniker": "D:0:0:{4E8ED199-50A4-6D22-F320-E112A27B83DE}|OpenForum\\OpenForum.csproj|solutionrelative:openforum\\views\\topic\\index.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{CE8F3387-4CAB-64ED-80E3-18319C5DCD81}|Repository\\Repository.csproj|c:\\users\\misterderp\\source\\repos\\openforum\\repository\\interfaces\\ichatrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{CE8F3387-4CAB-64ED-80E3-18319C5DCD81}|Repository\\Repository.csproj|solutionrelative:repository\\interfaces\\ichatrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{D61D7824-DEBB-40F3-BA47-3D46BC7E2EA8}|Application\\Application.csproj|c:\\users\\misterderp\\source\\repos\\openforum\\application\\interfaces\\services\\features\\ichatservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{D61D7824-DEBB-40F3-BA47-3D46BC7E2EA8}|Application\\Application.csproj|solutionrelative:application\\interfaces\\services\\features\\ichatservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{4E8ED199-50A4-6D22-F320-E112A27B83DE}|OpenForum\\OpenForum.csproj|c:\\users\\misterderp\\source\\repos\\openforum\\openforum\\contexts\\usercontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{4E8ED199-50A4-6D22-F320-E112A27B83DE}|OpenForum\\OpenForum.csproj|solutionrelative:openforum\\contexts\\usercontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{D61D7824-DEBB-40F3-BA47-3D46BC7E2EA8}|Application\\Application.csproj|c:\\users\\misterderp\\source\\repos\\openforum\\application\\interfaces\\contexts\\iusercontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{D61D7824-DEBB-40F3-BA47-3D46BC7E2EA8}|Application\\Application.csproj|solutionrelative:application\\interfaces\\contexts\\iusercontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{4E8ED199-50A4-6D22-F320-E112A27B83DE}|OpenForum\\OpenForum.csproj|c:\\users\\misterderp\\source\\repos\\openforum\\openforum\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{4E8ED199-50A4-6D22-F320-E112A27B83DE}|OpenForum\\OpenForum.csproj|solutionrelative:openforum\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{4E8ED199-50A4-6D22-F320-E112A27B83DE}|OpenForum\\OpenForum.csproj|c:\\users\\misterderp\\source\\repos\\openforum\\openforum\\hubs\\chathub.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{4E8ED199-50A4-6D22-F320-E112A27B83DE}|OpenForum\\OpenForum.csproj|solutionrelative:openforum\\hubs\\chathub.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{D084054C-AC22-C662-AC1A-FD5DDEB95E68}|EntityModels\\EntityModels.csproj|c:\\users\\misterderp\\source\\repos\\openforum\\entitymodels\\chatroommember.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{D084054C-AC22-C662-AC1A-FD5DDEB95E68}|EntityModels\\EntityModels.csproj|solutionrelative:entitymodels\\chatroommember.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{D084054C-AC22-C662-AC1A-FD5DDEB95E68}|EntityModels\\EntityModels.csproj|c:\\users\\misterderp\\source\\repos\\openforum\\entitymodels\\chatmessage.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{D084054C-AC22-C662-AC1A-FD5DDEB95E68}|EntityModels\\EntityModels.csproj|solutionrelative:entitymodels\\chatmessage.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{D084054C-AC22-C662-AC1A-FD5DDEB95E68}|EntityModels\\EntityModels.csproj|c:\\users\\misterderp\\source\\repos\\openforum\\entitymodels\\chatroom.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{D084054C-AC22-C662-AC1A-FD5DDEB95E68}|EntityModels\\EntityModels.csproj|solutionrelative:entitymodels\\chatroom.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{55936537-3749-C7DC-F15C-3531E8498743}|ViewModels\\ViewModels.csproj|c:\\users\\misterderp\\source\\repos\\openforum\\viewmodels\\chat\\chatfriendview.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{55936537-3749-C7DC-F15C-3531E8498743}|ViewModels\\ViewModels.csproj|solutionrelative:viewmodels\\chat\\chatfriendview.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{55936537-3749-C7DC-F15C-3531E8498743}|ViewModels\\ViewModels.csproj|c:\\users\\misterderp\\source\\repos\\openforum\\viewmodels\\chat\\chatmemberview.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{55936537-3749-C7DC-F15C-3531E8498743}|ViewModels\\ViewModels.csproj|solutionrelative:viewmodels\\chat\\chatmemberview.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{55936537-3749-C7DC-F15C-3531E8498743}|ViewModels\\ViewModels.csproj|c:\\users\\misterderp\\source\\repos\\openforum\\viewmodels\\chat\\chatmessageview.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{55936537-3749-C7DC-F15C-3531E8498743}|ViewModels\\ViewModels.csproj|solutionrelative:viewmodels\\chat\\chatmessageview.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{D61D7824-DEBB-40F3-BA47-3D46BC7E2EA8}|Application\\Application.csproj|c:\\users\\misterderp\\source\\repos\\openforum\\application\\interfaces\\services\\forum\\itopicservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{D61D7824-DEBB-40F3-BA47-3D46BC7E2EA8}|Application\\Application.csproj|solutionrelative:application\\interfaces\\services\\forum\\itopicservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{4E8ED199-50A4-6D22-F320-E112A27B83DE}|OpenForum\\OpenForum.csproj|c:\\users\\misterderp\\source\\repos\\openforum\\openforum\\controllers\\topiccontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{4E8ED199-50A4-6D22-F320-E112A27B83DE}|OpenForum\\OpenForum.csproj|solutionrelative:openforum\\controllers\\topiccontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{21B788FA-DEF4-1204-272F-CC4E3259BF18}|EntityContext\\EntityContext.csproj|c:\\users\\misterderp\\source\\repos\\openforum\\entitycontext\\forumcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{21B788FA-DEF4-1204-272F-CC4E3259BF18}|EntityContext\\EntityContext.csproj|solutionrelative:entitycontext\\forumcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{D084054C-AC22-C662-AC1A-FD5DDEB95E68}|EntityModels\\EntityModels.csproj|c:\\users\\misterderp\\source\\repos\\openforum\\entitymodels\\chatroomtype.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{D084054C-AC22-C662-AC1A-FD5DDEB95E68}|EntityModels\\EntityModels.csproj|solutionrelative:entitymodels\\chatroomtype.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\EntityContext\\Migrations\\20261124204245_init.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:EntityContext\\Migrations\\20261124204245_init.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{4E8ED199-50A4-6D22-F320-E112A27B83DE}|OpenForum\\OpenForum.csproj|c:\\users\\misterderp\\source\\repos\\openforum\\openforum\\views\\shared\\_leftpanel.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
       "RelativeMoniker": "D:0:0:{4E8ED199-50A4-6D22-F320-E112A27B83DE}|OpenForum\\OpenForum.csproj|solutionrelative:openforum\\views\\shared\\_leftpanel.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{CE8F3387-4CAB-64ED-80E3-18319C5DCD81}|Repository\\Repository.csproj|c:\\users\\misterderp\\source\\repos\\openforum\\repository\\friendshiprepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{CE8F3387-4CAB-64ED-80E3-18319C5DCD81}|Repository\\Repository.csproj|solutionrelative:repository\\friendshiprepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{4E8ED199-50A4-6D22-F320-E112A27B83DE}|OpenForum\\OpenForum.csproj|c:\\users\\misterderp\\source\\repos\\openforum\\openforum\\views\\shared\\components\\pendingfriendrequests\\default.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{4E8ED199-50A4-6D22-F320-E112A27B83DE}|OpenForum\\OpenForum.csproj|solutionrelative:openforum\\views\\shared\\components\\pendingfriendrequests\\default.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{4E8ED199-50A4-6D22-F320-E112A27B83DE}|OpenForum\\OpenForum.csproj|c:\\users\\misterderp\\source\\repos\\openforum\\openforum\\viewcomponents\\pendingfriendrequestsviewcomponent.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{4E8ED199-50A4-6D22-F320-E112A27B83DE}|OpenForum\\OpenForum.csproj|solutionrelative:openforum\\viewcomponents\\pendingfriendrequestsviewcomponent.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{D61D7824-DEBB-40F3-BA47-3D46BC7E2EA8}|Application\\Application.csproj|c:\\users\\misterderp\\source\\repos\\openforum\\application\\services\\features\\friendshipservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{D61D7824-DEBB-40F3-BA47-3D46BC7E2EA8}|Application\\Application.csproj|solutionrelative:application\\services\\features\\friendshipservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
+      "AbsoluteMoniker": "D:0:0:{D61D7824-DEBB-40F3-BA47-3D46BC7E2EA8}|Application\\Application.csproj|c:\\users\\misterderp\\source\\repos\\openforum\\application\\interfaces\\services\\features\\ifriendshipservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{D61D7824-DEBB-40F3-BA47-3D46BC7E2EA8}|Application\\Application.csproj|solutionrelative:application\\interfaces\\services\\features\\ifriendshipservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{CE8F3387-4CAB-64ED-80E3-18319C5DCD81}|Repository\\Repository.csproj|c:\\users\\misterderp\\source\\repos\\openforum\\repository\\friendshiprepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{CE8F3387-4CAB-64ED-80E3-18319C5DCD81}|Repository\\Repository.csproj|solutionrelative:repository\\friendshiprepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{CE8F3387-4CAB-64ED-80E3-18319C5DCD81}|Repository\\Repository.csproj|c:\\users\\misterderp\\source\\repos\\openforum\\repository\\interfaces\\ifriendshiprepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{CE8F3387-4CAB-64ED-80E3-18319C5DCD81}|Repository\\Repository.csproj|solutionrelative:repository\\interfaces\\ifriendshiprepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
       "AbsoluteMoniker": "D:0:0:{4E8ED199-50A4-6D22-F320-E112A27B83DE}|OpenForum\\OpenForum.csproj|c:\\users\\misterderp\\source\\repos\\openforum\\openforum\\controllers\\friendshipcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{4E8ED199-50A4-6D22-F320-E112A27B83DE}|OpenForum\\OpenForum.csproj|solutionrelative:openforum\\controllers\\friendshipcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{4E8ED199-50A4-6D22-F320-E112A27B83DE}|OpenForum\\OpenForum.csproj|c:\\users\\misterderp\\source\\repos\\openforum\\openforum\\views\\shared\\_layout.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
-      "RelativeMoniker": "D:0:0:{4E8ED199-50A4-6D22-F320-E112A27B83DE}|OpenForum\\OpenForum.csproj|solutionrelative:openforum\\views\\shared\\_layout.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+      "AbsoluteMoniker": "D:0:0:{4E8ED199-50A4-6D22-F320-E112A27B83DE}|OpenForum\\OpenForum.csproj|c:\\users\\misterderp\\source\\repos\\openforum\\openforum\\views\\shared\\components\\unseenchatrooms\\default.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{4E8ED199-50A4-6D22-F320-E112A27B83DE}|OpenForum\\OpenForum.csproj|solutionrelative:openforum\\views\\shared\\components\\unseenchatrooms\\default.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{4E8ED199-50A4-6D22-F320-E112A27B83DE}|OpenForum\\OpenForum.csproj|c:\\users\\misterderp\\source\\repos\\openforum\\openforum\\viewcomponents\\unseenchatroomsviewcomponent.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{4E8ED199-50A4-6D22-F320-E112A27B83DE}|OpenForum\\OpenForum.csproj|solutionrelative:openforum\\viewcomponents\\unseenchatroomsviewcomponent.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{4E8ED199-50A4-6D22-F320-E112A27B83DE}|OpenForum\\OpenForum.csproj|c:\\users\\misterderp\\source\\repos\\openforum\\openforum\\viewcomponents\\unreadmessagesviewcomponent.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{4E8ED199-50A4-6D22-F320-E112A27B83DE}|OpenForum\\OpenForum.csproj|solutionrelative:openforum\\viewcomponents\\unreadmessagesviewcomponent.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -146,408 +62,128 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 6,
+          "SelectedChildIndex": 0,
           "Children": [
             {
               "$type": "Document",
-              "DocumentIndex": 3,
-              "Title": "forum.css",
-              "DocumentMoniker": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\OpenForum\\wwwroot\\css\\forum.css",
-              "RelativeDocumentMoniker": "OpenForum\\wwwroot\\css\\forum.css",
-              "ToolTip": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\OpenForum\\wwwroot\\css\\forum.css",
-              "RelativeToolTip": "OpenForum\\wwwroot\\css\\forum.css",
-              "ViewState": "AgIAAIkAAAAAAAAAAAAiwKsAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003000|",
-              "WhenOpened": "2026-11-24T13:55:05.519Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 6,
-              "Title": "ChatController.cs",
-              "DocumentMoniker": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\OpenForum\\Controllers\\ChatController.cs",
-              "RelativeDocumentMoniker": "OpenForum\\Controllers\\ChatController.cs",
-              "ToolTip": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\OpenForum\\Controllers\\ChatController.cs",
-              "RelativeToolTip": "OpenForum\\Controllers\\ChatController.cs",
-              "ViewState": "AgIAABQAAAAAAAAAAAAAACUAAAAxAAAAAAAAAA==",
+              "DocumentIndex": 0,
+              "Title": "20261124204334_init.cs",
+              "DocumentMoniker": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\Identity\\Migrations\\20261124204334_init.cs",
+              "RelativeDocumentMoniker": "Identity\\Migrations\\20261124204334_init.cs",
+              "ToolTip": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\Identity\\Migrations\\20261124204334_init.cs",
+              "RelativeToolTip": "Identity\\Migrations\\20261124204334_init.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-11-23T20:39:50.935Z",
+              "WhenOpened": "2026-11-24T20:43:34.336Z",
               "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 16,
-              "Title": "IUserContext.cs",
-              "DocumentMoniker": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\Application\\Interfaces\\Contexts\\IUserContext.cs",
-              "RelativeDocumentMoniker": "Application\\Interfaces\\Contexts\\IUserContext.cs",
-              "ToolTip": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\Application\\Interfaces\\Contexts\\IUserContext.cs",
-              "RelativeToolTip": "Application\\Interfaces\\Contexts\\IUserContext.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA8AAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-11-24T12:42:01.041Z"
             },
             {
               "$type": "Document",
               "DocumentIndex": 1,
-              "Title": "Index.cshtml",
-              "DocumentMoniker": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\OpenForum\\Views\\Chat\\Index.cshtml",
-              "RelativeDocumentMoniker": "OpenForum\\Views\\Chat\\Index.cshtml",
-              "ToolTip": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\OpenForum\\Views\\Chat\\Index.cshtml",
-              "RelativeToolTip": "OpenForum\\Views\\Chat\\Index.cshtml",
-              "ViewState": "AgIAACYAAAAAAAAAAAAIwJkAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
-              "WhenOpened": "2026-11-23T20:40:00.506Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 8,
-              "Title": "chat-index.js",
-              "DocumentMoniker": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\OpenForum\\wwwroot\\js\\chat-index.js",
-              "RelativeDocumentMoniker": "OpenForum\\wwwroot\\js\\chat-index.js",
-              "ToolTip": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\OpenForum\\wwwroot\\js\\chat-index.js",
-              "RelativeToolTip": "OpenForum\\wwwroot\\js\\chat-index.js",
-              "ViewState": "AgIAABUBAAAAAAAAAAAiwDcBAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001646|",
-              "WhenOpened": "2026-11-23T18:47:11.511Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 2,
-              "Title": "chat-room.js",
-              "DocumentMoniker": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\OpenForum\\wwwroot\\js\\chat-room.js",
-              "RelativeDocumentMoniker": "OpenForum\\wwwroot\\js\\chat-room.js",
-              "ToolTip": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\OpenForum\\wwwroot\\js\\chat-room.js",
-              "RelativeToolTip": "OpenForum\\wwwroot\\js\\chat-room.js",
-              "ViewState": "AgIAAAwCAAAAAAAAAAAiwCgCAAAdAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001646|",
-              "WhenOpened": "2026-11-23T18:47:24.226Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 0,
-              "Title": "Room.cshtml",
-              "DocumentMoniker": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\OpenForum\\Views\\Chat\\Room.cshtml",
-              "RelativeDocumentMoniker": "OpenForum\\Views\\Chat\\Room.cshtml",
-              "ToolTip": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\OpenForum\\Views\\Chat\\Room.cshtml",
-              "RelativeToolTip": "OpenForum\\Views\\Chat\\Room.cshtml",
-              "ViewState": "AgIAAJgAAAAAAAAAAAAiwK0AAAAKAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
-              "WhenOpened": "2026-11-23T20:41:14.586Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 5,
-              "Title": "ChatRoomView.cs",
-              "DocumentMoniker": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\ViewModels\\Chat\\ChatRoomView.cs",
-              "RelativeDocumentMoniker": "ViewModels\\Chat\\ChatRoomView.cs",
-              "ToolTip": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\ViewModels\\Chat\\ChatRoomView.cs",
-              "RelativeToolTip": "ViewModels\\Chat\\ChatRoomView.cs",
-              "ViewState": "AgIAAAMAAAAAAAAAAAAAABAAAABBAAAAAAAAAA==",
+              "Title": "20261124204245_init.cs",
+              "DocumentMoniker": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\EntityContext\\Migrations\\20261124204245_init.cs",
+              "RelativeDocumentMoniker": "EntityContext\\Migrations\\20261124204245_init.cs",
+              "ToolTip": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\EntityContext\\Migrations\\20261124204245_init.cs",
+              "RelativeToolTip": "EntityContext\\Migrations\\20261124204245_init.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-11-23T20:39:22.484Z",
+              "WhenOpened": "2026-11-24T20:42:46.034Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 7,
-              "Title": "ChatRepository.cs",
-              "DocumentMoniker": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\Repository\\ChatRepository.cs",
-              "RelativeDocumentMoniker": "Repository\\ChatRepository.cs",
-              "ToolTip": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\Repository\\ChatRepository.cs",
-              "RelativeToolTip": "Repository\\ChatRepository.cs",
-              "ViewState": "AgIAABcAAAAAAAAAAAAIwB8AAAAaAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-11-23T20:38:39.302Z",
+              "DocumentIndex": 3,
+              "Title": "Default.cshtml",
+              "DocumentMoniker": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\OpenForum\\Views\\Shared\\components\\PendingFriendRequests\\Default.cshtml",
+              "RelativeDocumentMoniker": "OpenForum\\Views\\Shared\\components\\PendingFriendRequests\\Default.cshtml",
+              "ToolTip": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\OpenForum\\Views\\Shared\\components\\PendingFriendRequests\\Default.cshtml",
+              "RelativeToolTip": "OpenForum\\Views\\Shared\\components\\PendingFriendRequests\\Default.cshtml",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAcAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-11-24T20:39:43.268Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
               "DocumentIndex": 4,
-              "Title": "ChatService.cs",
-              "DocumentMoniker": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\Application\\Services\\Features\\ChatService.cs",
-              "RelativeDocumentMoniker": "Application\\Services\\Features\\ChatService.cs",
-              "ToolTip": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\Application\\Services\\Features\\ChatService.cs",
-              "RelativeToolTip": "Application\\Services\\Features\\ChatService.cs",
-              "ViewState": "AgIAAFAAAAAAAAAAAAAwwGsAAAAOAAAAAAAAAA==",
+              "Title": "PendingFriendRequestsViewComponent.cs",
+              "DocumentMoniker": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\OpenForum\\ViewComponents\\PendingFriendRequestsViewComponent.cs",
+              "RelativeDocumentMoniker": "OpenForum\\ViewComponents\\PendingFriendRequestsViewComponent.cs",
+              "ToolTip": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\OpenForum\\ViewComponents\\PendingFriendRequestsViewComponent.cs",
+              "RelativeToolTip": "OpenForum\\ViewComponents\\PendingFriendRequestsViewComponent.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABcAAAABAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-11-23T20:39:00.679Z",
+              "WhenOpened": "2026-11-24T20:38:55.13Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 11,
-              "Title": "TopicService.cs",
-              "DocumentMoniker": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\Application\\Services\\Forum\\TopicService.cs",
-              "RelativeDocumentMoniker": "Application\\Services\\Forum\\TopicService.cs",
-              "ToolTip": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\Application\\Services\\Forum\\TopicService.cs",
-              "RelativeToolTip": "Application\\Services\\Forum\\TopicService.cs",
-              "ViewState": "AgIAABIAAAAAAAAAAADwvxcAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-11-23T22:27:47.619Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 12,
-              "Title": "Index.cshtml",
-              "DocumentMoniker": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\OpenForum\\Views\\Topic\\Index.cshtml",
-              "RelativeDocumentMoniker": "OpenForum\\Views\\Topic\\Index.cshtml",
-              "ToolTip": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\OpenForum\\Views\\Topic\\Index.cshtml",
-              "RelativeToolTip": "OpenForum\\Views\\Topic\\Index.cshtml",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAHQAAABDAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
-              "WhenOpened": "2026-11-23T22:28:25.435Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 14,
-              "Title": "IChatService.cs",
-              "DocumentMoniker": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\Application\\Interfaces\\Services\\Features\\IChatService.cs",
-              "RelativeDocumentMoniker": "Application\\Interfaces\\Services\\Features\\IChatService.cs",
-              "ToolTip": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\Application\\Interfaces\\Services\\Features\\IChatService.cs",
-              "RelativeToolTip": "Application\\Interfaces\\Services\\Features\\IChatService.cs",
-              "ViewState": "AgIAABAAAAAAAAAAAAAkwCkAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-11-23T20:50:09.811Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 17,
-              "Title": "Program.cs",
-              "DocumentMoniker": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\OpenForum\\Program.cs",
-              "RelativeDocumentMoniker": "OpenForum\\Program.cs",
-              "ToolTip": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\OpenForum\\Program.cs",
-              "RelativeToolTip": "OpenForum\\Program.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAABkAAAAYAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-11-23T20:44:43.956Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 9,
-              "Title": "20261124131425_init.cs",
-              "DocumentMoniker": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\Identity\\Migrations\\20261124131425_init.cs",
-              "RelativeDocumentMoniker": "Identity\\Migrations\\20261124131425_init.cs",
-              "ToolTip": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\Identity\\Migrations\\20261124131425_init.cs",
-              "RelativeToolTip": "Identity\\Migrations\\20261124131425_init.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAsAAABFAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-11-24T13:14:25.738Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 10,
-              "Title": "20261124131340_init.cs",
-              "DocumentMoniker": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\EntityContext\\Migrations\\20261124131340_init.cs",
-              "RelativeDocumentMoniker": "EntityContext\\Migrations\\20261124131340_init.cs",
-              "ToolTip": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\EntityContext\\Migrations\\20261124131340_init.cs",
-              "RelativeToolTip": "EntityContext\\Migrations\\20261124131340_init.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-11-24T13:13:41.156Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 15,
-              "Title": "UserContext.cs",
-              "DocumentMoniker": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\OpenForum\\Contexts\\UserContext.cs",
-              "RelativeDocumentMoniker": "OpenForum\\Contexts\\UserContext.cs",
-              "ToolTip": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\OpenForum\\Contexts\\UserContext.cs",
-              "RelativeToolTip": "OpenForum\\Contexts\\UserContext.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAABUAAAABAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-11-24T12:42:23.412Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 18,
-              "Title": "ChatHub.cs",
-              "DocumentMoniker": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\OpenForum\\Hubs\\ChatHub.cs",
-              "RelativeDocumentMoniker": "OpenForum\\Hubs\\ChatHub.cs",
-              "ToolTip": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\OpenForum\\Hubs\\ChatHub.cs",
-              "RelativeToolTip": "OpenForum\\Hubs\\ChatHub.cs",
-              "ViewState": "AgIAAAcAAAAAAAAAAAAqwCMAAAAJAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-11-23T20:39:43.556Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 13,
-              "Title": "IChatRepository.cs",
-              "DocumentMoniker": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\Repository\\interfaces\\IChatRepository.cs",
-              "RelativeDocumentMoniker": "Repository\\interfaces\\IChatRepository.cs",
-              "ToolTip": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\Repository\\interfaces\\IChatRepository.cs",
-              "RelativeToolTip": "Repository\\interfaces\\IChatRepository.cs",
-              "ViewState": "AgIAABMAAAAAAAAAAAA3wCwAAAABAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-11-23T22:15:08.815Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 19,
-              "Title": "ChatRoomMember.cs",
-              "DocumentMoniker": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\EntityModels\\ChatRoomMember.cs",
-              "RelativeDocumentMoniker": "EntityModels\\ChatRoomMember.cs",
-              "ToolTip": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\EntityModels\\ChatRoomMember.cs",
-              "RelativeToolTip": "EntityModels\\ChatRoomMember.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAoAAABBAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-11-23T22:13:16.043Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 20,
-              "Title": "ChatMessage.cs",
-              "DocumentMoniker": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\EntityModels\\ChatMessage.cs",
-              "RelativeDocumentMoniker": "EntityModels\\ChatMessage.cs",
-              "ToolTip": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\EntityModels\\ChatMessage.cs",
-              "RelativeToolTip": "EntityModels\\ChatMessage.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAkAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-11-23T22:13:23.367Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 21,
-              "Title": "ChatRoom.cs",
-              "DocumentMoniker": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\EntityModels\\ChatRoom.cs",
-              "RelativeDocumentMoniker": "EntityModels\\ChatRoom.cs",
-              "ToolTip": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\EntityModels\\ChatRoom.cs",
-              "RelativeToolTip": "EntityModels\\ChatRoom.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAsAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-11-23T22:13:04.074Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 22,
-              "Title": "ChatFriendView.cs",
-              "DocumentMoniker": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\ViewModels\\Chat\\ChatFriendView.cs",
-              "RelativeDocumentMoniker": "ViewModels\\Chat\\ChatFriendView.cs",
-              "ToolTip": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\ViewModels\\Chat\\ChatFriendView.cs",
-              "RelativeToolTip": "ViewModels\\Chat\\ChatFriendView.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAgAAAABAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-11-23T20:51:02.955Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 23,
-              "Title": "ChatMemberView.cs",
-              "DocumentMoniker": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\ViewModels\\Chat\\ChatMemberView.cs",
-              "RelativeDocumentMoniker": "ViewModels\\Chat\\ChatMemberView.cs",
-              "ToolTip": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\ViewModels\\Chat\\ChatMemberView.cs",
-              "RelativeToolTip": "ViewModels\\Chat\\ChatMemberView.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAABEAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-11-23T20:39:33.348Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 24,
-              "Title": "ChatMessageView.cs",
-              "DocumentMoniker": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\ViewModels\\Chat\\ChatMessageView.cs",
-              "RelativeDocumentMoniker": "ViewModels\\Chat\\ChatMessageView.cs",
-              "ToolTip": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\ViewModels\\Chat\\ChatMessageView.cs",
-              "RelativeToolTip": "ViewModels\\Chat\\ChatMessageView.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAABcAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-11-23T20:39:15.317Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 25,
-              "Title": "ITopicService.cs",
-              "DocumentMoniker": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\Application\\Interfaces\\Services\\Forum\\ITopicService.cs",
-              "RelativeDocumentMoniker": "Application\\Interfaces\\Services\\Forum\\ITopicService.cs",
-              "ToolTip": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\Application\\Interfaces\\Services\\Forum\\ITopicService.cs",
-              "RelativeToolTip": "Application\\Interfaces\\Services\\Forum\\ITopicService.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAABQAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-11-24T00:03:30.703Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 26,
-              "Title": "TopicController.cs",
-              "DocumentMoniker": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\OpenForum\\Controllers\\TopicController.cs",
-              "RelativeDocumentMoniker": "OpenForum\\Controllers\\TopicController.cs",
-              "ToolTip": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\OpenForum\\Controllers\\TopicController.cs",
-              "RelativeToolTip": "OpenForum\\Controllers\\TopicController.cs",
-              "ViewState": "AgIAAFEAAAAAAAAAAAAkwHgAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-11-23T22:27:32.769Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 27,
-              "Title": "ForumContext.cs",
-              "DocumentMoniker": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\EntityContext\\ForumContext.cs",
-              "RelativeDocumentMoniker": "EntityContext\\ForumContext.cs",
-              "ToolTip": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\EntityContext\\ForumContext.cs",
-              "RelativeToolTip": "EntityContext\\ForumContext.cs",
-              "ViewState": "AgIAAEEBAAAAAAAAAAAYwFsBAAARAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-11-23T22:12:54.765Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 28,
-              "Title": "ChatRoomType.cs",
-              "DocumentMoniker": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\EntityModels\\ChatRoomType.cs",
-              "RelativeDocumentMoniker": "EntityModels\\ChatRoomType.cs",
-              "ToolTip": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\EntityModels\\ChatRoomType.cs",
-              "RelativeToolTip": "EntityModels\\ChatRoomType.cs",
+              "DocumentIndex": 8,
+              "Title": "IFriendshipRepository.cs",
+              "DocumentMoniker": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\Repository\\interfaces\\IFriendshipRepository.cs",
+              "RelativeDocumentMoniker": "Repository\\interfaces\\IFriendshipRepository.cs",
+              "ToolTip": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\Repository\\interfaces\\IFriendshipRepository.cs",
+              "RelativeToolTip": "Repository\\interfaces\\IFriendshipRepository.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAA0AAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-11-23T23:43:35.22Z"
+              "WhenOpened": "2026-11-24T20:36:48.148Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 29,
-              "Title": "_LeftPanel.cshtml",
-              "DocumentMoniker": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\OpenForum\\Views\\Shared\\_LeftPanel.cshtml",
-              "RelativeDocumentMoniker": "OpenForum\\Views\\Shared\\_LeftPanel.cshtml",
-              "ToolTip": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\OpenForum\\Views\\Shared\\_LeftPanel.cshtml",
-              "RelativeToolTip": "OpenForum\\Views\\Shared\\_LeftPanel.cshtml",
-              "ViewState": "AgIAAAYAAAAAAAAAAAAcwCAAAAAXAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
-              "WhenOpened": "2026-11-23T20:44:32.195Z"
+              "DocumentIndex": 6,
+              "Title": "IFriendshipService.cs",
+              "DocumentMoniker": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\Application\\Interfaces\\Services\\Features\\IFriendshipService.cs",
+              "RelativeDocumentMoniker": "Application\\Interfaces\\Services\\Features\\IFriendshipService.cs",
+              "ToolTip": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\Application\\Interfaces\\Services\\Features\\IFriendshipService.cs",
+              "RelativeToolTip": "Application\\Interfaces\\Services\\Features\\IFriendshipService.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABYAAAA4AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-11-24T20:36:41.785Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 30,
+              "DocumentIndex": 7,
               "Title": "FriendshipRepository.cs",
               "DocumentMoniker": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\Repository\\FriendshipRepository.cs",
               "RelativeDocumentMoniker": "Repository\\FriendshipRepository.cs",
               "ToolTip": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\Repository\\FriendshipRepository.cs",
               "RelativeToolTip": "Repository\\FriendshipRepository.cs",
-              "ViewState": "AgIAACUAAAAAAAAAAAAAAFEAAAAAAAAAAAAAAA==",
+              "ViewState": "AgIAABoAAAAAAAAAAAAiwDMAAAAJAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-11-23T20:48:55.52Z"
+              "WhenOpened": "2026-11-24T20:35:43.573Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 31,
+              "DocumentIndex": 5,
               "Title": "FriendshipService.cs",
               "DocumentMoniker": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\Application\\Services\\Features\\FriendshipService.cs",
               "RelativeDocumentMoniker": "Application\\Services\\Features\\FriendshipService.cs",
               "ToolTip": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\Application\\Services\\Features\\FriendshipService.cs",
               "RelativeToolTip": "Application\\Services\\Features\\FriendshipService.cs",
-              "ViewState": "AgIAACwBAAAAAAAAAAAwwE0BAAAAAAAAAAAAAA==",
+              "ViewState": "AgIAAIgAAAAAAAAAAAAAAJIAAAAtAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-11-23T20:48:44.322Z"
+              "WhenOpened": "2026-11-24T20:33:30.802Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 32,
+              "DocumentIndex": 2,
+              "Title": "_LeftPanel.cshtml",
+              "DocumentMoniker": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\OpenForum\\Views\\Shared\\_LeftPanel.cshtml",
+              "RelativeDocumentMoniker": "OpenForum\\Views\\Shared\\_LeftPanel.cshtml",
+              "ToolTip": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\OpenForum\\Views\\Shared\\_LeftPanel.cshtml",
+              "RelativeToolTip": "OpenForum\\Views\\Shared\\_LeftPanel.cshtml",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAB4AAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-11-24T20:32:18.067Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 9,
               "Title": "FriendshipController.cs",
               "DocumentMoniker": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\OpenForum\\Controllers\\FriendshipController.cs",
               "RelativeDocumentMoniker": "OpenForum\\Controllers\\FriendshipController.cs",
@@ -555,19 +191,47 @@
               "RelativeToolTip": "OpenForum\\Controllers\\FriendshipController.cs",
               "ViewState": "AgIAAHYAAAAAAAAAAAAowJYAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-11-23T20:48:30.339Z"
+              "WhenOpened": "2026-11-24T20:35:15.683Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 33,
-              "Title": "_Layout.cshtml",
-              "DocumentMoniker": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\OpenForum\\Views\\Shared\\_Layout.cshtml",
-              "RelativeDocumentMoniker": "OpenForum\\Views\\Shared\\_Layout.cshtml",
-              "ToolTip": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\OpenForum\\Views\\Shared\\_Layout.cshtml",
-              "RelativeToolTip": "OpenForum\\Views\\Shared\\_Layout.cshtml",
-              "ViewState": "AgIAAHwAAAAAAAAAAAAwwJ0AAAAHAAAAAAAAAA==",
+              "DocumentIndex": 10,
+              "Title": "Default.cshtml",
+              "DocumentMoniker": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\OpenForum\\Views\\Shared\\components\\UnseenChatRooms\\Default.cshtml",
+              "RelativeDocumentMoniker": "OpenForum\\Views\\Shared\\components\\UnseenChatRooms\\Default.cshtml",
+              "ToolTip": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\OpenForum\\Views\\Shared\\components\\UnseenChatRooms\\Default.cshtml",
+              "RelativeToolTip": "OpenForum\\Views\\Shared\\components\\UnseenChatRooms\\Default.cshtml",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAcAAAABAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
-              "WhenOpened": "2026-11-23T20:44:20.702Z"
+              "WhenOpened": "2026-11-24T20:31:55.902Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 12,
+              "Title": "UnreadMessagesViewComponent.cs",
+              "DocumentMoniker": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\OpenForum\\ViewComponents\\UnreadMessagesViewComponent.cs",
+              "RelativeDocumentMoniker": "OpenForum\\ViewComponents\\UnreadMessagesViewComponent.cs",
+              "ToolTip": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\OpenForum\\ViewComponents\\UnreadMessagesViewComponent.cs",
+              "RelativeToolTip": "OpenForum\\ViewComponents\\UnreadMessagesViewComponent.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-11-24T20:30:58.664Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 11,
+              "Title": "UnseenChatRoomsViewComponent.cs",
+              "DocumentMoniker": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\OpenForum\\ViewComponents\\UnseenChatRoomsViewComponent.cs",
+              "RelativeDocumentMoniker": "OpenForum\\ViewComponents\\UnseenChatRoomsViewComponent.cs",
+              "ToolTip": "C:\\Users\\MisterDerp\\source\\repos\\OpenForum\\OpenForum\\ViewComponents\\UnseenChatRoomsViewComponent.cs",
+              "RelativeToolTip": "OpenForum\\ViewComponents\\UnseenChatRoomsViewComponent.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABUAAAAJAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-11-24T20:30:45.468Z",
+              "EditorCaption": ""
             }
           ]
         }

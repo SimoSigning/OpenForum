@@ -20,6 +20,8 @@ namespace Application.Interfaces.Services.Features
 
         Task<IEnumerable<Friendship>> GetIncomingRequestsAsync();
 
+        Task<int> GetIncomingPendingRequestCountAsync();
+
         Task<UserSearchView> SearchUsersAsync(string query, int page = 1);
 
         Task<FriendsIndexView> GetFriendsIndexViewAsync();

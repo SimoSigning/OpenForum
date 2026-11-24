@@ -30,6 +30,14 @@ namespace Application.Interfaces.Services.Features
 
         Task LeaveRoomAsync(int roomId);
 
+        Task<int> GetUnseenPrivateRoomCountAsync();
+
+        Task MarkRoomAsVisitedAsync(int roomId);
+
+        // Automatically remove membership when the user disconnects.
+        // Only applies to Miscellaneous and Topic rooms.
+        Task RemoveTemporaryMembershipAsync(int roomId, string userId);
+
         // Topic rooms
         Task<int> GetOrCreateTopicRoomAsync(int topicId);
 

@@ -12,13 +12,15 @@
         <a asp-controller="Chat"
            asp-action="Index"
            class="left-panel-link">
-           Chat
+            Chat
+            @await Component.InvokeAsync("UnseenChatRooms")
         </a>
 
         <a asp-controller="Friendship"
            asp-action="Index"
            class="left-panel-link">
             Friends
+            @await Component.InvokeAsync("PendingFriendRequests")
         </a>
 
         <a asp-controller="Friendship"

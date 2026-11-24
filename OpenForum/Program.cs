@@ -109,6 +109,8 @@ builder.Services.AddScoped<IMyActivityService, MyActivityService>();
 builder.Services.AddScoped<IFriendshipService, FriendshipService>();
 builder.Services.AddScoped<IMessageService, MessageService>();
 builder.Services.AddScoped<IChatService, ChatService>();
+//Other
+builder.Services.AddSingleton<ChatConnectionTracker>();
 
 builder.Services.AddSignalR();
 

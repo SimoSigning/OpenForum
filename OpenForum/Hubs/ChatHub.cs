@@ -1,7 +1,8 @@
-﻿using Application.Interfaces.Services.Features;
-using Application.Interfaces.Services.User;
+﻿
+using Application.Interfaces.Services.Features;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
+using OpenForum.Services;
 
 namespace OpenForum.Hubs
 {
@@ -9,10 +10,54 @@ namespace OpenForum.Hubs
     public class ChatHub : Hub
     {
         private readonly IChatService chatService;
+        private readonly ChatConnectionTracker connectionTracker;
 
-        public ChatHub(IChatService chatService)
+        public ChatHub(
+            IChatService chatService,
+            ChatConnectionTracker connectionTracker)
         {
             this.chatService = chatService;
+            this.connectionTracker = connectionTracker;
+        }
+
+        public override async Task OnConnectedAsync()
+        {
+            string? userId = Context.UserIdentifier;
+
+            if (!string.IsNullOrEmpty(userId))
+            {
+                connectionTracker.AddConnection(
+                    userId,
+                    Context.ConnectionId);
+            }
+
+            await base.OnConnectedAsync();
+        }
+
+        public override async Task OnDisconnectedAsync(Exception? exception)
+        {
+            string? userId = Context.UserIdentifier;
+
+            if (!string.IsNullOrEmpty(userId))
+            {
+                // Atomically remove this connection and find rooms
+                // where this was the user's last active connection.
+                var roomsToCleanUp =
+                    connectionTracker.RemoveConnectionAndGetLastRooms(
+                        userId,
+                        Context.ConnectionId);
+
+                foreach (var roomId in roomsToCleanUp)
+                {
+                    // The service will only remove membership from
+                    // Miscellaneous and Topic rooms.
+                    await chatService.RemoveTemporaryMembershipAsync(
+                        roomId,
+                        userId);
+                }
+            }
+
+            await base.OnDisconnectedAsync(exception);
         }
 
         public async Task JoinRoom(int roomId)
@@ -20,19 +65,35 @@ namespace OpenForum.Hubs
             if (roomId <= 0)
                 throw new ArgumentException("Invalid room ID.");
 
-            // GetRoomAsync verifies membership and authorization.
             await chatService.GetRoomAsync(roomId);
 
-            await Groups.AddToGroupAsync(
-                Context.ConnectionId,
-                GetGroupName(roomId));
+            connectionTracker.AddRoom(Context.ConnectionId, roomId);
+
+            try
+            {
+                await Groups.AddToGroupAsync(
+                    Context.ConnectionId,
+                    GetGroupName(roomId));
+            }
+            catch
+            {
+                connectionTracker.RemoveRoom(Context.ConnectionId, roomId);
+                throw;
+            }
         }
 
         public async Task LeaveRoom(int roomId)
         {
+            if (roomId <= 0)
+                throw new ArgumentException("Invalid room ID.");
+
             await Groups.RemoveFromGroupAsync(
                 Context.ConnectionId,
                 GetGroupName(roomId));
+
+            connectionTracker.RemoveRoom(
+                Context.ConnectionId,
+                roomId);
         }
 
         public async Task SendMessage(int roomId, string content)
@@ -40,7 +101,6 @@ namespace OpenForum.Hubs
             if (roomId <= 0)
                 throw new ArgumentException("Invalid room ID.");
 
-            // The service validates membership, content and persistence.
             var message = await chatService.SendMessageAsync(
                 roomId,
                 content);
@@ -49,7 +109,7 @@ namespace OpenForum.Hubs
                 .SendAsync("ReceiveMessage", message);
         }
 
-        private static string GetGroupName(int roomId)
+        public static string GetGroupName(int roomId)
         {
             return $"chatroom_{roomId}";
         }
