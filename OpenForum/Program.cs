@@ -18,8 +18,10 @@ using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
 using OpenForum.Hubs;
 using OpenForum.Services;
-using Repository;
-using Repository.interfaces;
+using Repository.Interfaces.Repositories;
+using Repository.Interfaces.Utils;
+using Repository.Repositories;
+using Repository.Utils;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -82,6 +84,9 @@ builder.Services.AddScoped<IFriendshipRepository, FriendshipRepository>();
 builder.Services.AddScoped<IMessageRepository, MessageRepository>();
 builder.Services.AddScoped<IChatRepository, ChatRepository>();
 
+//Utils
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+
 
 // Register mappers
 // Forum
@@ -111,6 +116,7 @@ builder.Services.AddScoped<IMessageService, MessageService>();
 builder.Services.AddScoped<IChatService, ChatService>();
 //Other
 builder.Services.AddSingleton<ChatConnectionTracker>();
+builder.Services.AddScoped<IChatMembershipNotifier, ChatMembershipNotifier>();
 
 builder.Services.AddSignalR();
 

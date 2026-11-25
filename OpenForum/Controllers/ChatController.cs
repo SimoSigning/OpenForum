@@ -46,8 +46,7 @@ namespace OpenForum.Controllers
         {
             try
             {
-                IEnumerable<ChatRoomView> rooms =
-                    await chatService.GetMyRoomsAsync();
+                IEnumerable<ChatRoomView> rooms = await chatService.GetMyRoomsAsync();
 
                 return Json(rooms);
             }
@@ -62,8 +61,7 @@ namespace OpenForum.Controllers
         {
             try
             {
-                IEnumerable<ChatRoomView> rooms =
-                    await chatService.GetMiscellaneousRoomsAsync();
+                IEnumerable<ChatRoomView> rooms = await chatService.GetMiscellaneousRoomsAsync();
 
                 return Json(rooms);
             }
@@ -78,8 +76,7 @@ namespace OpenForum.Controllers
         {
             try
             {
-                ChatRoomView room =
-                    await chatService.GetRoomAsync(roomId);
+                ChatRoomView room = await chatService.GetRoomAsync(roomId);
 
                 return Json(room);
             }
@@ -98,8 +95,7 @@ namespace OpenForum.Controllers
         {
             try
             {
-                IEnumerable<ChatMemberView> members =
-                    await chatService.GetRoomMembersAsync(roomId);
+                IEnumerable<ChatMemberView> members = await chatService.GetRoomMembersAsync(roomId);
 
                 return Json(members);
             }
@@ -118,8 +114,7 @@ namespace OpenForum.Controllers
         {
             try
             {
-                IEnumerable<ChatMessageView> messages =
-                    await chatService.GetLatestMessagesAsync(roomId);
+                IEnumerable<ChatMessageView> messages = await chatService.GetLatestMessagesAsync(roomId);
 
                 return Json(messages);
             }
@@ -160,15 +155,11 @@ namespace OpenForum.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> CreatePrivateRoom(
-            string name,
-            IEnumerable<string> invitedUserIds)
+        public async Task<IActionResult> CreatePrivateRoom(string name, IEnumerable<string> invitedUserIds)
         {
             try
             {
-                int roomId = await chatService.CreatePrivateRoomAsync(
-                    name,
-                    invitedUserIds);
+                int roomId = await chatService.CreatePrivateRoomAsync(name, invitedUserIds);
 
                 return Json(new { roomId });
             }
@@ -202,8 +193,7 @@ namespace OpenForum.Controllers
         {
             try
             {
-                var friends =
-                    await chatService.GetAvailableFriendsToInviteAsync(roomId);
+                var friends = await chatService.GetAvailableFriendsToInviteAsync(roomId);
 
                 return Json(friends);
             }
@@ -223,15 +213,11 @@ namespace OpenForum.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> InviteFriend(
-            int roomId,
-            string invitedUserId)
+        public async Task<IActionResult> InviteFriend(int roomId, string invitedUserId)
         {
             try
             {
-                await chatService.InviteFriendAsync(
-                    roomId,
-                    invitedUserId);
+                await chatService.InviteFriendAsync(roomId, invitedUserId);
 
                 return Ok();
             }
@@ -284,8 +270,7 @@ namespace OpenForum.Controllers
             try
             {
                 // Identify the authenticated user.
-                string? userId = User.FindFirstValue(
-                    ClaimTypes.NameIdentifier);
+                string? userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
                 if (string.IsNullOrEmpty(userId))
                     return Forbid();
@@ -294,22 +279,17 @@ namespace OpenForum.Controllers
                 await chatService.LeaveRoomAsync(roomId);
 
                 // Find every active SignalR connection belonging to this user.
-                IReadOnlyList<string> connections =
-                    connectionTracker.GetConnections(userId);
+                IReadOnlyList<string> connections = connectionTracker.GetConnections(userId);
 
                 string groupName = ChatHub.GetGroupName(roomId);
 
                 foreach (string connectionId in connections)
                 {
                     // Remove the connection from the SignalR group.
-                    await chatHub.Groups.RemoveFromGroupAsync(
-                        connectionId,
-                        groupName);
+                    await chatHub.Groups.RemoveFromGroupAsync(connectionId, groupName);
 
                     // Also update our connection tracker.
-                    connectionTracker.RemoveRoom(
-                        connectionId,
-                        roomId);
+                    connectionTracker.RemoveRoom(connectionId, roomId);
                 }
 
                 return Ok();
@@ -339,8 +319,7 @@ namespace OpenForum.Controllers
         {
             try
             {
-                int roomId =
-                    await chatService.GetOrCreateTopicRoomAsync(topicId);
+                int roomId = await chatService.GetOrCreateTopicRoomAsync(topicId);
 
                 return Json(new { roomId });
             }
@@ -359,12 +338,9 @@ namespace OpenForum.Controllers
         {
             try
             {
-                int roomId =
-                    await chatService.GetOrCreateTopicRoomAsync(topicId);
+                int roomId = await chatService.GetOrCreateTopicRoomAsync(topicId);
 
-                return RedirectToAction(
-                    nameof(OpenRoom),
-                    new { roomId });
+                return RedirectToAction(nameof(OpenRoom), new { roomId });
             }
             catch (KeyNotFoundException)
             {

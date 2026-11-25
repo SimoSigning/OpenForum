@@ -3,6 +3,7 @@ using Application.Interfaces.Services.Features;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using OpenForum.Services;
+using ViewModels.Chat;
 
 namespace OpenForum.Hubs
 {
@@ -26,9 +27,7 @@ namespace OpenForum.Hubs
 
             if (!string.IsNullOrEmpty(userId))
             {
-                connectionTracker.AddConnection(
-                    userId,
-                    Context.ConnectionId);
+                connectionTracker.AddConnection(userId, Context.ConnectionId);
             }
 
             await base.OnConnectedAsync();
@@ -42,18 +41,13 @@ namespace OpenForum.Hubs
             {
                 // Atomically remove this connection and find rooms
                 // where this was the user's last active connection.
-                var roomsToCleanUp =
-                    connectionTracker.RemoveConnectionAndGetLastRooms(
-                        userId,
-                        Context.ConnectionId);
+                List<int> roomsToCleanUp = connectionTracker.RemoveConnectionAndGetLastRooms(userId, Context.ConnectionId);
 
-                foreach (var roomId in roomsToCleanUp)
+                foreach (int roomId in roomsToCleanUp)
                 {
                     // The service will only remove membership from
                     // Miscellaneous and Topic rooms.
-                    await chatService.RemoveTemporaryMembershipAsync(
-                        roomId,
-                        userId);
+                    await chatService.RemoveTemporaryMembershipAsync(roomId, userId);
                 }
             }
 
@@ -71,9 +65,7 @@ namespace OpenForum.Hubs
 
             try
             {
-                await Groups.AddToGroupAsync(
-                    Context.ConnectionId,
-                    GetGroupName(roomId));
+                await Groups.AddToGroupAsync(Context.ConnectionId, GetGroupName(roomId));
             }
             catch
             {
@@ -87,13 +79,9 @@ namespace OpenForum.Hubs
             if (roomId <= 0)
                 throw new ArgumentException("Invalid room ID.");
 
-            await Groups.RemoveFromGroupAsync(
-                Context.ConnectionId,
-                GetGroupName(roomId));
+            await Groups.RemoveFromGroupAsync(Context.ConnectionId, GetGroupName(roomId));
 
-            connectionTracker.RemoveRoom(
-                Context.ConnectionId,
-                roomId);
+            connectionTracker.RemoveRoom(Context.ConnectionId, roomId);
         }
 
         public async Task SendMessage(int roomId, string content)
@@ -101,12 +89,9 @@ namespace OpenForum.Hubs
             if (roomId <= 0)
                 throw new ArgumentException("Invalid room ID.");
 
-            var message = await chatService.SendMessageAsync(
-                roomId,
-                content);
+            ChatMessageView message = await chatService.SendMessageAsync(roomId, content);
 
-            await Clients.Group(GetGroupName(roomId))
-                .SendAsync("ReceiveMessage", message);
+            await Clients.Group(GetGroupName(roomId)).SendAsync("ReceiveMessage", message);
         }
 
         public static string GetGroupName(int roomId)

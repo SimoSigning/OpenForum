@@ -1,10 +1,10 @@
 ﻿
 using Microsoft.EntityFrameworkCore;
 using EntityModels;
-using Repository.interfaces;
 using EntityContext;
+using Repository.Interfaces.Repositories;
 
-namespace Repository
+namespace Repository.Repositories
 {
     public class FriendshipRepository : IFriendshipRepository
     {

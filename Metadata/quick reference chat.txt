@@ -26,22 +26,6 @@ namespace EntityModels
 
 namespace EntityModels
 {
-    public class ChatRoomMember
-    {
-        public int Id { get; set; }
-
-        public int ChatRoomId { get; set; }
-
-        public string UserId { get; set; } = null!;
-
-        public DateTime JoinedAt { get; set; } = DateTime.UtcNow;
-
-        public ChatRoom ChatRoom { get; set; } = null!;
-    }
-}
-
-namespace EntityModels
-{
     public class ChatMessage
     {
         public long Id { get; set; }
@@ -58,6 +42,25 @@ namespace EntityModels
     }
 }
 
+namespace EntityModels
+{
+    public class ChatRoomMember
+    {
+        public int Id { get; set; }
+
+        public int ChatRoomId { get; set; }
+
+        public string UserId { get; set; } = null!;
+
+        public DateTime JoinedAt { get; set; } = DateTime.UtcNow;
+
+        public DateTime? LastVisitedAt { get; set; }
+
+        public ChatRoom ChatRoom { get; set; } = null!;
+    }
+}
+
+
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -72,392 +75,13 @@ namespace EntityModels
     }
 }
 
-
-using EntityModels;
-using Microsoft.EntityFrameworkCore;
-
-namespace EntityContext
-{
-    public class ForumContext : DbContext
-    {
-        public ForumContext(DbContextOptions<ForumContext> options) : base(options){}
-
-        public DbSet<Topic> Topics => Set<Topic>();
-        public DbSet<Post> Posts => Set<Post>();
-        public DbSet<Comment> Comments => Set<Comment>();
-        public DbSet<Like> Likes => Set<Like>();
-        public DbSet<UserProfile> UserProfiles => Set<UserProfile>();
-        public DbSet<Friendship> Friendships => Set<Friendship>();
-        public DbSet<Message> Messages => Set<Message>();
-        public DbSet<ChatRoom> ChatRooms => Set<ChatRoom>();
-        public DbSet<ChatRoomMember> ChatRoomMembers => Set<ChatRoomMember>();
-        public DbSet<ChatMessage> ChatMessages => Set<ChatMessage>();
-
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
-        {
-            base.OnModelCreating(modelBuilder);
-
-            modelBuilder.Entity<Post>()
-                .HasOne(p => p.Topic)
-                .WithMany()
-                .HasForeignKey(p => p.TopicId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            modelBuilder.Entity<Comment>()
-                .HasOne(c => c.Post)
-                .WithMany(p => p.Comments)
-                .HasForeignKey(c => c.PostId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            modelBuilder.Entity<Comment>()
-                .HasOne(c => c.ParentComment)
-                .WithMany(c => c.Replies)
-                .HasForeignKey(c => c.ParentCommentId)
-                .OnDelete(DeleteBehavior.NoAction);
-
-            modelBuilder.Entity<Like>(entity =>
-            {
-                entity.ToTable("Likes", table =>
-                    table.HasCheckConstraint(
-                        "CK_Likes_ExactlyOneTarget",
-                        """
-                        ([PostId] IS NOT NULL AND [CommentId] IS NULL)
-                        OR
-                        ([PostId] IS NULL AND [CommentId] IS NOT NULL)
-                        """
-                        ));
-
-                entity.HasKey(l => l.Id);
-
-                entity.Property(l => l.UserId)
-                    .IsRequired();
-
-                entity.Property(l => l.CreatedAt)
-                    .IsRequired();
-
-                entity.HasOne(l => l.Post)
-                    .WithMany(p => p.Likes)
-                    .HasForeignKey(l => l.PostId)
-                    .OnDelete(DeleteBehavior.Restrict);
-
-                entity.HasOne(l => l.Comment)
-                    .WithMany(c => c.Likes)
-                    .HasForeignKey(l => l.CommentId)
-                    .OnDelete(DeleteBehavior.Restrict);
-
-                entity.HasIndex(l => new { l.UserId, l.PostId })
-                    .IsUnique()
-                    .HasFilter("[PostId] IS NOT NULL");
-
-                entity.HasIndex(l => new { l.UserId, l.CommentId })
-                    .IsUnique()
-                    .HasFilter("[CommentId] IS NOT NULL");
-            });
-
-            modelBuilder.Entity<UserProfile>(entity =>
-            {
-                entity.HasKey(p => p.Id);
-
-                entity.Property(p => p.UserId)
-                    .IsRequired();
-
-                entity.HasIndex(p => p.UserId)
-                    .IsUnique();
-
-                entity.Property(p => p.FirstName)
-                    .HasMaxLength(100);
-
-                entity.Property(p => p.LastName)
-                    .HasMaxLength(100);
-
-                entity.Property(p => p.Address)
-                    .HasMaxLength(200);
-
-                entity.Property(p => p.PostalCode)
-                    .HasMaxLength(20);
-
-                entity.Property(p => p.City)
-                    .HasMaxLength(100);
-
-                entity.Property(p => p.ProfileText)
-                    .HasMaxLength(5000);
-            });
-
-            modelBuilder.Entity<Friendship>(entity =>
-            {
-                entity.ToTable("Friendships", table =>
-                    table.HasCheckConstraint(
-                        "CK_Friendships_DifferentUsers",
-                        "[UserIdLow] <> [UserIdHigh]"
-                    ));
-
-                entity.Property(f => f.RequesterUserId)
-                    .IsRequired()
-                    .HasMaxLength(450);
-
-                entity.Property(f => f.AddresseeUserId)
-                    .IsRequired()
-                    .HasMaxLength(450);
-
-                entity.Property(f => f.UserIdLow)
-                    .IsRequired()
-                    .HasMaxLength(450);
-
-                entity.Property(f => f.UserIdHigh)
-                    .IsRequired()
-                    .HasMaxLength(450);
-
-                entity.HasIndex(f => new
-                {
-                    f.UserIdLow,
-                    f.UserIdHigh
-                }).IsUnique();
-            });
-
-            modelBuilder.Entity<Message>(entity =>
-            {
-                entity.HasKey(m => m.Id);
-
-                entity.Property(m => m.SenderUserId)
-                    .IsRequired()
-                    .HasMaxLength(450);
-
-                entity.Property(m => m.RecipientUserId)
-                    .IsRequired()
-                    .HasMaxLength(450);
-
-                entity.Property(m => m.Subject)
-                    .IsRequired()
-                    .HasMaxLength(150);
-
-                entity.Property(m => m.Body)
-                    .IsRequired()
-                    .HasMaxLength(5000);
-
-                entity.Property(m => m.SentAt)
-                    .IsRequired();
-
-                entity.Property(m => m.IsRead)
-                    .IsRequired();
-
-                // Helps retrieve inbox messages and unread messages.
-                entity.HasIndex(m => new
-                {
-                    m.RecipientUserId,
-                    m.IsRead,
-                    m.SentAt
-                });
-
-                // Helps retrieve sent messages.
-                entity.HasIndex(m => new
-                {
-                    m.SenderUserId,
-                    m.SentAt
-                });
-            });
-
-            // Chat rooms
-            modelBuilder.Entity<ChatRoom>(entity =>
-            {
-                entity.ToTable("ChatRooms", table =>
-                table.HasCheckConstraint(
-                    "CK_ChatRooms_ValidRoomConfiguration",
-                    """
-                    (
-                        [RoomType] = 1
-                        AND [TopicId] IS NULL
-                        AND [OwnerUserId] IS NOT NULL
-                    )
-                    OR
-                    (
-                        [RoomType] = 2
-                        AND [TopicId] IS NULL
-                        AND [OwnerUserId] IS NULL
-                    )
-                    OR
-                    (
-                        [RoomType] = 3
-                        AND [TopicId] IS NOT NULL
-                        AND [OwnerUserId] IS NULL
-                    )
-                    """
-                ));
-
-                entity.HasKey(r => r.Id);
-
-                entity.Property(r => r.Name)
-                    .IsRequired()
-                    .HasMaxLength(100);
-
-                entity.Property(r => r.RoomType)
-                    .IsRequired();
-
-                entity.Property(r => r.CreatedByUserId)
-                    .IsRequired()
-                    .HasMaxLength(450);
-
-                entity.Property(r => r.OwnerUserId)
-                    .HasMaxLength(450);
-
-                entity.Property(r => r.CreatedAt)
-                    .IsRequired();
-
-                // A topic can only have one chatroom.
-                entity.HasIndex(r => r.TopicId)
-                    .IsUnique()
-                    .HasFilter("[TopicId] IS NOT NULL");
-
-                // Topic relationship.
-                entity.HasOne(r => r.Topic)
-                    .WithOne()
-                    .HasForeignKey<ChatRoom>(r => r.TopicId)
-                    .OnDelete(DeleteBehavior.Cascade);
-
-                // Helpful when retrieving rooms by type.
-                entity.HasIndex(r => r.RoomType);
-            });
-
-
-
-            // Chat room members
-            modelBuilder.Entity<ChatRoomMember>(entity =>
-            {
-                entity.HasKey(m => m.Id);
-
-                entity.Property(m => m.UserId)
-                    .IsRequired()
-                    .HasMaxLength(450);
-
-                entity.Property(m => m.JoinedAt)
-                    .IsRequired();
-
-                entity.HasOne(m => m.ChatRoom)
-                    .WithMany(r => r.Members)
-                    .HasForeignKey(m => m.ChatRoomId)
-                    .OnDelete(DeleteBehavior.Cascade);
-
-                // A user can only belong to a room once.
-                entity.HasIndex(m => new
-                {
-                    m.ChatRoomId,
-                    m.UserId
-                }).IsUnique();
-
-                // Find all rooms belonging to a user.
-                entity.HasIndex(m => m.UserId);
-            });
-
-            // Chat messages
-            modelBuilder.Entity<ChatMessage>(entity =>
-            {
-                entity.HasKey(m => m.Id);
-
-                entity.Property(m => m.SenderUserId)
-                    .IsRequired()
-                    .HasMaxLength(450);
-
-                entity.Property(m => m.Content)
-                    .IsRequired()
-                    .HasMaxLength(2000);
-
-                entity.Property(m => m.SentAt)
-                    .IsRequired();
-
-                entity.HasOne(m => m.ChatRoom)
-                    .WithMany(r => r.Messages)
-                    .HasForeignKey(m => m.ChatRoomId)
-                    .OnDelete(DeleteBehavior.Cascade);
-
-                // Supports retrieving the latest messages efficiently.
-                entity.HasIndex(m => new
-                {
-                    m.ChatRoomId,
-                    m.Id
-                });
-            });
-
-            SeedData(modelBuilder);
-        }
-        private static void SeedData(ModelBuilder modelBuilder)
-        {
-            int topicId = 1;
-            int postId = 1;
-            int commentId = 1;
-
-            modelBuilder.Entity<Topic>().HasData(
-                new Topic
-                {
-                    Id = topicId,
-                    Title = "Welcome to the forum",
-                    CreatedByUserId = "seed-user",
-                    CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc)
-                }
-            );
-
-            modelBuilder.Entity<Post>().HasData(
-                new Post
-                {
-                    Id = postId,
-                    TopicId = topicId,
-                    Content = "This is the first post",
-                    CreatedByUserId = "seed-user",
-                    CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc)
-                }
-            );
-
-            modelBuilder.Entity<Comment>().HasData(
-                new Comment
-                {
-                    Id = commentId,
-                    PostId = postId,
-                    Content = "First comment!",
-                    CreatedByUserId = "seed-user",
-                    CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc)
-                }
-            );
-
-            modelBuilder.Entity<ChatRoom>().HasData(
-                new ChatRoom
-                {
-                    Id = 1,
-                    Name = "General",
-                    RoomType = ChatRoomType.Miscellaneous,
-                    CreatedByUserId = "seed-user",
-                    OwnerUserId = null,
-                    TopicId = null,
-                    CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc)
-                },
-                new ChatRoom
-                {
-                    Id = 2,
-                    Name = "Introductions",
-                    RoomType = ChatRoomType.Miscellaneous,
-                    CreatedByUserId = "seed-user",
-                    OwnerUserId = null,
-                    TopicId = null,
-                    CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc)
-                },
-                new ChatRoom
-                {
-                    Id = 3,
-                    Name = "Off-topic",
-                    RoomType = ChatRoomType.Miscellaneous,
-                    CreatedByUserId = "seed-user",
-                    OwnerUserId = null,
-                    TopicId = null,
-                    CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc)
-                }
-             );
-        }
-    }
-}
-
 using EntityContext;
 using EntityModels;
 using Microsoft.EntityFrameworkCore;
-using Repository.interfaces;
+using Microsoft.EntityFrameworkCore.Storage;
+using Repository.Interfaces.Repositories;
 
-namespace Repository
+namespace Repository.Repositories
 {
     public class ChatRepository : IChatRepository
     {
@@ -482,15 +106,12 @@ namespace Repository
             return await context.ChatRooms.FirstOrDefaultAsync(r => r.TopicId == topicId);
         }
 
-        public async Task<IEnumerable<ChatRoom>> GetRoomsForUserAsync(
-            string userId)
+        public async Task<IEnumerable<ChatRoom>> GetRoomsForUserAsync(string userId)
         {
             return await context.ChatRooms
                 .AsNoTracking()
                 .Include(r => r.Members)
-                .Where(r =>
-                    r.RoomType == ChatRoomType.Private &&
-                    r.Members.Any(m => m.UserId == userId))
+                .Where(r => r.RoomType == ChatRoomType.Private && r.Members.Any(m => m.UserId == userId))
                 .OrderByDescending(r => r.CreatedAt)
                 .ToListAsync();
         }
@@ -505,32 +126,13 @@ namespace Repository
                 .ToListAsync();
         }
 
-        public async Task AddRoomAsync(ChatRoom room)
-        {
-            context.ChatRooms.Add(room);
-
-            await context.SaveChangesAsync();
-        }
-
-        public async Task DeleteRoomAsync(ChatRoom room)
-        {
-            context.ChatRooms.Remove(room);
-
-            await context.SaveChangesAsync();
-        }
-
-        public async Task CreateRoomWithMembersAsync(
-            ChatRoom room,
-            IEnumerable<ChatRoomMember> members)
+        public async Task CreateRoomWithMembersAsync(ChatRoom room, IEnumerable<ChatRoomMember> members)
         {
             List<ChatRoomMember> memberList = members.ToList();
 
-            bool ownsTransaction =
-                context.Database.CurrentTransaction == null;
+            bool ownsTransaction = context.Database.CurrentTransaction == null;
 
-            await using var transaction = ownsTransaction
-                ? await context.Database.BeginTransactionAsync()
-                : null;
+            await using IDbContextTransaction? transaction = ownsTransaction ? await context.Database.BeginTransactionAsync() : null;
 
             try
             {
@@ -563,12 +165,10 @@ namespace Repository
                     // from EF Core's change tracker.
                     foreach (ChatRoomMember member in memberList)
                     {
-                        context.Entry(member).State =
-                            EntityState.Detached;
+                        context.Entry(member).State = EntityState.Detached;
                     }
 
-                    context.Entry(room).State =
-                        EntityState.Detached;
+                    context.Entry(room).State = EntityState.Detached;
                 }
 
                 throw;
@@ -578,46 +178,32 @@ namespace Repository
 
         public async Task LeaveRoomAsync(int roomId, string userId)
         {
-            await using var transaction =
-                await context.Database.BeginTransactionAsync(
-                    System.Data.IsolationLevel.Serializable);
+            await using IDbContextTransaction? transaction = await context.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
 
             try
             {
-                ChatRoom? room = await context.ChatRooms
-                    .FirstOrDefaultAsync(r => r.Id == roomId);
+                ChatRoom? room = await context.ChatRooms.FirstOrDefaultAsync(r => r.Id == roomId);
 
                 if (room == null)
                     throw new KeyNotFoundException("Chat room not found.");
 
-                ChatRoomMember? member = await context.ChatRoomMembers
-                    .FirstOrDefaultAsync(m =>
-                        m.ChatRoomId == roomId &&
-                        m.UserId == userId);
+                ChatRoomMember? member = await context.ChatRoomMembers.FirstOrDefaultAsync(m => m.ChatRoomId == roomId && m.UserId == userId);
 
                 if (member == null)
-                    throw new InvalidOperationException(
-                        "You are not a member of this chat room.");
+                    throw new InvalidOperationException("You are not a member of this chat room.");
 
-                List<ChatRoomMember> remainingMembers =
-                    await context.ChatRoomMembers
-                        .Where(m =>
-                            m.ChatRoomId == roomId &&
-                            m.UserId != userId)
-                        .ToListAsync();
+                List<ChatRoomMember> remainingMembers = await context.ChatRoomMembers.Where(m => m.ChatRoomId == roomId && m.UserId != userId).ToListAsync();
 
                 // Only private rooms are deleted when their final
                 // member leaves.
-                if (room.RoomType == ChatRoomType.Private &&
-                    remainingMembers.Count == 0)
+                if (room.RoomType == ChatRoomType.Private && remainingMembers.Count == 0)
                 {
                     context.ChatRooms.Remove(room);
                 }
                 else
                 {
                     // Transfer ownership if the current owner leaves.
-                    if (room.RoomType == ChatRoomType.Private &&
-                        room.OwnerUserId == userId)
+                    if (room.RoomType == ChatRoomType.Private && room.OwnerUserId == userId)
                     {
                         ChatRoomMember newOwner = remainingMembers
                             .OrderBy(m => m.JoinedAt)
@@ -652,8 +238,19 @@ namespace Repository
 
         public async Task<bool> TopicExistsAsync(int topicId)
         {
-            return await context.Topics
-                .AnyAsync(t => t.Id == topicId);
+            return await context.Topics.AnyAsync(t => t.Id == topicId);
+        }
+
+        public async Task<int> GetUnseenPrivateRoomCountAsync(string userId)
+        {
+            return await context.ChatRoomMembers.CountAsync(m => m.UserId == userId && m.ChatRoom.RoomType == ChatRoomType.Private && m.LastVisitedAt == null);
+        }
+
+        public async Task MarkRoomAsVisitedAsync(int roomId, string userId)
+        {
+            await context.ChatRoomMembers
+                .Where(m => m.ChatRoomId == roomId && m.UserId == userId)
+                .ExecuteUpdateAsync(setters => setters.SetProperty(m => m.LastVisitedAt, DateTime.UtcNow));
         }
 
         // -------------------------
@@ -662,10 +259,7 @@ namespace Repository
 
         public async Task<ChatRoomMember?> GetMembershipAsync(int roomId, string userId)
         {
-            return await context.ChatRoomMembers
-                .FirstOrDefaultAsync(m =>
-                    m.ChatRoomId == roomId &&
-                    m.UserId == userId);
+            return await context.ChatRoomMembers.FirstOrDefaultAsync(m => m.ChatRoomId == roomId && m.UserId == userId);
         }
 
         public async Task<IEnumerable<ChatRoomMember>> GetMembersAsync(int roomId)
@@ -708,8 +302,7 @@ namespace Repository
 
         public async Task AddMessageAsync(ChatMessage message)
         {
-            await using var transaction =
-                await context.Database.BeginTransactionAsync();
+            await using IDbContextTransaction? transaction = await context.Database.BeginTransactionAsync();
 
             try
             {
@@ -726,9 +319,7 @@ namespace Repository
 
                 if (oldMessageIds.Count > 0)
                 {
-                    await context.ChatMessages
-                        .Where(m => oldMessageIds.Contains(m.Id))
-                        .ExecuteDeleteAsync();
+                    await context.ChatMessages.Where(m => oldMessageIds.Contains(m.Id)).ExecuteDeleteAsync();
                 }
 
                 await transaction.CommitAsync();
@@ -739,24 +330,13 @@ namespace Repository
                 throw;
             }
         }
-
-        // -------------------------
-        // Ownership
-        // -------------------------
-
-        public async Task UpdateRoomAsync(ChatRoom room)
-        {
-            context.ChatRooms.Update(room);
-
-            await context.SaveChangesAsync();
-        }
     }
 }
 
 using Application.Interfaces.Services.Features;
 using Application.Interfaces.Services.User;
 using EntityModels;
-using Repository.interfaces;
+using Repository.Interfaces.Repositories;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -794,8 +374,7 @@ namespace Application.Services.Features
         {
             string userId = currentUser.GetRequiredUserId();
 
-            IEnumerable<ChatRoom> rooms =
-                await chatRepository.GetRoomsForUserAsync(userId);
+            IEnumerable<ChatRoom> rooms = await chatRepository.GetRoomsForUserAsync(userId);
 
             return rooms.Select(room => MapRoom(room, userId));
         }
@@ -804,8 +383,7 @@ namespace Application.Services.Features
         {
             string userId = currentUser.GetRequiredUserId();
 
-            IEnumerable<ChatRoom> rooms =
-                await chatRepository.GetMiscellaneousRoomsAsync();
+            IEnumerable<ChatRoom> rooms = await chatRepository.GetMiscellaneousRoomsAsync();
 
             return rooms.Select(room => new ChatRoomView
             {
@@ -828,8 +406,7 @@ namespace Application.Services.Features
 
             if (room.RoomType == ChatRoomType.Topic)
             {
-                ChatRoomMember? membership =
-                    await chatRepository.GetMembershipAsync(roomId, userId);
+                ChatRoomMember? membership = await chatRepository.GetMembershipAsync(roomId, userId);
 
                 if (membership == null)
                 {
@@ -848,15 +425,15 @@ namespace Application.Services.Features
             else if (room.RoomType == ChatRoomType.Private)
             {
                 await EnsureMembershipAsync(roomId, userId);
+
+                await chatRepository.MarkRoomAsVisitedAsync(roomId, userId);
             }
             else
             {
-                throw new InvalidOperationException(
-                    "Unsupported chat room type.");
+                throw new InvalidOperationException("Unsupported chat room type.");
             }
 
-            IEnumerable<ChatRoomMember> members =
-                await chatRepository.GetMembersAsync(room.Id);
+            IEnumerable<ChatRoomMember> members = await chatRepository.GetMembersAsync(room.Id);
 
             return new ChatRoomView
             {
@@ -881,24 +458,17 @@ namespace Application.Services.Features
             // Verify that the current user belongs to the room.
             await EnsureMembershipAsync(roomId, currentUserId);
 
-            IEnumerable<ChatRoomMember> members =
-                await chatRepository.GetMembersAsync(roomId);
+            IEnumerable<ChatRoomMember> members = await chatRepository.GetMembersAsync(roomId);
 
             List<ChatRoomMember> memberList = members.ToList();
 
-            Dictionary<string, string> usernames =
-                await userService.GetUsernamesByIdsAsync(
-                    memberList.Select(m => m.UserId));
+            Dictionary<string, string> usernames = await userService.GetUsernamesByIdsAsync(memberList.Select(m => m.UserId));
 
             return memberList.Select(member =>
                 new ChatMemberView
                 {
                     UserId = member.UserId,
-                    Username = usernames.TryGetValue(
-                        member.UserId,
-                        out string? username)
-                            ? username
-                            : "Unknown user",
+                    Username = usernames.TryGetValue(member.UserId, out string? username) ? username : "Unknown user",
                     JoinedAt = member.JoinedAt,
                     IsOwner = room.OwnerUserId == member.UserId
                 });
@@ -912,31 +482,22 @@ namespace Application.Services.Features
         {
             string currentUserId = currentUser.GetRequiredUserId();
 
-            IEnumerable<Friendship> friendships =
-                await friendshipRepository.GetAcceptedForUserAsync(currentUserId);
+            IEnumerable<Friendship> friendships = await friendshipRepository.GetAcceptedForUserAsync(currentUserId);
 
             List<Friendship> friendshipList = friendships.ToList();
 
             List<string> friendUserIds = friendshipList
-                .Select(f =>
-                    f.RequesterUserId == currentUserId
-                        ? f.AddresseeUserId
-                        : f.RequesterUserId)
+                .Select(f => f.RequesterUserId == currentUserId ? f.AddresseeUserId : f.RequesterUserId)
                 .Distinct()
                 .ToList();
 
-            Dictionary<string, string> usernames =
-                await userService.GetUsernamesByIdsAsync(friendUserIds);
+            Dictionary<string, string> usernames = await userService.GetUsernamesByIdsAsync(friendUserIds);
 
             return friendUserIds.Select(userId =>
                 new ChatFriendView
                 {
                     UserId = userId,
-                    Username = usernames.TryGetValue(
-                        userId,
-                        out string? username)
-                            ? username
-                            : "Unknown user"
+                    Username = usernames.TryGetValue(userId, out string? username) ? username : "Unknown user"
                 });
         }
 
@@ -947,53 +508,36 @@ namespace Application.Services.Features
             ChatRoom room = await GetRoomOrThrowAsync(roomId);
 
             if (room.RoomType != ChatRoomType.Private)
-                throw new InvalidOperationException(
-                    "Friends can only be invited to private rooms.");
+                throw new InvalidOperationException("Friends can only be invited to private rooms.");
 
             await EnsureMembershipAsync(roomId, currentUserId);
 
-            IEnumerable<Friendship> friendships =
-                await friendshipRepository.GetAcceptedForUserAsync(currentUserId);
+            IEnumerable<Friendship> friendships = await friendshipRepository.GetAcceptedForUserAsync(currentUserId);
 
             List<Friendship> friendshipList = friendships.ToList();
 
             List<string> friendUserIds = friendshipList
-                .Select(f =>
-                    f.RequesterUserId == currentUserId
-                        ? f.AddresseeUserId
-                        : f.RequesterUserId)
+                .Select(f => f.RequesterUserId == currentUserId ? f.AddresseeUserId : f.RequesterUserId)
                 .Distinct()
                 .ToList();
 
-            IEnumerable<ChatRoomMember> members =
-                await chatRepository.GetMembersAsync(roomId);
+            IEnumerable<ChatRoomMember> members = await chatRepository.GetMembersAsync(roomId);
 
-            HashSet<string> existingMemberIds = members
-                .Select(m => m.UserId)
-                .ToHashSet();
+            HashSet<string> existingMemberIds = members.Select(m => m.UserId).ToHashSet();
 
-            List<string> availableFriendIds = friendUserIds
-                .Where(id => !existingMemberIds.Contains(id))
-                .ToList();
+            List<string> availableFriendIds = friendUserIds.Where(id => !existingMemberIds.Contains(id)).ToList();
 
-            Dictionary<string, string> usernames =
-                await userService.GetUsernamesByIdsAsync(availableFriendIds);
+            Dictionary<string, string> usernames = await userService.GetUsernamesByIdsAsync(availableFriendIds);
 
             return availableFriendIds.Select(userId =>
                 new ChatFriendView
                 {
                     UserId = userId,
-                    Username = usernames.TryGetValue(
-                        userId,
-                        out string? username)
-                            ? username
-                            : "Unknown user"
+                    Username = usernames.TryGetValue(userId, out string? username) ? username : "Unknown user"
                 });
         }
 
-        public async Task<int> CreatePrivateRoomAsync(
-            string name,
-            IEnumerable<string> invitedUserIds)
+        public async Task<int> CreatePrivateRoomAsync(string name, IEnumerable<string> invitedUserIds)
         {
             string currentUserId = currentUser.GetRequiredUserId();
 
@@ -1003,8 +547,7 @@ namespace Application.Services.Features
             name = name.Trim();
 
             if (name.Length > 100)
-                throw new ArgumentException(
-                    "Room names cannot exceed 100 characters.");
+                throw new ArgumentException("Room names cannot exceed 100 characters.");
 
             if (invitedUserIds == null)
                 throw new ArgumentNullException(nameof(invitedUserIds));
@@ -1018,9 +561,7 @@ namespace Application.Services.Features
 
             foreach (string invitedUserId in userIds)
             {
-                await EnsureAcceptedFriendshipAsync(
-                    currentUserId,
-                    invitedUserId);
+                await EnsureAcceptedFriendshipAsync(currentUserId, invitedUserId);
             }
 
             ChatRoom room = new ChatRoom
@@ -1048,16 +589,12 @@ namespace Application.Services.Features
                     JoinedAt = DateTime.UtcNow
                 }));
 
-            await chatRepository.CreateRoomWithMembersAsync(
-                room,
-                members);
+            await chatRepository.CreateRoomWithMembersAsync(room, members);
 
             return room.Id;
         }
 
-        public async Task InviteFriendAsync(
-            int roomId,
-            string invitedUserId)
+        public async Task InviteFriendAsync(int roomId, string invitedUserId)
         {
             string currentUserId = currentUser.GetRequiredUserId();
 
@@ -1065,29 +602,21 @@ namespace Application.Services.Features
                 throw new ArgumentException("A user ID is required.");
 
             if (invitedUserId == currentUserId)
-                throw new InvalidOperationException(
-                    "You cannot invite yourself.");
+                throw new InvalidOperationException("You cannot invite yourself.");
 
             ChatRoom room = await GetRoomOrThrowAsync(roomId);
 
             if (room.RoomType != ChatRoomType.Private)
-                throw new InvalidOperationException(
-                    "Friends can only be invited to private rooms.");
+                throw new InvalidOperationException("Friends can only be invited to private rooms.");
 
             await EnsureMembershipAsync(roomId, currentUserId);
 
-            await EnsureAcceptedFriendshipAsync(
-                currentUserId,
-                invitedUserId);
+            await EnsureAcceptedFriendshipAsync(currentUserId, invitedUserId);
 
-            ChatRoomMember? existingMember =
-                await chatRepository.GetMembershipAsync(
-                    roomId,
-                    invitedUserId);
+            ChatRoomMember? existingMember = await chatRepository.GetMembershipAsync(roomId, invitedUserId);
 
             if (existingMember != null)
-                throw new InvalidOperationException(
-                    "This user is already a member of the room.");
+                throw new InvalidOperationException("This user is already a member of the room.");
 
             await chatRepository.AddMemberAsync(new ChatRoomMember
             {
@@ -1108,11 +637,9 @@ namespace Application.Services.Features
             ChatRoom room = await GetRoomOrThrowAsync(roomId);
 
             if (room.RoomType != ChatRoomType.Miscellaneous)
-                throw new InvalidOperationException(
-                    "This room cannot be joined through this operation.");
+                throw new InvalidOperationException("This room cannot be joined through this operation.");
 
-            ChatRoomMember? existingMember =
-                await chatRepository.GetMembershipAsync(roomId, userId);
+            ChatRoomMember? existingMember = await chatRepository.GetMembershipAsync(roomId, userId);
 
             if (existingMember != null)
                 return;
@@ -1125,29 +652,24 @@ namespace Application.Services.Features
             });
         }
 
-        public async Task RemoveTemporaryMembershipAsync(
-    int roomId,
-    string userId)
+        public async Task RemoveTemporaryMembershipAsync(int roomId, string userId)
         {
             if (string.IsNullOrWhiteSpace(userId))
                 return;
 
             // The room might have been deleted while the user was disconnected.
-            ChatRoom? room =
-                await chatRepository.GetRoomByIdAsync(roomId);
+            ChatRoom? room = await chatRepository.GetRoomByIdAsync(roomId);
 
             if (room == null)
                 return;
 
             // Never automatically remove private-room membership.
-            if (room.RoomType != ChatRoomType.Miscellaneous &&
-                room.RoomType != ChatRoomType.Topic)
+            if (room.RoomType != ChatRoomType.Miscellaneous && room.RoomType != ChatRoomType.Topic)
             {
                 return;
             }
 
-            ChatRoomMember? membership =
-                await chatRepository.GetMembershipAsync(roomId, userId);
+            ChatRoomMember? membership = await chatRepository.GetMembershipAsync(roomId, userId);
 
             if (membership == null)
                 return;
@@ -1162,7 +684,26 @@ namespace Application.Services.Features
             await chatRepository.LeaveRoomAsync(roomId, userId);
         }
 
+        public async Task<int> GetUnseenPrivateRoomCountAsync()
+        {
+            string userId = currentUser.GetRequiredUserId();
 
+            return await chatRepository.GetUnseenPrivateRoomCountAsync(userId);
+        }
+
+        public async Task MarkRoomAsVisitedAsync(int roomId)
+        {
+            string userId = currentUser.GetRequiredUserId();
+
+            ChatRoom room = await GetRoomOrThrowAsync(roomId);
+
+            if (room.RoomType != ChatRoomType.Private)
+                return;
+
+            await EnsureMembershipAsync(roomId, userId);
+
+            await chatRepository.MarkRoomAsVisitedAsync(roomId, userId);
+        }
 
         // --------------------------------
         // Topic rooms
@@ -1175,19 +716,16 @@ namespace Application.Services.Features
             if (topicId <= 0)
                 throw new ArgumentException("Invalid topic ID.");
 
-            bool topicExists =
-                await chatRepository.TopicExistsAsync(topicId);
+            bool topicExists = await chatRepository.TopicExistsAsync(topicId);//maybe use topic repo?
 
             if (!topicExists)
                 throw new KeyNotFoundException("Topic not found.");
 
-            ChatRoom? room =
-                await chatRepository.GetRoomByTopicIdAsync(topicId);
+            ChatRoom? room = await chatRepository.GetRoomByTopicIdAsync(topicId);
 
             if (room == null)
             {
-                string? topicTitle =
-                    await chatRepository.GetTopicTitleAsync(topicId);
+                string? topicTitle = await chatRepository.GetTopicTitleAsync(topicId);//maybe use topic repo
 
                 room = new ChatRoom
                 {
@@ -1231,57 +769,41 @@ namespace Application.Services.Features
         // Messages
         // --------------------------------
 
-        public async Task<IEnumerable<ChatMessageView>>
-            GetLatestMessagesAsync(int roomId)
+        public async Task<IEnumerable<ChatMessageView>> GetLatestMessagesAsync(int roomId)
         {
             string userId = currentUser.GetRequiredUserId();
 
             await GetRoomAsync(roomId);
 
-            IEnumerable<ChatMessage> messages =
-                await chatRepository.GetLatestMessagesAsync(
-                    roomId,
-                    MessageLimit);
+            IEnumerable<ChatMessage> messages = await chatRepository.GetLatestMessagesAsync(roomId, MessageLimit);
 
             List<ChatMessage> messageList = messages.ToList();
 
-            Dictionary<string, string> usernames =
-                await userService.GetUsernamesByIdsAsync(
-                    messageList.Select(m => m.SenderUserId));
+            Dictionary<string, string> usernames = await userService.GetUsernamesByIdsAsync(messageList.Select(m => m.SenderUserId));
 
-            return messageList.Select(message =>
-                new ChatMessageView
+            return messageList.Select(message => new ChatMessageView
                 {
                     Id = message.Id,
                     ChatRoomId = message.ChatRoomId,
                     SenderUserId = message.SenderUserId,
-                    SenderUsername =
-                        usernames.TryGetValue(
-                            message.SenderUserId,
-                            out string? username)
-                            ? username
-                            : "Unknown user",
+                    SenderUsername = usernames.TryGetValue(message.SenderUserId, out string? username) ? username : "Unknown user",
                     Content = message.Content,
                     SentAt = message.SentAt,
                     IsOwnMessage = message.SenderUserId == userId
                 });
         }
 
-        public async Task<ChatMessageView> SendMessageAsync(
-            int roomId,
-            string content)
+        public async Task<ChatMessageView> SendMessageAsync(int roomId, string content)
         {
             string userId = currentUser.GetRequiredUserId();
 
             if (string.IsNullOrWhiteSpace(content))
-                throw new ArgumentException(
-                    "A message cannot be empty.");
+                throw new ArgumentException("A message cannot be empty.");
 
             content = content.Trim();
 
             if (content.Length > MaxMessageLength)
-                throw new ArgumentException(
-                    $"Messages cannot exceed {MaxMessageLength} characters.");
+                throw new ArgumentException($"Messages cannot exceed {MaxMessageLength} characters.");
 
             await GetRoomOrThrowAsync(roomId);
             await EnsureMembershipAsync(roomId, userId);
@@ -1316,8 +838,7 @@ namespace Application.Services.Features
 
         private async Task<ChatRoom> GetRoomOrThrowAsync(int roomId)
         {
-            ChatRoom? room =
-                await chatRepository.GetRoomByIdAsync(roomId);
+            ChatRoom? room = await chatRepository.GetRoomByIdAsync(roomId);
 
             if (room == null)
                 throw new KeyNotFoundException("Chat room not found.");
@@ -1325,38 +846,25 @@ namespace Application.Services.Features
             return room;
         }
 
-        private async Task EnsureMembershipAsync(
-            int roomId,
-            string userId)
+        private async Task EnsureMembershipAsync(int roomId,string userId)
         {
-            ChatRoomMember? membership =
-                await chatRepository.GetMembershipAsync(roomId, userId);
+            ChatRoomMember? membership = await chatRepository.GetMembershipAsync(roomId, userId);
 
             if (membership == null)
-                throw new UnauthorizedAccessException(
-                    "You are not a member of this chatroom.");
+                throw new UnauthorizedAccessException("You are not a member of this chatroom.");
         }
 
-        private async Task EnsureAcceptedFriendshipAsync(
-            string firstUserId,
-            string secondUserId)
+        private async Task EnsureAcceptedFriendshipAsync(string firstUserId, string secondUserId)
         {
-            Friendship? friendship =
-                await friendshipRepository.GetBetweenUsersAsync(
-                    firstUserId,
-                    secondUserId);
+            Friendship? friendship = await friendshipRepository.GetBetweenUsersAsync(firstUserId, secondUserId);
 
-            if (friendship == null ||
-                friendship.Status != FriendshipStatus.Accepted)
+            if (friendship == null || friendship.Status != FriendshipStatus.Accepted)
             {
-                throw new InvalidOperationException(
-                    "You can only invite accepted friends.");
+                throw new InvalidOperationException("You can only invite accepted friends.");
             }
         }
 
-        private static ChatRoomView MapRoom(
-            ChatRoom room,
-            string currentUserId)
+        private static ChatRoomView MapRoom(ChatRoom room, string currentUserId)
         {
             return new ChatRoomView
             {
@@ -1372,6 +880,7 @@ namespace Application.Services.Features
         }
     }
 }
+
 
 using System;
 using System.Collections.Generic;
@@ -1444,7 +953,6 @@ namespace ViewModels.Chat
     }
 }
 
-
 namespace ViewModels.Chat
 {
     public class ChatFriendView
@@ -1455,6 +963,239 @@ namespace ViewModels.Chat
     }
 }
 
+
+using Application.Interfaces.Services.Features;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.SignalR;
+using OpenForum.Services;
+using ViewModels.Chat;
+
+namespace OpenForum.Hubs
+{
+    [Authorize]
+    public class ChatHub : Hub
+    {
+        private readonly IChatService chatService;
+        private readonly ChatConnectionTracker connectionTracker;
+
+        public ChatHub(
+            IChatService chatService,
+            ChatConnectionTracker connectionTracker)
+        {
+            this.chatService = chatService;
+            this.connectionTracker = connectionTracker;
+        }
+
+        public override async Task OnConnectedAsync()
+        {
+            string? userId = Context.UserIdentifier;
+
+            if (!string.IsNullOrEmpty(userId))
+            {
+                connectionTracker.AddConnection(userId, Context.ConnectionId);
+            }
+
+            await base.OnConnectedAsync();
+        }
+
+        public override async Task OnDisconnectedAsync(Exception? exception)
+        {
+            string? userId = Context.UserIdentifier;
+
+            if (!string.IsNullOrEmpty(userId))
+            {
+                // Atomically remove this connection and find rooms
+                // where this was the user's last active connection.
+                List<int> roomsToCleanUp = connectionTracker.RemoveConnectionAndGetLastRooms(userId, Context.ConnectionId);
+
+                foreach (int roomId in roomsToCleanUp)
+                {
+                    // The service will only remove membership from
+                    // Miscellaneous and Topic rooms.
+                    await chatService.RemoveTemporaryMembershipAsync(roomId, userId);
+                }
+            }
+
+            await base.OnDisconnectedAsync(exception);
+        }
+
+        public async Task JoinRoom(int roomId)
+        {
+            if (roomId <= 0)
+                throw new ArgumentException("Invalid room ID.");
+
+            await chatService.GetRoomAsync(roomId);
+
+            connectionTracker.AddRoom(Context.ConnectionId, roomId);
+
+            try
+            {
+                await Groups.AddToGroupAsync(Context.ConnectionId, GetGroupName(roomId));
+            }
+            catch
+            {
+                connectionTracker.RemoveRoom(Context.ConnectionId, roomId);
+                throw;
+            }
+        }
+
+        public async Task LeaveRoom(int roomId)
+        {
+            if (roomId <= 0)
+                throw new ArgumentException("Invalid room ID.");
+
+            await Groups.RemoveFromGroupAsync(Context.ConnectionId, GetGroupName(roomId));
+
+            connectionTracker.RemoveRoom(Context.ConnectionId, roomId);
+        }
+
+        public async Task SendMessage(int roomId, string content)
+        {
+            if (roomId <= 0)
+                throw new ArgumentException("Invalid room ID.");
+
+            ChatMessageView message = await chatService.SendMessageAsync(roomId, content);
+
+            await Clients.Group(GetGroupName(roomId)).SendAsync("ReceiveMessage", message);
+        }
+
+        public static string GetGroupName(int roomId)
+        {
+            return $"chatroom_{roomId}";
+        }
+    }
+}
+
+
+using System.Collections.Concurrent;
+
+public class ChatConnectionTracker
+{
+    private readonly object _lock = new();
+
+    // User ID -> connection IDs
+    private readonly Dictionary<string, HashSet<string>> _userConnections = new();
+
+    // Connection ID -> joined room IDs
+    private readonly Dictionary<string, HashSet<int>> _connectionRooms = new();
+
+    public List<string> GetConnections(string userId)
+    {
+        lock (_lock)
+        {
+            return _userConnections.TryGetValue(userId, out var connections) ? connections.ToList() : new List<string>();
+        }
+    }
+
+    public void AddConnection(string userId, string connectionId)
+    {
+        lock (_lock)
+        {
+            if (!_userConnections.TryGetValue(userId, out var connections))
+            {
+                connections = new HashSet<string>();
+                _userConnections[userId] = connections;
+            }
+
+            connections.Add(connectionId);
+
+            if (!_connectionRooms.ContainsKey(connectionId))
+            {
+                _connectionRooms[connectionId] = new HashSet<int>();
+            }
+        }
+    }
+
+    public void RemoveConnection(string userId, string connectionId)
+    {
+        lock (_lock)
+        {
+            if (_userConnections.TryGetValue(userId, out var connections))
+            {
+                connections.Remove(connectionId);
+
+                if (connections.Count == 0)
+                {
+                    _userConnections.Remove(userId);
+                }
+            }
+
+            _connectionRooms.Remove(connectionId);
+        }
+    }
+
+    public List<int> RemoveConnectionAndGetLastRooms(string userId, string connectionId)
+    {
+        lock (_lock)
+        {
+            var joinedRooms = _connectionRooms.TryGetValue(connectionId, out var rooms) ? rooms.ToList() : new List<int>();
+
+            _connectionRooms.Remove(connectionId);
+
+            if (!_userConnections.TryGetValue(userId, out var connections))
+                return joinedRooms;
+
+            connections.Remove(connectionId);
+
+            if (connections.Count == 0)
+            {
+                _userConnections.Remove(userId);
+                return joinedRooms;
+            }
+
+            // Only return rooms that no remaining connection for this user
+            // is currently joined to.
+            return joinedRooms
+                .Where(roomId => !connections.Any(otherConnectionId =>
+                    _connectionRooms.TryGetValue(otherConnectionId, out var otherRooms) && otherRooms.Contains(roomId)))
+                .ToList();
+        }
+    }
+
+    public void AddRoom(string connectionId, int roomId)
+    {
+        lock (_lock)
+        {
+            if (!_connectionRooms.TryGetValue(connectionId, out var rooms))
+            {
+                rooms = new HashSet<int>();
+                _connectionRooms[connectionId] = rooms;
+            }
+
+            rooms.Add(roomId);
+        }
+    }
+
+    public void RemoveRoom(string connectionId, int roomId)
+    {
+        lock (_lock)
+        {
+            if (_connectionRooms.TryGetValue(connectionId, out var rooms))
+            {
+                rooms.Remove(roomId);
+            }
+        }
+    }
+
+    public List<int> GetRooms(string connectionId)
+    {
+        lock (_lock)
+        {
+            return _connectionRooms.TryGetValue(connectionId, out var rooms) ? rooms.ToList() : new List<int>();
+        }
+    }
+
+    public bool HasOtherConnectionInRoom(string userId, string connectionId, int roomId)
+    {
+        lock (_lock)
+        {
+            if (!_userConnections.TryGetValue(userId, out var connections))
+                return false;
+
+            return connections.Where(id => id != connectionId).Any(id => _connectionRooms.TryGetValue(id, out var rooms) && rooms.Contains(roomId));
+        }
+    }
+}
 
 
 using Application.Interfaces.Services.Features;
@@ -1504,8 +1245,7 @@ namespace OpenForum.Controllers
         {
             try
             {
-                IEnumerable<ChatRoomView> rooms =
-                    await chatService.GetMyRoomsAsync();
+                IEnumerable<ChatRoomView> rooms = await chatService.GetMyRoomsAsync();
 
                 return Json(rooms);
             }
@@ -1520,8 +1260,7 @@ namespace OpenForum.Controllers
         {
             try
             {
-                IEnumerable<ChatRoomView> rooms =
-                    await chatService.GetMiscellaneousRoomsAsync();
+                IEnumerable<ChatRoomView> rooms = await chatService.GetMiscellaneousRoomsAsync();
 
                 return Json(rooms);
             }
@@ -1536,8 +1275,7 @@ namespace OpenForum.Controllers
         {
             try
             {
-                ChatRoomView room =
-                    await chatService.GetRoomAsync(roomId);
+                ChatRoomView room = await chatService.GetRoomAsync(roomId);
 
                 return Json(room);
             }
@@ -1556,8 +1294,7 @@ namespace OpenForum.Controllers
         {
             try
             {
-                IEnumerable<ChatMemberView> members =
-                    await chatService.GetRoomMembersAsync(roomId);
+                IEnumerable<ChatMemberView> members = await chatService.GetRoomMembersAsync(roomId);
 
                 return Json(members);
             }
@@ -1576,8 +1313,7 @@ namespace OpenForum.Controllers
         {
             try
             {
-                IEnumerable<ChatMessageView> messages =
-                    await chatService.GetLatestMessagesAsync(roomId);
+                IEnumerable<ChatMessageView> messages = await chatService.GetLatestMessagesAsync(roomId);
 
                 return Json(messages);
             }
@@ -1618,15 +1354,11 @@ namespace OpenForum.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> CreatePrivateRoom(
-            string name,
-            IEnumerable<string> invitedUserIds)
+        public async Task<IActionResult> CreatePrivateRoom(string name, IEnumerable<string> invitedUserIds)
         {
             try
             {
-                int roomId = await chatService.CreatePrivateRoomAsync(
-                    name,
-                    invitedUserIds);
+                int roomId = await chatService.CreatePrivateRoomAsync(name, invitedUserIds);
 
                 return Json(new { roomId });
             }
@@ -1660,8 +1392,7 @@ namespace OpenForum.Controllers
         {
             try
             {
-                var friends =
-                    await chatService.GetAvailableFriendsToInviteAsync(roomId);
+                var friends = await chatService.GetAvailableFriendsToInviteAsync(roomId);
 
                 return Json(friends);
             }
@@ -1681,15 +1412,11 @@ namespace OpenForum.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> InviteFriend(
-            int roomId,
-            string invitedUserId)
+        public async Task<IActionResult> InviteFriend(int roomId, string invitedUserId)
         {
             try
             {
-                await chatService.InviteFriendAsync(
-                    roomId,
-                    invitedUserId);
+                await chatService.InviteFriendAsync(roomId, invitedUserId);
 
                 return Ok();
             }
@@ -1742,8 +1469,7 @@ namespace OpenForum.Controllers
             try
             {
                 // Identify the authenticated user.
-                string? userId = User.FindFirstValue(
-                    ClaimTypes.NameIdentifier);
+                string? userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
                 if (string.IsNullOrEmpty(userId))
                     return Forbid();
@@ -1752,22 +1478,17 @@ namespace OpenForum.Controllers
                 await chatService.LeaveRoomAsync(roomId);
 
                 // Find every active SignalR connection belonging to this user.
-                IReadOnlyList<string> connections =
-                    connectionTracker.GetConnections(userId);
+                IReadOnlyList<string> connections = connectionTracker.GetConnections(userId);
 
                 string groupName = ChatHub.GetGroupName(roomId);
 
                 foreach (string connectionId in connections)
                 {
                     // Remove the connection from the SignalR group.
-                    await chatHub.Groups.RemoveFromGroupAsync(
-                        connectionId,
-                        groupName);
+                    await chatHub.Groups.RemoveFromGroupAsync(connectionId, groupName);
 
                     // Also update our connection tracker.
-                    connectionTracker.RemoveRoom(
-                        connectionId,
-                        roomId);
+                    connectionTracker.RemoveRoom(connectionId, roomId);
                 }
 
                 return Ok();
@@ -1797,8 +1518,7 @@ namespace OpenForum.Controllers
         {
             try
             {
-                int roomId =
-                    await chatService.GetOrCreateTopicRoomAsync(topicId);
+                int roomId = await chatService.GetOrCreateTopicRoomAsync(topicId);
 
                 return Json(new { roomId });
             }
@@ -1817,12 +1537,9 @@ namespace OpenForum.Controllers
         {
             try
             {
-                int roomId =
-                    await chatService.GetOrCreateTopicRoomAsync(topicId);
+                int roomId = await chatService.GetOrCreateTopicRoomAsync(topicId);
 
-                return RedirectToAction(
-                    nameof(OpenRoom),
-                    new { roomId });
+                return RedirectToAction(nameof(OpenRoom), new { roomId });
             }
             catch (KeyNotFoundException)
             {
@@ -1835,277 +1552,6 @@ namespace OpenForum.Controllers
         }
     }
 }
-
-
-using Application.Interfaces.Services.Features;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.SignalR;
-using OpenForum.Services;
-
-namespace OpenForum.Hubs
-{
-    [Authorize]
-    public class ChatHub : Hub
-    {
-        private readonly IChatService chatService;
-        private readonly ChatConnectionTracker connectionTracker;
-
-        public ChatHub(
-            IChatService chatService,
-            ChatConnectionTracker connectionTracker)
-        {
-            this.chatService = chatService;
-            this.connectionTracker = connectionTracker;
-        }
-
-        public override async Task OnConnectedAsync()
-        {
-            string? userId = Context.UserIdentifier;
-
-            if (!string.IsNullOrEmpty(userId))
-            {
-                connectionTracker.AddConnection(
-                    userId,
-                    Context.ConnectionId);
-            }
-
-            await base.OnConnectedAsync();
-        }
-
-        public override async Task OnDisconnectedAsync(Exception? exception)
-        {
-            string? userId = Context.UserIdentifier;
-
-            if (!string.IsNullOrEmpty(userId))
-            {
-                // Atomically remove this connection and find rooms
-                // where this was the user's last active connection.
-                var roomsToCleanUp =
-                    connectionTracker.RemoveConnectionAndGetLastRooms(
-                        userId,
-                        Context.ConnectionId);
-
-                foreach (var roomId in roomsToCleanUp)
-                {
-                    // The service will only remove membership from
-                    // Miscellaneous and Topic rooms.
-                    await chatService.RemoveTemporaryMembershipAsync(
-                        roomId,
-                        userId);
-                }
-            }
-
-            await base.OnDisconnectedAsync(exception);
-        }
-
-        public async Task JoinRoom(int roomId)
-        {
-            if (roomId <= 0)
-                throw new ArgumentException("Invalid room ID.");
-
-            await chatService.GetRoomAsync(roomId);
-
-            connectionTracker.AddRoom(Context.ConnectionId, roomId);
-
-            try
-            {
-                await Groups.AddToGroupAsync(
-                    Context.ConnectionId,
-                    GetGroupName(roomId));
-            }
-            catch
-            {
-                connectionTracker.RemoveRoom(Context.ConnectionId, roomId);
-                throw;
-            }
-        }
-
-        public async Task LeaveRoom(int roomId)
-        {
-            if (roomId <= 0)
-                throw new ArgumentException("Invalid room ID.");
-
-            await Groups.RemoveFromGroupAsync(
-                Context.ConnectionId,
-                GetGroupName(roomId));
-
-            connectionTracker.RemoveRoom(
-                Context.ConnectionId,
-                roomId);
-        }
-
-        public async Task SendMessage(int roomId, string content)
-        {
-            if (roomId <= 0)
-                throw new ArgumentException("Invalid room ID.");
-
-            var message = await chatService.SendMessageAsync(
-                roomId,
-                content);
-
-            await Clients.Group(GetGroupName(roomId))
-                .SendAsync("ReceiveMessage", message);
-        }
-
-        public static string GetGroupName(int roomId)
-        {
-            return $"chatroom_{roomId}";
-        }
-    }
-}
-
-
-
-using System.Collections.Concurrent;
-
-public class ChatConnectionTracker
-{
-    private readonly object _lock = new();
-
-    // User ID -> connection IDs
-    private readonly Dictionary<string, HashSet<string>> _userConnections = new();
-
-    // Connection ID -> joined room IDs
-    private readonly Dictionary<string, HashSet<int>> _connectionRooms = new();
-
-    public List<string> GetConnections(string userId)
-    {
-        lock (_lock)
-        {
-            return _userConnections.TryGetValue(userId, out var connections)
-                ? connections.ToList()
-                : new List<string>();
-        }
-    }
-
-    public void AddConnection(string userId, string connectionId)
-    {
-        lock (_lock)
-        {
-            if (!_userConnections.TryGetValue(userId, out var connections))
-            {
-                connections = new HashSet<string>();
-                _userConnections[userId] = connections;
-            }
-
-            connections.Add(connectionId);
-
-            if (!_connectionRooms.ContainsKey(connectionId))
-            {
-                _connectionRooms[connectionId] = new HashSet<int>();
-            }
-        }
-    }
-
-    public void RemoveConnection(string userId, string connectionId)
-    {
-        lock (_lock)
-        {
-            if (_userConnections.TryGetValue(userId, out var connections))
-            {
-                connections.Remove(connectionId);
-
-                if (connections.Count == 0)
-                {
-                    _userConnections.Remove(userId);
-                }
-            }
-
-            _connectionRooms.Remove(connectionId);
-        }
-    }
-
-    public List<int> RemoveConnectionAndGetLastRooms(
-    string userId,
-    string connectionId)
-    {
-        lock (_lock)
-        {
-            var joinedRooms = _connectionRooms.TryGetValue(
-                connectionId,
-                out var rooms)
-                    ? rooms.ToList()
-                    : new List<int>();
-
-            _connectionRooms.Remove(connectionId);
-
-            if (!_userConnections.TryGetValue(userId, out var connections))
-                return joinedRooms;
-
-            connections.Remove(connectionId);
-
-            if (connections.Count == 0)
-            {
-                _userConnections.Remove(userId);
-                return joinedRooms;
-            }
-
-            // Only return rooms that no remaining connection for this user
-            // is currently joined to.
-            return joinedRooms
-                .Where(roomId => !connections.Any(otherConnectionId =>
-                    _connectionRooms.TryGetValue(
-                        otherConnectionId,
-                        out var otherRooms)
-                    && otherRooms.Contains(roomId)))
-                .ToList();
-        }
-    }
-
-    public void AddRoom(string connectionId, int roomId)
-    {
-        lock (_lock)
-        {
-            if (!_connectionRooms.TryGetValue(connectionId, out var rooms))
-            {
-                rooms = new HashSet<int>();
-                _connectionRooms[connectionId] = rooms;
-            }
-
-            rooms.Add(roomId);
-        }
-    }
-
-    public void RemoveRoom(string connectionId, int roomId)
-    {
-        lock (_lock)
-        {
-            if (_connectionRooms.TryGetValue(connectionId, out var rooms))
-            {
-                rooms.Remove(roomId);
-            }
-        }
-    }
-
-    public List<int> GetRooms(string connectionId)
-    {
-        lock (_lock)
-        {
-            return _connectionRooms.TryGetValue(connectionId, out var rooms)
-                ? rooms.ToList()
-                : new List<int>();
-        }
-    }
-
-    public bool HasOtherConnectionInRoom(
-        string userId,
-        string connectionId,
-        int roomId)
-    {
-        lock (_lock)
-        {
-            if (!_userConnections.TryGetValue(userId, out var connections))
-                return false;
-
-            return connections
-                .Where(id => id != connectionId)
-                .Any(id =>
-                    _connectionRooms.TryGetValue(id, out var rooms)
-                    && rooms.Contains(roomId));
-        }
-    }
-}
-
 
 //chat-index.js
 document.addEventListener("DOMContentLoaded", () => {
@@ -2222,9 +1668,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     async function joinRoom(roomId) {
         try {
-            const token = document.querySelector(
-                'input[name="__RequestVerificationToken"]'
-            )?.value;
+            const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
 
             const response = await fetch("/Chat/JoinRoom", {
                 method: "POST",
@@ -2252,34 +1696,26 @@ document.addEventListener("DOMContentLoaded", () => {
     // Create private chat
     // --------------------------------
 
-    const createChatButton =
-        document.getElementById("createChatButton");
+    const createChatButton = document.getElementById("createChatButton");
 
-    const createChatModalElement =
-        document.getElementById("createChatModal");
+    const createChatModalElement = document.getElementById("createChatModal");
 
-    const createChatModal =
-        new bootstrap.Modal(createChatModalElement);
+    const createChatModal = new bootstrap.Modal(createChatModalElement);
 
-    const chatFriendsList =
-        document.getElementById("chatFriendsList");
+    const chatFriendsList = document.getElementById("chatFriendsList");
 
-    const createChatError =
-        document.getElementById("createChatError");
+    const createChatError = document.getElementById("createChatError");
 
-    const confirmCreateChatButton =
-        document.getElementById("confirmCreateChatButton");
+    const confirmCreateChatButton = document.getElementById("confirmCreateChatButton");
 
     async function loadChatFriends() {
 
         try {
             chatFriendsList.replaceChildren();
 
-            document.getElementById("chatFriendsLoading")
-                .classList.remove("d-none");
+            document.getElementById("chatFriendsLoading").classList.remove("d-none");
 
-            document.getElementById("chatFriendsEmpty")
-                .classList.add("d-none");
+            document.getElementById("chatFriendsEmpty").classList.add("d-none");
 
             const response = await fetch("/Chat/Friends");
 
@@ -2289,13 +1725,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
             const friends = await response.json();
 
-            document.getElementById("chatFriendsLoading")
-                .classList.add("d-none");
+            document.getElementById("chatFriendsLoading").classList.add("d-none");
 
             if (friends.length === 0) {
-                document.getElementById("chatFriendsEmpty")
-                    .classList.remove("d-none");
-
+                document.getElementById("chatFriendsEmpty").classList.remove("d-none");
                 return;
             }
 
@@ -2303,8 +1736,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 const label = document.createElement("label");
 
-                label.className =
-                    "list-group-item d-flex align-items-center gap-2";
+                label.className = "list-group-item d-flex align-items-center gap-2";
 
                 const checkbox = document.createElement("input");
 
@@ -2323,8 +1755,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         } catch (error) {
 
-            document.getElementById("chatFriendsLoading")
-                .classList.add("d-none");
+            document.getElementById("chatFriendsLoading").classList.add("d-none");
 
             showError(error.message);
         }
@@ -2345,26 +1776,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
         createChatError.classList.add("d-none");
 
-        const name = document.getElementById("chatRoomName")
-            .value.trim();
+        const name = document.getElementById("chatRoomName").value.trim();
 
         if (!name) {
-            createChatError.textContent =
-                "Please enter a chatroom name.";
+            createChatError.textContent = "Please enter a chatroom name.";
 
             createChatError.classList.remove("d-none");
             return;
         }
 
-        const invitedUserIds = Array.from(
-            chatFriendsList.querySelectorAll(
-                'input[type="checkbox"]:checked'
-            )
-        ).map(checkbox => checkbox.value);
+        const invitedUserIds = Array.from(chatFriendsList.querySelectorAll('input[type="checkbox"]:checked')).map(checkbox => checkbox.value);
 
-        const token = document.querySelector(
-            'input[name="__RequestVerificationToken"]'
-        )?.value;
+        const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
 
         confirmCreateChatButton.disabled = true;
 
@@ -2392,15 +1815,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 const result = await response.json();
 
-                throw new Error(
-                    result.error || "Could not create the chatroom."
-                );
+                throw new Error(result.error || "Could not create the chatroom.");
             }
 
             const result = await response.json();
 
-            window.location.href =
-                `/Chat/OpenRoom?roomId=${result.roomId}`;
+            window.location.href = `/Chat/OpenRoom?roomId=${result.roomId}`;
 
         } catch (error) {
 
@@ -2425,23 +1845,17 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     const roomId = window.chatRoomId;
 
-    const messagesContainer =
-        document.getElementById("messagesContainer");
+    const messagesContainer = document.getElementById("messagesContainer");
 
-    const messagesLoading =
-        document.getElementById("messagesLoading");
+    const messagesLoading = document.getElementById("messagesLoading");
 
-    const messageForm =
-        document.getElementById("messageForm");
+    const messageForm = document.getElementById("messageForm");
 
-    const messageInput =
-        document.getElementById("messageInput");
+    const messageInput = document.getElementById("messageInput");
 
-    const sendMessageButton =
-        document.getElementById("sendMessageButton");
+    const sendMessageButton = document.getElementById("sendMessageButton");
 
-    const errorElement =
-        document.getElementById("chatError");
+    const errorElement = document.getElementById("chatError");
 
     const MAX_MESSAGES = 100;
 
@@ -2486,15 +1900,11 @@ document.addEventListener("DOMContentLoaded", async () => {
         sortedMessages.forEach(message => {
 
             // Determine ownership for the currently logged-in user.
-            const isOwnMessage =
-                message.senderUserId === window.chatCurrentUserId;
+            const isOwnMessage = message.senderUserId === window.chatCurrentUserId;
 
             const messageElement = document.createElement("div");
 
-            messageElement.className =
-                isOwnMessage
-                    ? "align-self-start bg-primary text-white rounded p-3"
-                    : "align-self-end bg-light border rounded p-3";
+            messageElement.className = isOwnMessage ? "align-self-start bg-primary text-white rounded p-3" : "align-self-end bg-light border rounded p-3";
 
             messageElement.style.maxWidth = "75%";
 
@@ -2509,26 +1919,18 @@ document.addEventListener("DOMContentLoaded", async () => {
 
             const timestamp = document.createElement("small");
 
-            timestamp.className =
-                isOwnMessage
-                    ? "d-block mt-2 text-white-50"
-                    : "d-block mt-2 text-muted";
+            timestamp.className = isOwnMessage ? "d-block mt-2 text-white-50" : "d-block mt-2 text-muted";
 
             const sentAt = new Date(message.sentAt);
 
             timestamp.textContent = sentAt.toLocaleString();
 
-            messageElement.append(
-                sender,
-                content,
-                timestamp
-            );
+            messageElement.append(sender, content, timestamp);
 
             messagesContainer.appendChild(messageElement);
         });
 
-        messagesContainer.scrollTop =
-            messagesContainer.scrollHeight;
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
 
     function addMessage(message) {
@@ -2549,8 +1951,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     async function loadMessages() {
 
         try {
-            const response = await fetch(
-                `/Chat/Messages?roomId=${roomId}`
+            const response = await fetch(`/Chat/Messages?roomId=${roomId}`
             );
 
             if (!response.ok) {
@@ -2642,9 +2043,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             if (isPageLeaving)
                 return;
 
-            showError(
-                "Connection to the chatroom was lost. Please refresh the page."
-            );
+            showError("Connection to the chatroom was lost. Please refresh the page.");
 
             sendMessageButton.disabled = true;
         });
@@ -2700,8 +2099,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         await connectToChat();
 
-        if (connection &&
-            connection.state === signalR.HubConnectionState.Connected) {
+        if (connection && connection.state === signalR.HubConnectionState.Connected) {
 
             await loadMessages();
             await loadRoomMembers();
@@ -2731,8 +2129,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             return;
         }
 
-        if (!connection ||
-            connection.state !== signalR.HubConnectionState.Connected) {
+        if (!connection || connection.state !== signalR.HubConnectionState.Connected) {
 
             showError("You are not connected to the chatroom.");
             return;
@@ -2742,10 +2139,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         try {
 
-            await connection.invoke(
-                "SendMessage",
-                roomId,
-                content
+            await connection.invoke("SendMessage", roomId, content
             );
 
             messageInput.value = "";
@@ -2757,9 +2151,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         } finally {
 
-            sendMessageButton.disabled =
-                !connection ||
-                connection.state !== signalR.HubConnectionState.Connected;
+            sendMessageButton.disabled = !connection || connection.state !== signalR.HubConnectionState.Connected;
         }
     });
 
@@ -2769,16 +2161,13 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     async function loadRoomMembers() {
 
-        const membersList =
-            document.getElementById("roomMembersList");
+        const membersList = document.getElementById("roomMembersList");
 
-        const loading =
-            document.getElementById("roomMembersLoading");
+        const loading = document.getElementById("roomMembersLoading");
 
         try {
 
-            const response = await fetch(
-                `/Chat/RoomMembers?roomId=${roomId}`
+            const response = await fetch(`/Chat/RoomMembers?roomId=${roomId}`
             );
 
             if (!response.ok) {
@@ -2802,8 +2191,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 membersList.appendChild(badge);
             });
 
-            document.getElementById("roomMemberCount").textContent =
-                members.length;
+            document.getElementById("roomMemberCount").textContent = members.length;
 
         } catch (error) {
 
@@ -2821,25 +2209,19 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Invite friends
     // --------------------------------
 
-    const inviteFriendsButton =
-        document.getElementById("inviteFriendsButton");
+    const inviteFriendsButton = document.getElementById("inviteFriendsButton");
 
     if (inviteFriendsButton) {
 
-        const inviteModalElement =
-            document.getElementById("inviteFriendsModal");
+        const inviteModalElement = document.getElementById("inviteFriendsModal");
 
-        const inviteModal =
-            new bootstrap.Modal(inviteModalElement);
+        const inviteModal = new bootstrap.Modal(inviteModalElement);
 
-        const inviteFriendsList =
-            document.getElementById("inviteFriendsList");
+        const inviteFriendsList = document.getElementById("inviteFriendsList");
 
-        const inviteFriendsError =
-            document.getElementById("inviteFriendsError");
+        const inviteFriendsError = document.getElementById("inviteFriendsError");
 
-        const inviteFriendsSuccess =
-            document.getElementById("inviteFriendsSuccess");
+        const inviteFriendsSuccess = document.getElementById("inviteFriendsSuccess");
 
         async function loadAvailableFriends() {
 
@@ -2848,16 +2230,13 @@ document.addEventListener("DOMContentLoaded", async () => {
             inviteFriendsError.classList.add("d-none");
             inviteFriendsSuccess.classList.add("d-none");
 
-            document.getElementById("inviteFriendsLoading")
-                .classList.remove("d-none");
+            document.getElementById("inviteFriendsLoading").classList.remove("d-none");
 
-            document.getElementById("inviteFriendsEmpty")
-                .classList.add("d-none");
+            document.getElementById("inviteFriendsEmpty").classList.add("d-none");
 
             try {
 
-                const response = await fetch(
-                    `/Chat/AvailableFriendsToInvite?roomId=${roomId}`
+                const response = await fetch(`/Chat/AvailableFriendsToInvite?roomId=${roomId}`
                 );
 
                 if (!response.ok) {
@@ -2866,13 +2245,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 
                 const friends = await response.json();
 
-                document.getElementById("inviteFriendsLoading")
-                    .classList.add("d-none");
+                document.getElementById("inviteFriendsLoading").classList.add("d-none");
 
                 if (friends.length === 0) {
 
-                    document.getElementById("inviteFriendsEmpty")
-                        .classList.remove("d-none");
+                    document.getElementById("inviteFriendsEmpty").classList.remove("d-none");
 
                     return;
                 }
@@ -2881,8 +2258,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
                     const item = document.createElement("div");
 
-                    item.className =
-                        "list-group-item d-flex justify-content-between align-items-center";
+                    item.className = "list-group-item d-flex justify-content-between align-items-center";
 
                     const username = document.createElement("span");
 
@@ -2905,8 +2281,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
             } catch (error) {
 
-                document.getElementById("inviteFriendsLoading")
-                    .classList.add("d-none");
+                document.getElementById("inviteFriendsLoading").classList.add("d-none");
 
                 inviteFriendsError.textContent = error.message;
                 inviteFriendsError.classList.remove("d-none");
@@ -2918,9 +2293,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             inviteFriendsError.classList.add("d-none");
             inviteFriendsSuccess.classList.add("d-none");
 
-            const token = document.querySelector(
-                'input[name="__RequestVerificationToken"]'
-            )?.value;
+            const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
 
             button.disabled = true;
 
@@ -2945,21 +2318,17 @@ document.addEventListener("DOMContentLoaded", async () => {
 
                     const result = await response.json();
 
-                    throw new Error(
-                        result.error || "Could not invite friend."
-                    );
+                    throw new Error(result.error || "Could not invite friend.");
                 }
 
-                inviteFriendsSuccess.textContent =
-                    "Friend successfully invited.";
+                inviteFriendsSuccess.textContent = "Friend successfully invited.";
 
                 inviteFriendsSuccess.classList.remove("d-none");
 
                 await loadRoomMembers();
                 await loadAvailableFriends();
 
-                inviteFriendsSuccess.textContent =
-                    "Friend successfully invited.";
+                inviteFriendsSuccess.textContent = "Friend successfully invited.";
 
                 inviteFriendsSuccess.classList.remove("d-none");
 
@@ -2984,8 +2353,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Leave room
     // --------------------------------
 
-    const leaveRoomButton =
-        document.getElementById("leaveRoomButton");
+    const leaveRoomButton = document.getElementById("leaveRoomButton");
 
     if (leaveRoomButton) {
 
@@ -2993,16 +2361,12 @@ document.addEventListener("DOMContentLoaded", async () => {
 
             clearError();
 
-            const confirmed = confirm(
-                "Are you sure you want to leave this chatroom?"
-            );
+            const confirmed = confirm("Are you sure you want to leave this chatroom?");
 
             if (!confirmed)
                 return;
 
-            const token = document.querySelector(
-                'input[name="__RequestVerificationToken"]'
-            )?.value;
+            const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
 
             leaveRoomButton.disabled = true;
 
@@ -3063,15 +2427,13 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     await connectToChat();
 
-    if (connection &&
-        connection.state === signalR.HubConnectionState.Connected) {
+    if (connection && connection.state === signalR.HubConnectionState.Connected) {
 
         await loadMessages();
         await loadRoomMembers();
     }
 
 });
-
 
 <!-- /Views/Chat/Index.cshtml-->
 @{
@@ -3422,236 +2784,165 @@ document.addEventListener("DOMContentLoaded", async () => {
     <script src="~/js/chat-room.js" asp-append-version="true"></script>
 }
 
+--- and chat implementation for topics inside the topic service now we are at it: 
 
------ the _layout and _leftpanel:
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - OpenForum</title>
-
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
-          rel="stylesheet">
-
-    <link rel="stylesheet" href="~/css/forum.css" asp-append-version="true" />
-</head>
-
-<body class="bg-light">
-
-    <!-- Header -->
-    <header class="bg-dark text-white py-3">
-        <div class="container-fluid px-4">
-
-            <div class="d-flex flex-column flex-sm-row
-                        justify-content-between align-items-sm-center gap-3">
-
-                <h1 class="h2 mb-0 text-nowrap">
-                    <a asp-controller="Topic"
-                       asp-action="Index"
-                       class="text-white text-decoration-none">
-                        OpenForum
-                    </a>
-                </h1>
-
-                <div class="d-flex flex-wrap align-items-center gap-2">
-
-                    @if (User.Identity?.IsAuthenticated ?? false)
-                    {
-                        <span class="text-white-50 small me-1">
-                            Welcome @User.Identity.Name
-                        </span>
-
-                        <a asp-controller="MyProfile"
-                           asp-action="Index"
-                           class="btn btn-outline-light btn-sm">
-                            Edit profile
-                        </a>
-
-                        <form asp-area="Identity"
-                              asp-page="/Account/Logout"
-                              method="post"
-                              class="d-inline">
-
-                            <button type="submit"
-                                    class="btn btn-outline-light btn-sm">
-                                Logout
-                            </button>
-                        </form>
-                    }
-                    else
-                    {
-                        <a asp-area="Identity"
-                           asp-page="/Account/Login"
-                           class="btn btn-outline-light btn-sm">
-                            Login
-                        </a>
-
-                        <a asp-area="Identity"
-                           asp-page="/Account/Register"
-                           class="btn btn-light btn-sm">
-                            Register
-                        </a>
-                    }
-
-                </div>
-            </div>
-        </div>
-    </header>
-
-
-    <div class="page-layout">
-
-        <aside class="left-panel">
-            @await Html.PartialAsync("_LeftPanel")
-        </aside>
-
-        <main class="main-content">
-            @RenderBody()
-        </main>
-
-        <aside class="right-panel">
-            @await Html.PartialAsync("_RightPanel")
-        </aside>
-
-    </div>
-
-
-    <!-- Footer -->
-    <footer class="site-footer bg-dark text-white-50">
-        <div class="container-fluid px-4 text-center">
-            <small>
-                &copy; @DateTime.Now.Year OpenForum. All rights reserved.
-            </small>
-        </div>
-    </footer>
-
-
-    <!-- Scripts -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js">
-    </script>
-
-    <script src="~/lib/signalr/signalr.js"></script>
-
-    <script src="~/js/likes.js" asp-append-version="true"></script>
-
-    @await RenderSectionAsync("Scripts", required: false)
-
-
-    <!-- Likes modal -->
-    <div class="modal fade" id="likersModal" tabindex="-1"
-         aria-labelledby="likersModalLabel" aria-hidden="true">
-
-        <div class="modal-dialog modal-dialog-centered">
-
-            <div class="modal-content">
-
-                <div class="modal-header">
-                    <h5 class="modal-title" id="likersModalLabel">
-                        People who liked this
-                    </h5>
-
-                    <button type="button" class="btn-close"
-                            data-bs-dismiss="modal"
-                            aria-label="Close">
-                    </button>
-                </div>
-
-                <div class="modal-body">
-
-                    <p id="likersLoading" class="d-none">
-                        Loading likes...
-                    </p>
-
-                    <p id="likersError" class="text-danger d-none">
-                        Could not load likes. Please try again.
-                    </p>
-
-                    <p id="likersEmpty" class="d-none">
-                        No likes yet.
-                    </p>
-
-                    <ul id="likersList"
-                        class="list-group list-group-flush">
-                    </ul>
-
-                </div>
-            </div>
-        </div>
-    </div>
-
-</body>
-</html>
-
-@if (User.Identity?.IsAuthenticated ?? false)
-{
-    <div class="left-panel-menu">
-
-        <a asp-controller="Message"
-           asp-action="Inbox"
-           class="left-panel-link">
-            Messages
-            @await Component.InvokeAsync("UnreadMessages")
-        </a>
-
-        <a asp-controller="Chat"
-           asp-action="Index"
-           class="left-panel-link">
-           Chat
-        </a>
-
-        <a asp-controller="Friendship"
-           asp-action="Index"
-           class="left-panel-link">
-            Friends
-        </a>
-
-        <a asp-controller="Friendship"
-           asp-action="Search"
-           class="left-panel-link">
-            Search users
-        </a>
-
-        <a asp-controller="MyActivity"
-           asp-action="Index"
-           class="left-panel-link">
-            My activity
-        </a>
-
-    </div>
-}
-
-<div class="left-panel-menu">
-    <a asp-controller="Misc"
-       asp-action="About"
-       class="left-panel-link">
-        About
-    </a>
-</div>
-
+using Application.common.Application.Common;
+using Application.Interfaces.Contexts;
+using Application.Interfaces.Mappers.Forum;
 using Application.Interfaces.Services.Features;
-using Microsoft.AspNetCore.Mvc;
+using Application.Interfaces.Services.Forum;
+using Application.Interfaces.Services.User;
+using EntityContext;
+using EntityModels;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
+using Repository.Interfaces.Repositories;
+using Repository.Interfaces.Utils;
+using ViewModels.Topic;
 
-namespace OpenForum.ViewComponents
+namespace Application.Services.Forum
 {
-    public class UnreadMessagesViewComponent : ViewComponent
+    public class TopicService : ITopicService
     {
-        private readonly IMessageService messageService;
+        private readonly ITopicRepository topicRepository;
+        private readonly ITopicMapper topicMapper;
+        private readonly ICurrentUserService currentUser;
+        private readonly IUserService userService;
+        private readonly IUnitOfWork unitOfWork;
+        private readonly IChatService chatService;
+        private const int PageSize = 5;
 
-        public UnreadMessagesViewComponent(
-            IMessageService messageService)
+        public TopicService(
+            ITopicRepository topicRepository,
+            ITopicMapper topicMapper,
+            ICurrentUserService currentUser,
+            IUserService userService,
+            IUnitOfWork unitOfWork,
+            IChatService chatService)
         {
-            this.messageService = messageService;
+            this.topicRepository = topicRepository;
+            this.topicMapper = topicMapper;
+            this.currentUser = currentUser;
+            this.userService = userService;
+            this.unitOfWork = unitOfWork;
+            this.chatService = chatService;
         }
 
-        public async Task<IViewComponentResult> InvokeAsync()
+        public async Task<TopicIndexView> GetTopicIndexViewAsync(int page = 1, TopicCreateView? createTopic = null)
         {
-            int unreadCount =
-                await messageService.GetUnreadCountAsync();
+            page = Math.Max(1, page);
 
-            return View(unreadCount);
+            (IEnumerable<Topic> Items, int TotalCount) result = await topicRepository.GetPageAsync(page, PageSize);
+
+            int totalPages = Math.Max(1, (int)Math.Ceiling(result.TotalCount / (double)PageSize));
+
+            // If the requested page is beyond the last page,
+            // use the last valid page instead.
+            if (page > totalPages)
+            {
+                page = totalPages;
+                result = await topicRepository.GetPageAsync(page, PageSize);
+            }
+
+            string? userId = currentUser.GetUserIdOrNull();
+
+            List<TopicListItemView> topics = result.Items.Select(
+                topic => 
+                {
+                    TopicListItemView item = topicMapper.ToListItemView(topic);
+                    item.CreatorDisplayName = CreatorDisplayNameResolver.Resolve(userId, topic.CreatedByUserId, item.Creator);
+                    item.CanManage = userId != null && topic.CreatedByUserId == userId;
+                    return item;
+                })
+                .ToList();
+
+            return new TopicIndexView
+            {
+                Topics = topics,
+                CreateTopic = createTopic ?? new TopicCreateView(),
+                EditTopic = null,
+                CanCreate = userId != null,
+                CurrentPage = page,
+                TotalPages = totalPages
+            };
         }
+
+        public async Task<TopicIndexView?> GetEditViewAsync(int id, int page = 1, TopicEditView? editTopic = null)
+        {
+            Topic? topic = await topicRepository.GetByIdAsync(id);
+
+            if (topic == null)
+                return null;
+
+            string userId = currentUser.GetRequiredUserId();
+
+            if (topic.CreatedByUserId != userId)
+                throw new UnauthorizedAccessException("You are not allowed to edit this topic.");
+
+            TopicIndexView viewModel = await GetTopicIndexViewAsync(page);
+
+            viewModel.EditTopic = editTopic ?? topicMapper.ToEditView(topic);
+
+            return viewModel;
+        }
+
+        public async Task CreateAsync(TopicCreateView model)
+        {
+            string userId = currentUser.GetRequiredUserId();
+
+            Topic topic = topicMapper.ToEntity(model);
+            topic.CreatedByUserId = userId;
+            topic.CreatedByUserName = await userService.GetUsernameByIdAsync(userId);
+
+            await unitOfWork.BeginTransactionAsync();
+
+            try
+            {
+                // Save the topic first so it receives its database ID.
+                await topicRepository.AddAsync(topic);
+
+                // Create its chatroom and add the creator as the first member.
+                await chatService.GetOrCreateTopicRoomAsync(topic.Id);
+
+                await unitOfWork.CommitTransactionAsync();
+            }
+            catch
+            {
+                await unitOfWork.RollbackTransactionAsync();
+                throw;
+            }
+        }
+
+        public async Task UpdateAsync(TopicEditView model)
+        {
+            string userId = currentUser.GetRequiredUserId();
+            Topic? topic = await topicRepository.GetByIdAsync(model.Id);
+
+            if (topic == null)
+                return;
+
+            if (topic.CreatedByUserId != userId)
+                throw new UnauthorizedAccessException("You are not allowed to edit this topic.");
+
+            topic.Title = model.Title;
+
+            await topicRepository.UpdateAsync(topic);
+        }
+
+        public async Task DeleteAsync(int id)
+        {
+            string userId = currentUser.GetRequiredUserId();
+
+            Topic? topic = await topicRepository.GetByIdAsync(id);
+
+            if (topic == null)
+                return;
+
+            if (topic.CreatedByUserId != userId)
+                throw new UnauthorizedAccessException("You are not allowed to delete this topic.");
+
+            await topicRepository.DeleteAsync(id);
+        }
+
     }
 }
-
-

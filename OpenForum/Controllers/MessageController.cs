@@ -51,11 +51,21 @@ namespace OpenForum.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Compose(string recipientUserName,string? returnUrl)
+        public async Task<IActionResult> Compose(string? recipientUserName, string? returnUrl)
         {
             try
             {
-                ComposeMessageView model = await messageService.GetComposeViewAsync(recipientUserName);
+                ComposeMessageView model;
+
+                if (!string.IsNullOrWhiteSpace(recipientUserName))
+                {
+                    model = await messageService.GetComposeViewAsync(recipientUserName);
+                    model.IsRecipientPreselected = true;
+                }
+                else
+                {
+                    model = new ComposeMessageView();
+                }
 
                 model.ReturnUrl = Url.IsLocalUrl(returnUrl) ? returnUrl : Url.Action(nameof(Inbox));
 

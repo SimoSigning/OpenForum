@@ -1,7 +1,7 @@
 ﻿using Application.Interfaces.Mappers.Features;
 using Application.Interfaces.Services.Features;
 using EntityModels;
-using Repository.interfaces;
+using Repository.Interfaces.Repositories;
 using ViewModels.Discover;
 
 namespace Application.Services.Features

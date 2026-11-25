@@ -1,16 +1,13 @@
 ﻿using EntityModels;
 
-namespace Repository.interfaces
+namespace Repository.Interfaces.Repositories
 {
     public interface ICommentRepository
     {
 
         Task<(IEnumerable<Comment> Items, int TotalCount)> GetPageByPostIdAsync(int postId, int page, int pageSize);
 
-        Task<IEnumerable<Comment>> GetByCreatedByUserIdAsync(
-    string userId,
-    int skip,
-    int take);
+        Task<IEnumerable<Comment>> GetByCreatedByUserIdAsync(string userId, int skip, int take);
 
         Task<int> CountByCreatedByUserIdAsync(string userId);
 

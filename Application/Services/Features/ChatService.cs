@@ -1,7 +1,7 @@
 ﻿using Application.Interfaces.Services.Features;
 using Application.Interfaces.Services.User;
 using EntityModels;
-using Repository.interfaces;
+using Repository.Interfaces.Repositories;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -15,6 +15,7 @@ namespace Application.Services.Features
         private readonly IFriendshipRepository friendshipRepository;
         private readonly ICurrentUserService currentUser;
         private readonly IUserService userService;
+        private readonly IChatMembershipNotifier membershipNotifier;
 
         private const int MessageLimit = 100;
         private const int MaxMessageLength = 2000;
@@ -23,12 +24,14 @@ namespace Application.Services.Features
             IChatRepository chatRepository,
             IFriendshipRepository friendshipRepository,
             ICurrentUserService currentUser,
-            IUserService userService)
+            IUserService userService,
+            IChatMembershipNotifier membershipNotifier)
         {
             this.chatRepository = chatRepository;
             this.friendshipRepository = friendshipRepository;
             this.currentUser = currentUser;
             this.userService = userService;
+            this.membershipNotifier = membershipNotifier;
         }
 
         // --------------------------------
@@ -39,8 +42,7 @@ namespace Application.Services.Features
         {
             string userId = currentUser.GetRequiredUserId();
 
-            IEnumerable<ChatRoom> rooms =
-                await chatRepository.GetRoomsForUserAsync(userId);
+            IEnumerable<ChatRoom> rooms = await chatRepository.GetRoomsForUserAsync(userId);
 
             return rooms.Select(room => MapRoom(room, userId));
         }
@@ -49,8 +51,7 @@ namespace Application.Services.Features
         {
             string userId = currentUser.GetRequiredUserId();
 
-            IEnumerable<ChatRoom> rooms =
-                await chatRepository.GetMiscellaneousRoomsAsync();
+            IEnumerable<ChatRoom> rooms = await chatRepository.GetMiscellaneousRoomsAsync();
 
             return rooms.Select(room => new ChatRoomView
             {
@@ -84,6 +85,8 @@ namespace Application.Services.Features
                         UserId = userId,
                         JoinedAt = DateTime.UtcNow
                     });
+
+                    await membershipNotifier.NotifyMembersChangedAsync(roomId);
                 }
             }
             else if (room.RoomType == ChatRoomType.Miscellaneous)
@@ -101,8 +104,7 @@ namespace Application.Services.Features
                 throw new InvalidOperationException("Unsupported chat room type.");
             }
 
-            IEnumerable<ChatRoomMember> members =
-                await chatRepository.GetMembersAsync(room.Id);
+            IEnumerable<ChatRoomMember> members = await chatRepository.GetMembersAsync(room.Id);
 
             return new ChatRoomView
             {
@@ -127,24 +129,17 @@ namespace Application.Services.Features
             // Verify that the current user belongs to the room.
             await EnsureMembershipAsync(roomId, currentUserId);
 
-            IEnumerable<ChatRoomMember> members =
-                await chatRepository.GetMembersAsync(roomId);
+            IEnumerable<ChatRoomMember> members = await chatRepository.GetMembersAsync(roomId);
 
             List<ChatRoomMember> memberList = members.ToList();
 
-            Dictionary<string, string> usernames =
-                await userService.GetUsernamesByIdsAsync(
-                    memberList.Select(m => m.UserId));
+            Dictionary<string, string> usernames = await userService.GetUsernamesByIdsAsync(memberList.Select(m => m.UserId));
 
             return memberList.Select(member =>
                 new ChatMemberView
                 {
                     UserId = member.UserId,
-                    Username = usernames.TryGetValue(
-                        member.UserId,
-                        out string? username)
-                            ? username
-                            : "Unknown user",
+                    Username = usernames.TryGetValue(member.UserId, out string? username) ? username : "Unknown user",
                     JoinedAt = member.JoinedAt,
                     IsOwner = room.OwnerUserId == member.UserId
                 });
@@ -158,31 +153,22 @@ namespace Application.Services.Features
         {
             string currentUserId = currentUser.GetRequiredUserId();
 
-            IEnumerable<Friendship> friendships =
-                await friendshipRepository.GetAcceptedForUserAsync(currentUserId);
+            IEnumerable<Friendship> friendships = await friendshipRepository.GetAcceptedForUserAsync(currentUserId);
 
             List<Friendship> friendshipList = friendships.ToList();
 
             List<string> friendUserIds = friendshipList
-                .Select(f =>
-                    f.RequesterUserId == currentUserId
-                        ? f.AddresseeUserId
-                        : f.RequesterUserId)
+                .Select(f => f.RequesterUserId == currentUserId ? f.AddresseeUserId : f.RequesterUserId)
                 .Distinct()
                 .ToList();
 
-            Dictionary<string, string> usernames =
-                await userService.GetUsernamesByIdsAsync(friendUserIds);
+            Dictionary<string, string> usernames = await userService.GetUsernamesByIdsAsync(friendUserIds);
 
             return friendUserIds.Select(userId =>
                 new ChatFriendView
                 {
                     UserId = userId,
-                    Username = usernames.TryGetValue(
-                        userId,
-                        out string? username)
-                            ? username
-                            : "Unknown user"
+                    Username = usernames.TryGetValue(userId, out string? username) ? username : "Unknown user"
                 });
         }
 
@@ -193,53 +179,36 @@ namespace Application.Services.Features
             ChatRoom room = await GetRoomOrThrowAsync(roomId);
 
             if (room.RoomType != ChatRoomType.Private)
-                throw new InvalidOperationException(
-                    "Friends can only be invited to private rooms.");
+                throw new InvalidOperationException("Friends can only be invited to private rooms.");
 
             await EnsureMembershipAsync(roomId, currentUserId);
 
-            IEnumerable<Friendship> friendships =
-                await friendshipRepository.GetAcceptedForUserAsync(currentUserId);
+            IEnumerable<Friendship> friendships = await friendshipRepository.GetAcceptedForUserAsync(currentUserId);
 
             List<Friendship> friendshipList = friendships.ToList();
 
             List<string> friendUserIds = friendshipList
-                .Select(f =>
-                    f.RequesterUserId == currentUserId
-                        ? f.AddresseeUserId
-                        : f.RequesterUserId)
+                .Select(f => f.RequesterUserId == currentUserId ? f.AddresseeUserId : f.RequesterUserId)
                 .Distinct()
                 .ToList();
 
-            IEnumerable<ChatRoomMember> members =
-                await chatRepository.GetMembersAsync(roomId);
+            IEnumerable<ChatRoomMember> members = await chatRepository.GetMembersAsync(roomId);
 
-            HashSet<string> existingMemberIds = members
-                .Select(m => m.UserId)
-                .ToHashSet();
+            HashSet<string> existingMemberIds = members.Select(m => m.UserId).ToHashSet();
 
-            List<string> availableFriendIds = friendUserIds
-                .Where(id => !existingMemberIds.Contains(id))
-                .ToList();
+            List<string> availableFriendIds = friendUserIds.Where(id => !existingMemberIds.Contains(id)).ToList();
 
-            Dictionary<string, string> usernames =
-                await userService.GetUsernamesByIdsAsync(availableFriendIds);
+            Dictionary<string, string> usernames = await userService.GetUsernamesByIdsAsync(availableFriendIds);
 
             return availableFriendIds.Select(userId =>
                 new ChatFriendView
                 {
                     UserId = userId,
-                    Username = usernames.TryGetValue(
-                        userId,
-                        out string? username)
-                            ? username
-                            : "Unknown user"
+                    Username = usernames.TryGetValue(userId, out string? username) ? username : "Unknown user"
                 });
         }
 
-        public async Task<int> CreatePrivateRoomAsync(
-            string name,
-            IEnumerable<string> invitedUserIds)
+        public async Task<int> CreatePrivateRoomAsync(string name, IEnumerable<string> invitedUserIds)
         {
             string currentUserId = currentUser.GetRequiredUserId();
 
@@ -249,8 +218,7 @@ namespace Application.Services.Features
             name = name.Trim();
 
             if (name.Length > 100)
-                throw new ArgumentException(
-                    "Room names cannot exceed 100 characters.");
+                throw new ArgumentException("Room names cannot exceed 100 characters.");
 
             if (invitedUserIds == null)
                 throw new ArgumentNullException(nameof(invitedUserIds));
@@ -264,9 +232,7 @@ namespace Application.Services.Features
 
             foreach (string invitedUserId in userIds)
             {
-                await EnsureAcceptedFriendshipAsync(
-                    currentUserId,
-                    invitedUserId);
+                await EnsureAcceptedFriendshipAsync(currentUserId, invitedUserId);
             }
 
             ChatRoom room = new ChatRoom
@@ -294,16 +260,12 @@ namespace Application.Services.Features
                     JoinedAt = DateTime.UtcNow
                 }));
 
-            await chatRepository.CreateRoomWithMembersAsync(
-                room,
-                members);
+            await chatRepository.CreateRoomWithMembersAsync(room, members);
 
             return room.Id;
         }
 
-        public async Task InviteFriendAsync(
-            int roomId,
-            string invitedUserId)
+        public async Task InviteFriendAsync(int roomId, string invitedUserId)
         {
             string currentUserId = currentUser.GetRequiredUserId();
 
@@ -311,29 +273,21 @@ namespace Application.Services.Features
                 throw new ArgumentException("A user ID is required.");
 
             if (invitedUserId == currentUserId)
-                throw new InvalidOperationException(
-                    "You cannot invite yourself.");
+                throw new InvalidOperationException("You cannot invite yourself.");
 
             ChatRoom room = await GetRoomOrThrowAsync(roomId);
 
             if (room.RoomType != ChatRoomType.Private)
-                throw new InvalidOperationException(
-                    "Friends can only be invited to private rooms.");
+                throw new InvalidOperationException("Friends can only be invited to private rooms.");
 
             await EnsureMembershipAsync(roomId, currentUserId);
 
-            await EnsureAcceptedFriendshipAsync(
-                currentUserId,
-                invitedUserId);
+            await EnsureAcceptedFriendshipAsync(currentUserId, invitedUserId);
 
-            ChatRoomMember? existingMember =
-                await chatRepository.GetMembershipAsync(
-                    roomId,
-                    invitedUserId);
+            ChatRoomMember? existingMember = await chatRepository.GetMembershipAsync(roomId, invitedUserId);
 
             if (existingMember != null)
-                throw new InvalidOperationException(
-                    "This user is already a member of the room.");
+                throw new InvalidOperationException("This user is already a member of the room.");
 
             await chatRepository.AddMemberAsync(new ChatRoomMember
             {
@@ -341,6 +295,8 @@ namespace Application.Services.Features
                 UserId = invitedUserId,
                 JoinedAt = DateTime.UtcNow
             });
+
+            await membershipNotifier.NotifyMembersChangedAsync(roomId);
         }
 
         // --------------------------------
@@ -354,11 +310,9 @@ namespace Application.Services.Features
             ChatRoom room = await GetRoomOrThrowAsync(roomId);
 
             if (room.RoomType != ChatRoomType.Miscellaneous)
-                throw new InvalidOperationException(
-                    "This room cannot be joined through this operation.");
+                throw new InvalidOperationException("This room cannot be joined through this operation.");
 
-            ChatRoomMember? existingMember =
-                await chatRepository.GetMembershipAsync(roomId, userId);
+            ChatRoomMember? existingMember = await chatRepository.GetMembershipAsync(roomId, userId);
 
             if (existingMember != null)
                 return;
@@ -369,6 +323,8 @@ namespace Application.Services.Features
                 UserId = userId,
                 JoinedAt = DateTime.UtcNow
             });
+
+            await membershipNotifier.NotifyMembersChangedAsync(roomId);
         }
 
         public async Task RemoveTemporaryMembershipAsync(int roomId, string userId)
@@ -377,26 +333,25 @@ namespace Application.Services.Features
                 return;
 
             // The room might have been deleted while the user was disconnected.
-            ChatRoom? room =
-                await chatRepository.GetRoomByIdAsync(roomId);
+            ChatRoom? room = await chatRepository.GetRoomByIdAsync(roomId);
 
             if (room == null)
                 return;
 
             // Never automatically remove private-room membership.
-            if (room.RoomType != ChatRoomType.Miscellaneous &&
-                room.RoomType != ChatRoomType.Topic)
+            if (room.RoomType != ChatRoomType.Miscellaneous && room.RoomType != ChatRoomType.Topic)
             {
                 return;
             }
 
-            ChatRoomMember? membership =
-                await chatRepository.GetMembershipAsync(roomId, userId);
+            ChatRoomMember? membership = await chatRepository.GetMembershipAsync(roomId, userId);
 
             if (membership == null)
                 return;
 
             await chatRepository.RemoveMemberAsync(membership);
+
+            await membershipNotifier.NotifyMembersChangedAsync(roomId);
         }
 
         public async Task LeaveRoomAsync(int roomId)
@@ -404,6 +359,8 @@ namespace Application.Services.Features
             string userId = currentUser.GetRequiredUserId();
 
             await chatRepository.LeaveRoomAsync(roomId, userId);
+
+            await membershipNotifier.NotifyMembersChangedAsync(roomId);
         }
 
         public async Task<int> GetUnseenPrivateRoomCountAsync()
@@ -438,19 +395,16 @@ namespace Application.Services.Features
             if (topicId <= 0)
                 throw new ArgumentException("Invalid topic ID.");
 
-            bool topicExists =
-                await chatRepository.TopicExistsAsync(topicId);
+            bool topicExists = await chatRepository.TopicExistsAsync(topicId);//maybe use topic repo?
 
             if (!topicExists)
                 throw new KeyNotFoundException("Topic not found.");
 
-            ChatRoom? room =
-                await chatRepository.GetRoomByTopicIdAsync(topicId);
+            ChatRoom? room = await chatRepository.GetRoomByTopicIdAsync(topicId);
 
             if (room == null)
             {
-                string? topicTitle =
-                    await chatRepository.GetTopicTitleAsync(topicId);
+                string? topicTitle = await chatRepository.GetTopicTitleAsync(topicId);//maybe use topic repo
 
                 room = new ChatRoom
                 {
@@ -494,57 +448,41 @@ namespace Application.Services.Features
         // Messages
         // --------------------------------
 
-        public async Task<IEnumerable<ChatMessageView>>
-            GetLatestMessagesAsync(int roomId)
+        public async Task<IEnumerable<ChatMessageView>> GetLatestMessagesAsync(int roomId)
         {
             string userId = currentUser.GetRequiredUserId();
 
             await GetRoomAsync(roomId);
 
-            IEnumerable<ChatMessage> messages =
-                await chatRepository.GetLatestMessagesAsync(
-                    roomId,
-                    MessageLimit);
+            IEnumerable<ChatMessage> messages = await chatRepository.GetLatestMessagesAsync(roomId, MessageLimit);
 
             List<ChatMessage> messageList = messages.ToList();
 
-            Dictionary<string, string> usernames =
-                await userService.GetUsernamesByIdsAsync(
-                    messageList.Select(m => m.SenderUserId));
+            Dictionary<string, string> usernames = await userService.GetUsernamesByIdsAsync(messageList.Select(m => m.SenderUserId));
 
-            return messageList.Select(message =>
-                new ChatMessageView
+            return messageList.Select(message => new ChatMessageView
                 {
                     Id = message.Id,
                     ChatRoomId = message.ChatRoomId,
                     SenderUserId = message.SenderUserId,
-                    SenderUsername =
-                        usernames.TryGetValue(
-                            message.SenderUserId,
-                            out string? username)
-                            ? username
-                            : "Unknown user",
+                    SenderUsername = usernames.TryGetValue(message.SenderUserId, out string? username) ? username : "Unknown user",
                     Content = message.Content,
                     SentAt = message.SentAt,
                     IsOwnMessage = message.SenderUserId == userId
                 });
         }
 
-        public async Task<ChatMessageView> SendMessageAsync(
-            int roomId,
-            string content)
+        public async Task<ChatMessageView> SendMessageAsync(int roomId, string content)
         {
             string userId = currentUser.GetRequiredUserId();
 
             if (string.IsNullOrWhiteSpace(content))
-                throw new ArgumentException(
-                    "A message cannot be empty.");
+                throw new ArgumentException("A message cannot be empty.");
 
             content = content.Trim();
 
             if (content.Length > MaxMessageLength)
-                throw new ArgumentException(
-                    $"Messages cannot exceed {MaxMessageLength} characters.");
+                throw new ArgumentException($"Messages cannot exceed {MaxMessageLength} characters.");
 
             await GetRoomOrThrowAsync(roomId);
             await EnsureMembershipAsync(roomId, userId);
@@ -579,8 +517,7 @@ namespace Application.Services.Features
 
         private async Task<ChatRoom> GetRoomOrThrowAsync(int roomId)
         {
-            ChatRoom? room =
-                await chatRepository.GetRoomByIdAsync(roomId);
+            ChatRoom? room = await chatRepository.GetRoomByIdAsync(roomId);
 
             if (room == null)
                 throw new KeyNotFoundException("Chat room not found.");
@@ -588,38 +525,25 @@ namespace Application.Services.Features
             return room;
         }
 
-        private async Task EnsureMembershipAsync(
-            int roomId,
-            string userId)
+        private async Task EnsureMembershipAsync(int roomId,string userId)
         {
-            ChatRoomMember? membership =
-                await chatRepository.GetMembershipAsync(roomId, userId);
+            ChatRoomMember? membership = await chatRepository.GetMembershipAsync(roomId, userId);
 
             if (membership == null)
-                throw new UnauthorizedAccessException(
-                    "You are not a member of this chatroom.");
+                throw new UnauthorizedAccessException("You are not a member of this chatroom.");
         }
 
-        private async Task EnsureAcceptedFriendshipAsync(
-            string firstUserId,
-            string secondUserId)
+        private async Task EnsureAcceptedFriendshipAsync(string firstUserId, string secondUserId)
         {
-            Friendship? friendship =
-                await friendshipRepository.GetBetweenUsersAsync(
-                    firstUserId,
-                    secondUserId);
+            Friendship? friendship = await friendshipRepository.GetBetweenUsersAsync(firstUserId, secondUserId);
 
-            if (friendship == null ||
-                friendship.Status != FriendshipStatus.Accepted)
+            if (friendship == null || friendship.Status != FriendshipStatus.Accepted)
             {
-                throw new InvalidOperationException(
-                    "You can only invite accepted friends.");
+                throw new InvalidOperationException("You can only invite accepted friends.");
             }
         }
 
-        private static ChatRoomView MapRoom(
-            ChatRoom room,
-            string currentUserId)
+        private static ChatRoomView MapRoom(ChatRoom room, string currentUserId)
         {
             return new ChatRoomView
             {

@@ -5,7 +5,7 @@ using Application.Interfaces.Services.Forum;
 using Application.Interfaces.Services.User;
 using Application.Mappers;
 using EntityModels;
-using Repository.interfaces;
+using Repository.Interfaces.Repositories;
 using ViewModels.Post;
 using ViewModels.Topic;
 

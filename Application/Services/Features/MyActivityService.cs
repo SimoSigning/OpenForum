@@ -5,7 +5,7 @@ using Application.Interfaces.Services.Features;
 using Application.Interfaces.Services.Forum;
 using Application.Interfaces.Services.User;
 using EntityModels;
-using Repository.interfaces;
+using Repository.Interfaces.Repositories;
 using ViewModels.Comment;
 using ViewModels.MyActivity;
 using ViewModels.Post;

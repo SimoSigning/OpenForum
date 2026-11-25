@@ -15,9 +15,7 @@ public class ChatConnectionTracker
     {
         lock (_lock)
         {
-            return _userConnections.TryGetValue(userId, out var connections)
-                ? connections.ToList()
-                : new List<string>();
+            return _userConnections.TryGetValue(userId, out var connections) ? connections.ToList() : new List<string>();
         }
     }
 
@@ -58,17 +56,11 @@ public class ChatConnectionTracker
         }
     }
 
-    public List<int> RemoveConnectionAndGetLastRooms(
-    string userId,
-    string connectionId)
+    public List<int> RemoveConnectionAndGetLastRooms(string userId, string connectionId)
     {
         lock (_lock)
         {
-            var joinedRooms = _connectionRooms.TryGetValue(
-                connectionId,
-                out var rooms)
-                    ? rooms.ToList()
-                    : new List<int>();
+            var joinedRooms = _connectionRooms.TryGetValue(connectionId, out var rooms) ? rooms.ToList() : new List<int>();
 
             _connectionRooms.Remove(connectionId);
 
@@ -87,10 +79,7 @@ public class ChatConnectionTracker
             // is currently joined to.
             return joinedRooms
                 .Where(roomId => !connections.Any(otherConnectionId =>
-                    _connectionRooms.TryGetValue(
-                        otherConnectionId,
-                        out var otherRooms)
-                    && otherRooms.Contains(roomId)))
+                    _connectionRooms.TryGetValue(otherConnectionId, out var otherRooms) && otherRooms.Contains(roomId)))
                 .ToList();
         }
     }
@@ -124,27 +113,18 @@ public class ChatConnectionTracker
     {
         lock (_lock)
         {
-            return _connectionRooms.TryGetValue(connectionId, out var rooms)
-                ? rooms.ToList()
-                : new List<int>();
+            return _connectionRooms.TryGetValue(connectionId, out var rooms) ? rooms.ToList() : new List<int>();
         }
     }
 
-    public bool HasOtherConnectionInRoom(
-        string userId,
-        string connectionId,
-        int roomId)
+    public bool HasOtherConnectionInRoom(string userId, string connectionId, int roomId)
     {
         lock (_lock)
         {
             if (!_userConnections.TryGetValue(userId, out var connections))
                 return false;
 
-            return connections
-                .Where(id => id != connectionId)
-                .Any(id =>
-                    _connectionRooms.TryGetValue(id, out var rooms)
-                    && rooms.Contains(roomId));
+            return connections.Where(id => id != connectionId).Any(id => _connectionRooms.TryGetValue(id, out var rooms) && rooms.Contains(roomId));
         }
     }
 }

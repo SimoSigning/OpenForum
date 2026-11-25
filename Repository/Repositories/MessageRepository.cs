@@ -5,9 +5,9 @@ using System.Text;
 using EntityContext;
 using EntityModels;
 using Microsoft.EntityFrameworkCore;
-using Repository.interfaces;
+using Repository.Interfaces.Repositories;
 
-namespace Repository
+namespace Repository.Repositories
 {
     public class MessageRepository : IMessageRepository
     {

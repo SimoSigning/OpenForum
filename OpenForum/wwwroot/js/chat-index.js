@@ -113,9 +113,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     async function joinRoom(roomId) {
         try {
-            const token = document.querySelector(
-                'input[name="__RequestVerificationToken"]'
-            )?.value;
+            const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
 
             const response = await fetch("/Chat/JoinRoom", {
                 method: "POST",
@@ -143,34 +141,26 @@ document.addEventListener("DOMContentLoaded", () => {
     // Create private chat
     // --------------------------------
 
-    const createChatButton =
-        document.getElementById("createChatButton");
+    const createChatButton = document.getElementById("createChatButton");
 
-    const createChatModalElement =
-        document.getElementById("createChatModal");
+    const createChatModalElement = document.getElementById("createChatModal");
 
-    const createChatModal =
-        new bootstrap.Modal(createChatModalElement);
+    const createChatModal = new bootstrap.Modal(createChatModalElement);
 
-    const chatFriendsList =
-        document.getElementById("chatFriendsList");
+    const chatFriendsList = document.getElementById("chatFriendsList");
 
-    const createChatError =
-        document.getElementById("createChatError");
+    const createChatError = document.getElementById("createChatError");
 
-    const confirmCreateChatButton =
-        document.getElementById("confirmCreateChatButton");
+    const confirmCreateChatButton = document.getElementById("confirmCreateChatButton");
 
     async function loadChatFriends() {
 
         try {
             chatFriendsList.replaceChildren();
 
-            document.getElementById("chatFriendsLoading")
-                .classList.remove("d-none");
+            document.getElementById("chatFriendsLoading").classList.remove("d-none");
 
-            document.getElementById("chatFriendsEmpty")
-                .classList.add("d-none");
+            document.getElementById("chatFriendsEmpty").classList.add("d-none");
 
             const response = await fetch("/Chat/Friends");
 
@@ -180,13 +170,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
             const friends = await response.json();
 
-            document.getElementById("chatFriendsLoading")
-                .classList.add("d-none");
+            document.getElementById("chatFriendsLoading").classList.add("d-none");
 
             if (friends.length === 0) {
-                document.getElementById("chatFriendsEmpty")
-                    .classList.remove("d-none");
-
+                document.getElementById("chatFriendsEmpty").classList.remove("d-none");
                 return;
             }
 
@@ -194,8 +181,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 const label = document.createElement("label");
 
-                label.className =
-                    "list-group-item d-flex align-items-center gap-2";
+                label.className = "list-group-item d-flex align-items-center gap-2";
 
                 const checkbox = document.createElement("input");
 
@@ -214,8 +200,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         } catch (error) {
 
-            document.getElementById("chatFriendsLoading")
-                .classList.add("d-none");
+            document.getElementById("chatFriendsLoading").classList.add("d-none");
 
             showError(error.message);
         }
@@ -236,26 +221,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
         createChatError.classList.add("d-none");
 
-        const name = document.getElementById("chatRoomName")
-            .value.trim();
+        const name = document.getElementById("chatRoomName").value.trim();
 
         if (!name) {
-            createChatError.textContent =
-                "Please enter a chatroom name.";
+            createChatError.textContent = "Please enter a chatroom name.";
 
             createChatError.classList.remove("d-none");
             return;
         }
 
-        const invitedUserIds = Array.from(
-            chatFriendsList.querySelectorAll(
-                'input[type="checkbox"]:checked'
-            )
-        ).map(checkbox => checkbox.value);
+        const invitedUserIds = Array.from(chatFriendsList.querySelectorAll('input[type="checkbox"]:checked')).map(checkbox => checkbox.value);
 
-        const token = document.querySelector(
-            'input[name="__RequestVerificationToken"]'
-        )?.value;
+        const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
 
         confirmCreateChatButton.disabled = true;
 
@@ -283,15 +260,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 const result = await response.json();
 
-                throw new Error(
-                    result.error || "Could not create the chatroom."
-                );
+                throw new Error(result.error || "Could not create the chatroom.");
             }
 
             const result = await response.json();
 
-            window.location.href =
-                `/Chat/OpenRoom?roomId=${result.roomId}`;
+            window.location.href = `/Chat/OpenRoom?roomId=${result.roomId}`;
 
         } catch (error) {
 

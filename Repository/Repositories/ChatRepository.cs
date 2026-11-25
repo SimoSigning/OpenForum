@@ -1,9 +1,10 @@
 ﻿using EntityContext;
 using EntityModels;
 using Microsoft.EntityFrameworkCore;
-using Repository.interfaces;
+using Microsoft.EntityFrameworkCore.Storage;
+using Repository.Interfaces.Repositories;
 
-namespace Repository
+namespace Repository.Repositories
 {
     public class ChatRepository : IChatRepository
     {
@@ -17,7 +18,6 @@ namespace Repository
         // -------------------------
         // Chat rooms
         // -------------------------
-
         public async Task<ChatRoom?> GetRoomByIdAsync(int roomId)
         {
             return await context.ChatRooms.FirstOrDefaultAsync(r => r.Id == roomId);
@@ -28,15 +28,12 @@ namespace Repository
             return await context.ChatRooms.FirstOrDefaultAsync(r => r.TopicId == topicId);
         }
 
-        public async Task<IEnumerable<ChatRoom>> GetRoomsForUserAsync(
-            string userId)
+        public async Task<IEnumerable<ChatRoom>> GetRoomsForUserAsync(string userId)
         {
             return await context.ChatRooms
                 .AsNoTracking()
                 .Include(r => r.Members)
-                .Where(r =>
-                    r.RoomType == ChatRoomType.Private &&
-                    r.Members.Any(m => m.UserId == userId))
+                .Where(r => r.RoomType == ChatRoomType.Private && r.Members.Any(m => m.UserId == userId))
                 .OrderByDescending(r => r.CreatedAt)
                 .ToListAsync();
         }
@@ -51,32 +48,13 @@ namespace Repository
                 .ToListAsync();
         }
 
-        public async Task AddRoomAsync(ChatRoom room)
-        {
-            context.ChatRooms.Add(room);
-
-            await context.SaveChangesAsync();
-        }
-
-        public async Task DeleteRoomAsync(ChatRoom room)
-        {
-            context.ChatRooms.Remove(room);
-
-            await context.SaveChangesAsync();
-        }
-
-        public async Task CreateRoomWithMembersAsync(
-            ChatRoom room,
-            IEnumerable<ChatRoomMember> members)
+        public async Task CreateRoomWithMembersAsync(ChatRoom room, IEnumerable<ChatRoomMember> members)
         {
             List<ChatRoomMember> memberList = members.ToList();
 
-            bool ownsTransaction =
-                context.Database.CurrentTransaction == null;
+            bool ownsTransaction = context.Database.CurrentTransaction == null;
 
-            await using var transaction = ownsTransaction
-                ? await context.Database.BeginTransactionAsync()
-                : null;
+            await using IDbContextTransaction? transaction = ownsTransaction ? await context.Database.BeginTransactionAsync() : null;
 
             try
             {
@@ -109,61 +87,44 @@ namespace Repository
                     // from EF Core's change tracker.
                     foreach (ChatRoomMember member in memberList)
                     {
-                        context.Entry(member).State =
-                            EntityState.Detached;
+                        context.Entry(member).State = EntityState.Detached;
                     }
 
-                    context.Entry(room).State =
-                        EntityState.Detached;
+                    context.Entry(room).State = EntityState.Detached;
                 }
 
                 throw;
             }
         }
 
-
         public async Task LeaveRoomAsync(int roomId, string userId)
         {
-            await using var transaction =
-                await context.Database.BeginTransactionAsync(
-                    System.Data.IsolationLevel.Serializable);
+            await using IDbContextTransaction? transaction = await context.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
 
             try
             {
-                ChatRoom? room = await context.ChatRooms
-                    .FirstOrDefaultAsync(r => r.Id == roomId);
+                ChatRoom? room = await context.ChatRooms.FirstOrDefaultAsync(r => r.Id == roomId);
 
                 if (room == null)
                     throw new KeyNotFoundException("Chat room not found.");
 
-                ChatRoomMember? member = await context.ChatRoomMembers
-                    .FirstOrDefaultAsync(m =>
-                        m.ChatRoomId == roomId &&
-                        m.UserId == userId);
+                ChatRoomMember? member = await context.ChatRoomMembers.FirstOrDefaultAsync(m => m.ChatRoomId == roomId && m.UserId == userId);
 
                 if (member == null)
-                    throw new InvalidOperationException(
-                        "You are not a member of this chat room.");
+                    throw new InvalidOperationException("You are not a member of this chat room.");
 
-                List<ChatRoomMember> remainingMembers =
-                    await context.ChatRoomMembers
-                        .Where(m =>
-                            m.ChatRoomId == roomId &&
-                            m.UserId != userId)
-                        .ToListAsync();
+                List<ChatRoomMember> remainingMembers = await context.ChatRoomMembers.Where(m => m.ChatRoomId == roomId && m.UserId != userId).ToListAsync();
 
                 // Only private rooms are deleted when their final
                 // member leaves.
-                if (room.RoomType == ChatRoomType.Private &&
-                    remainingMembers.Count == 0)
+                if (room.RoomType == ChatRoomType.Private && remainingMembers.Count == 0)
                 {
                     context.ChatRooms.Remove(room);
                 }
                 else
                 {
                     // Transfer ownership if the current owner leaves.
-                    if (room.RoomType == ChatRoomType.Private &&
-                        room.OwnerUserId == userId)
+                    if (room.RoomType == ChatRoomType.Private && room.OwnerUserId == userId)
                     {
                         ChatRoomMember newOwner = remainingMembers
                             .OrderBy(m => m.JoinedAt)
@@ -198,41 +159,27 @@ namespace Repository
 
         public async Task<bool> TopicExistsAsync(int topicId)
         {
-            return await context.Topics
-                .AnyAsync(t => t.Id == topicId);
+            return await context.Topics.AnyAsync(t => t.Id == topicId);
         }
 
         public async Task<int> GetUnseenPrivateRoomCountAsync(string userId)
         {
-            return await context.ChatRoomMembers
-                .CountAsync(m =>
-                    m.UserId == userId &&
-                    m.ChatRoom.RoomType == ChatRoomType.Private &&
-                    m.LastVisitedAt == null);
+            return await context.ChatRoomMembers.CountAsync(m => m.UserId == userId && m.ChatRoom.RoomType == ChatRoomType.Private && m.LastVisitedAt == null);
         }
 
         public async Task MarkRoomAsVisitedAsync(int roomId, string userId)
         {
             await context.ChatRoomMembers
-                .Where(m =>
-                    m.ChatRoomId == roomId &&
-                    m.UserId == userId)
-                .ExecuteUpdateAsync(setters =>
-                    setters.SetProperty(
-                        m => m.LastVisitedAt,
-                        DateTime.UtcNow));
+                .Where(m => m.ChatRoomId == roomId && m.UserId == userId)
+                .ExecuteUpdateAsync(setters => setters.SetProperty(m => m.LastVisitedAt, DateTime.UtcNow));
         }
 
         // -------------------------
         // Membership
         // -------------------------
-
         public async Task<ChatRoomMember?> GetMembershipAsync(int roomId, string userId)
         {
-            return await context.ChatRoomMembers
-                .FirstOrDefaultAsync(m =>
-                    m.ChatRoomId == roomId &&
-                    m.UserId == userId);
+            return await context.ChatRoomMembers.FirstOrDefaultAsync(m => m.ChatRoomId == roomId && m.UserId == userId);
         }
 
         public async Task<IEnumerable<ChatRoomMember>> GetMembersAsync(int roomId)
@@ -261,7 +208,6 @@ namespace Repository
         // -------------------------
         // Messages
         // -------------------------
-
         public async Task<IEnumerable<ChatMessage>> GetLatestMessagesAsync(int roomId, int count)
         {
             return await context.ChatMessages
@@ -275,8 +221,7 @@ namespace Repository
 
         public async Task AddMessageAsync(ChatMessage message)
         {
-            await using var transaction =
-                await context.Database.BeginTransactionAsync();
+            await using IDbContextTransaction? transaction = await context.Database.BeginTransactionAsync();
 
             try
             {
@@ -293,9 +238,7 @@ namespace Repository
 
                 if (oldMessageIds.Count > 0)
                 {
-                    await context.ChatMessages
-                        .Where(m => oldMessageIds.Contains(m.Id))
-                        .ExecuteDeleteAsync();
+                    await context.ChatMessages.Where(m => oldMessageIds.Contains(m.Id)).ExecuteDeleteAsync();
                 }
 
                 await transaction.CommitAsync();
@@ -305,17 +248,6 @@ namespace Repository
                 await transaction.RollbackAsync();
                 throw;
             }
-        }
-
-        // -------------------------
-        // Ownership
-        // -------------------------
-
-        public async Task UpdateRoomAsync(ChatRoom room)
-        {
-            context.ChatRooms.Update(room);
-
-            await context.SaveChangesAsync();
         }
     }
 }

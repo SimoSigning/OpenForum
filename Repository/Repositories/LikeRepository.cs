@@ -1,9 +1,9 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using EntityContext;
 using EntityModels;
-using Repository.interfaces;
+using Repository.Interfaces.Repositories;
 
-namespace Repository
+namespace Repository.Repositories
 {
     public class LikeRepository : ILikeRepository
     {

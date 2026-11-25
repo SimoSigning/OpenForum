@@ -25,5 +25,7 @@ namespace ViewModels.Messages
         public int? OriginalMessageId { get; set; }
 
         public string? ReturnUrl { get; set; }
+
+        public bool IsRecipientPreselected { get; set; }
     }
 }

@@ -2,7 +2,7 @@
 using Application.Interfaces.Services.Features;
 using Application.Interfaces.Services.User;
 using EntityModels;
-using Repository.interfaces;
+using Repository.Interfaces.Repositories;
 using ViewModels.Friends;
 using ViewModels.MyUser;
 using ViewModels.PublicUserProfile;

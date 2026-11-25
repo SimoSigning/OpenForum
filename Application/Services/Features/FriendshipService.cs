@@ -2,7 +2,7 @@
 using Application.Interfaces.Services.User;
 using Application.Models;
 using EntityModels;
-using Repository.interfaces;
+using Repository.Interfaces.Repositories;
 using System;
 using System.Collections.Generic;
 using System.Text;

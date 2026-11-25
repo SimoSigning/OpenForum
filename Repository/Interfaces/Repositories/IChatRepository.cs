@@ -1,6 +1,6 @@
 ﻿using EntityModels;
 
-namespace Repository.interfaces
+namespace Repository.Interfaces.Repositories
 {
     public interface IChatRepository
     {
@@ -12,10 +12,6 @@ namespace Repository.interfaces
         Task<IEnumerable<ChatRoom>> GetRoomsForUserAsync(string userId);
 
         Task<IEnumerable<ChatRoom>> GetMiscellaneousRoomsAsync();
-
-        Task AddRoomAsync(ChatRoom room);
-
-        Task DeleteRoomAsync(ChatRoom room);
 
         Task CreateRoomWithMembersAsync(ChatRoom room, IEnumerable<ChatRoomMember> members);
 
@@ -43,7 +39,5 @@ namespace Repository.interfaces
 
         Task AddMessageAsync(ChatMessage message);
 
-        // Ownership
-        Task UpdateRoomAsync(ChatRoom room);
     }
 }

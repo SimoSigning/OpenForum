@@ -1,13 +1,15 @@
 ﻿using Application.common.Application.Common;
 using Application.Interfaces.Contexts;
 using Application.Interfaces.Mappers.Forum;
+using Application.Interfaces.Services.Features;
 using Application.Interfaces.Services.Forum;
 using Application.Interfaces.Services.User;
-using Application.Interfaces.Services.Features;
 using EntityContext;
-using Microsoft.EntityFrameworkCore;
 using EntityModels;
-using Repository.interfaces;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
+using Repository.Interfaces.Repositories;
+using Repository.Interfaces.Utils;
 using ViewModels.Topic;
 
 namespace Application.Services.Forum
@@ -18,7 +20,7 @@ namespace Application.Services.Forum
         private readonly ITopicMapper topicMapper;
         private readonly ICurrentUserService currentUser;
         private readonly IUserService userService;
-        private readonly ForumContext context;
+        private readonly IUnitOfWork unitOfWork;
         private readonly IChatService chatService;
         private const int PageSize = 5;
 
@@ -27,14 +29,14 @@ namespace Application.Services.Forum
             ITopicMapper topicMapper,
             ICurrentUserService currentUser,
             IUserService userService,
-            ForumContext context,
+            IUnitOfWork unitOfWork,
             IChatService chatService)
         {
             this.topicRepository = topicRepository;
             this.topicMapper = topicMapper;
             this.currentUser = currentUser;
             this.userService = userService;
-            this.context = context;
+            this.unitOfWork = unitOfWork;
             this.chatService = chatService;
         }
 
@@ -102,11 +104,9 @@ namespace Application.Services.Forum
 
             Topic topic = topicMapper.ToEntity(model);
             topic.CreatedByUserId = userId;
-            topic.CreatedByUserName =
-                await userService.GetUsernameByIdAsync(userId);
+            topic.CreatedByUserName = await userService.GetUsernameByIdAsync(userId);
 
-            await using var transaction =
-                await context.Database.BeginTransactionAsync();
+            await unitOfWork.BeginTransactionAsync();
 
             try
             {
@@ -116,11 +116,11 @@ namespace Application.Services.Forum
                 // Create its chatroom and add the creator as the first member.
                 await chatService.GetOrCreateTopicRoomAsync(topic.Id);
 
-                await transaction.CommitAsync();
+                await unitOfWork.CommitTransactionAsync();
             }
             catch
             {
-                await transaction.RollbackAsync();
+                await unitOfWork.RollbackTransactionAsync();
                 throw;
             }
         }

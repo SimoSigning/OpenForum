@@ -3,23 +3,17 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     const roomId = window.chatRoomId;
 
-    const messagesContainer =
-        document.getElementById("messagesContainer");
+    const messagesContainer = document.getElementById("messagesContainer");
 
-    const messagesLoading =
-        document.getElementById("messagesLoading");
+    const messagesLoading = document.getElementById("messagesLoading");
 
-    const messageForm =
-        document.getElementById("messageForm");
+    const messageForm = document.getElementById("messageForm");
 
-    const messageInput =
-        document.getElementById("messageInput");
+    const messageInput = document.getElementById("messageInput");
 
-    const sendMessageButton =
-        document.getElementById("sendMessageButton");
+    const sendMessageButton = document.getElementById("sendMessageButton");
 
-    const errorElement =
-        document.getElementById("chatError");
+    const errorElement = document.getElementById("chatError");
 
     const MAX_MESSAGES = 100;
 
@@ -64,15 +58,11 @@ document.addEventListener("DOMContentLoaded", async () => {
         sortedMessages.forEach(message => {
 
             // Determine ownership for the currently logged-in user.
-            const isOwnMessage =
-                message.senderUserId === window.chatCurrentUserId;
+            const isOwnMessage = message.senderUserId === window.chatCurrentUserId;
 
             const messageElement = document.createElement("div");
 
-            messageElement.className =
-                isOwnMessage
-                    ? "align-self-start bg-primary text-white rounded p-3"
-                    : "align-self-end bg-light border rounded p-3";
+            messageElement.className = isOwnMessage ? "align-self-start bg-primary text-white rounded p-3" : "align-self-end bg-light border rounded p-3";
 
             messageElement.style.maxWidth = "75%";
 
@@ -87,26 +77,18 @@ document.addEventListener("DOMContentLoaded", async () => {
 
             const timestamp = document.createElement("small");
 
-            timestamp.className =
-                isOwnMessage
-                    ? "d-block mt-2 text-white-50"
-                    : "d-block mt-2 text-muted";
+            timestamp.className = isOwnMessage ? "d-block mt-2 text-white-50" : "d-block mt-2 text-muted";
 
             const sentAt = new Date(message.sentAt);
 
             timestamp.textContent = sentAt.toLocaleString();
 
-            messageElement.append(
-                sender,
-                content,
-                timestamp
-            );
+            messageElement.append(sender, content, timestamp);
 
             messagesContainer.appendChild(messageElement);
         });
 
-        messagesContainer.scrollTop =
-            messagesContainer.scrollHeight;
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
 
     function addMessage(message) {
@@ -127,8 +109,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     async function loadMessages() {
 
         try {
-            const response = await fetch(
-                `/Chat/Messages?roomId=${roomId}`
+            const response = await fetch(`/Chat/Messages?roomId=${roomId}`
             );
 
             if (!response.ok) {
@@ -180,6 +161,18 @@ document.addEventListener("DOMContentLoaded", async () => {
             }
         });
 
+        // Receive notifications when room membership changes.
+        connection.on("RoomMembersChanged", changedRoomId => {
+
+            if (isPageLeaving)
+                return;
+
+            if (Number(changedRoomId) !== Number(roomId))
+                return;
+
+            loadRoomMembers();
+        });
+
         connection.onreconnecting(() => {
 
             if (isPageLeaving)
@@ -220,9 +213,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             if (isPageLeaving)
                 return;
 
-            showError(
-                "Connection to the chatroom was lost. Please refresh the page."
-            );
+            showError("Connection to the chatroom was lost. Please refresh the page.");
 
             sendMessageButton.disabled = true;
         });
@@ -278,8 +269,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         await connectToChat();
 
-        if (connection &&
-            connection.state === signalR.HubConnectionState.Connected) {
+        if (connection && connection.state === signalR.HubConnectionState.Connected) {
 
             await loadMessages();
             await loadRoomMembers();
@@ -309,8 +299,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             return;
         }
 
-        if (!connection ||
-            connection.state !== signalR.HubConnectionState.Connected) {
+        if (!connection || connection.state !== signalR.HubConnectionState.Connected) {
 
             showError("You are not connected to the chatroom.");
             return;
@@ -320,10 +309,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         try {
 
-            await connection.invoke(
-                "SendMessage",
-                roomId,
-                content
+            await connection.invoke("SendMessage", roomId, content
             );
 
             messageInput.value = "";
@@ -335,9 +321,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         } finally {
 
-            sendMessageButton.disabled =
-                !connection ||
-                connection.state !== signalR.HubConnectionState.Connected;
+            sendMessageButton.disabled = !connection || connection.state !== signalR.HubConnectionState.Connected;
         }
     });
 
@@ -347,16 +331,13 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     async function loadRoomMembers() {
 
-        const membersList =
-            document.getElementById("roomMembersList");
+        const membersList = document.getElementById("roomMembersList");
 
-        const loading =
-            document.getElementById("roomMembersLoading");
+        const loading = document.getElementById("roomMembersLoading");
 
         try {
 
-            const response = await fetch(
-                `/Chat/RoomMembers?roomId=${roomId}`
+            const response = await fetch(`/Chat/RoomMembers?roomId=${roomId}`
             );
 
             if (!response.ok) {
@@ -380,8 +361,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 membersList.appendChild(badge);
             });
 
-            document.getElementById("roomMemberCount").textContent =
-                members.length;
+            document.getElementById("roomMemberCount").textContent = members.length;
 
         } catch (error) {
 
@@ -399,25 +379,19 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Invite friends
     // --------------------------------
 
-    const inviteFriendsButton =
-        document.getElementById("inviteFriendsButton");
+    const inviteFriendsButton = document.getElementById("inviteFriendsButton");
 
     if (inviteFriendsButton) {
 
-        const inviteModalElement =
-            document.getElementById("inviteFriendsModal");
+        const inviteModalElement = document.getElementById("inviteFriendsModal");
 
-        const inviteModal =
-            new bootstrap.Modal(inviteModalElement);
+        const inviteModal = new bootstrap.Modal(inviteModalElement);
 
-        const inviteFriendsList =
-            document.getElementById("inviteFriendsList");
+        const inviteFriendsList = document.getElementById("inviteFriendsList");
 
-        const inviteFriendsError =
-            document.getElementById("inviteFriendsError");
+        const inviteFriendsError = document.getElementById("inviteFriendsError");
 
-        const inviteFriendsSuccess =
-            document.getElementById("inviteFriendsSuccess");
+        const inviteFriendsSuccess = document.getElementById("inviteFriendsSuccess");
 
         async function loadAvailableFriends() {
 
@@ -426,16 +400,13 @@ document.addEventListener("DOMContentLoaded", async () => {
             inviteFriendsError.classList.add("d-none");
             inviteFriendsSuccess.classList.add("d-none");
 
-            document.getElementById("inviteFriendsLoading")
-                .classList.remove("d-none");
+            document.getElementById("inviteFriendsLoading").classList.remove("d-none");
 
-            document.getElementById("inviteFriendsEmpty")
-                .classList.add("d-none");
+            document.getElementById("inviteFriendsEmpty").classList.add("d-none");
 
             try {
 
-                const response = await fetch(
-                    `/Chat/AvailableFriendsToInvite?roomId=${roomId}`
+                const response = await fetch(`/Chat/AvailableFriendsToInvite?roomId=${roomId}`
                 );
 
                 if (!response.ok) {
@@ -444,13 +415,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 
                 const friends = await response.json();
 
-                document.getElementById("inviteFriendsLoading")
-                    .classList.add("d-none");
+                document.getElementById("inviteFriendsLoading").classList.add("d-none");
 
                 if (friends.length === 0) {
 
-                    document.getElementById("inviteFriendsEmpty")
-                        .classList.remove("d-none");
+                    document.getElementById("inviteFriendsEmpty").classList.remove("d-none");
 
                     return;
                 }
@@ -459,8 +428,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
                     const item = document.createElement("div");
 
-                    item.className =
-                        "list-group-item d-flex justify-content-between align-items-center";
+                    item.className = "list-group-item d-flex justify-content-between align-items-center";
 
                     const username = document.createElement("span");
 
@@ -483,8 +451,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
             } catch (error) {
 
-                document.getElementById("inviteFriendsLoading")
-                    .classList.add("d-none");
+                document.getElementById("inviteFriendsLoading").classList.add("d-none");
 
                 inviteFriendsError.textContent = error.message;
                 inviteFriendsError.classList.remove("d-none");
@@ -496,9 +463,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             inviteFriendsError.classList.add("d-none");
             inviteFriendsSuccess.classList.add("d-none");
 
-            const token = document.querySelector(
-                'input[name="__RequestVerificationToken"]'
-            )?.value;
+            const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
 
             button.disabled = true;
 
@@ -523,21 +488,17 @@ document.addEventListener("DOMContentLoaded", async () => {
 
                     const result = await response.json();
 
-                    throw new Error(
-                        result.error || "Could not invite friend."
-                    );
+                    throw new Error(result.error || "Could not invite friend.");
                 }
 
-                inviteFriendsSuccess.textContent =
-                    "Friend successfully invited.";
+                inviteFriendsSuccess.textContent = "Friend successfully invited.";
 
                 inviteFriendsSuccess.classList.remove("d-none");
 
                 await loadRoomMembers();
                 await loadAvailableFriends();
 
-                inviteFriendsSuccess.textContent =
-                    "Friend successfully invited.";
+                inviteFriendsSuccess.textContent = "Friend successfully invited.";
 
                 inviteFriendsSuccess.classList.remove("d-none");
 
@@ -562,8 +523,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Leave room
     // --------------------------------
 
-    const leaveRoomButton =
-        document.getElementById("leaveRoomButton");
+    const leaveRoomButton = document.getElementById("leaveRoomButton");
 
     if (leaveRoomButton) {
 
@@ -571,16 +531,12 @@ document.addEventListener("DOMContentLoaded", async () => {
 
             clearError();
 
-            const confirmed = confirm(
-                "Are you sure you want to leave this chatroom?"
-            );
+            const confirmed = confirm("Are you sure you want to leave this chatroom?");
 
             if (!confirmed)
                 return;
 
-            const token = document.querySelector(
-                'input[name="__RequestVerificationToken"]'
-            )?.value;
+            const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
 
             leaveRoomButton.disabled = true;
 
@@ -641,8 +597,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     await connectToChat();
 
-    if (connection &&
-        connection.state === signalR.HubConnectionState.Connected) {
+    if (connection && connection.state === signalR.HubConnectionState.Connected) {
 
         await loadMessages();
         await loadRoomMembers();

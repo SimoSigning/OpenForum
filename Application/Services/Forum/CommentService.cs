@@ -5,7 +5,7 @@ using Application.Interfaces.Services.Forum;
 using Application.Interfaces.Services.User;
 using EntityModels;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
-using Repository.interfaces;
+using Repository.Interfaces.Repositories;
 using ViewModels.Comment;
 
 namespace Application.Services.Forum

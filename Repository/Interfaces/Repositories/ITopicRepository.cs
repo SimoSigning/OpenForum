@@ -1,6 +1,6 @@
 ﻿using EntityModels;
 
-namespace Repository.interfaces
+namespace Repository.Interfaces.Repositories
 {
     public interface ITopicRepository
     {
