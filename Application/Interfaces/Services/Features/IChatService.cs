@@ -25,10 +25,12 @@ namespace Application.Interfaces.Services.Features
 
         Task InviteFriendAsync(int roomId, string invitedUserId);
 
+        Task DeletePrivateRoomAsync(int roomId);
+
         // Membership
         Task JoinMiscellaneousRoomAsync(int roomId);
 
-        Task LeaveRoomAsync(int roomId);
+        Task<bool> LeaveRoomAsync(int roomId);
 
         Task<int> GetUnseenPrivateRoomCountAsync();
 

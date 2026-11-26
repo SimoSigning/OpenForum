@@ -1,16 +1,33 @@
-﻿@model ViewModels.Messages.MessageDetailsView
+﻿
+@model ViewModels.Messages.MessageDetailsView
 
 @{
     ViewData["Title"] = "Message details";
 }
 
 <div class="container py-4">
+
     <div class="card">
+
         <div class="card-header">
-            <h3 class="mb-0">@Model.Subject</h3>
+
+            @if (Model.IsDeletedBySender)
+            {
+                <h3 class="mb-0 text-muted">
+                    Deleted message
+                </h3>
+            }
+            else
+            {
+                <h3 class="mb-0">
+                    @Model.Subject
+                </h3>
+            }
+
         </div>
 
         <div class="card-body">
+
             <div class="mb-3">
                 <strong>From:</strong>
                 @Model.SenderUserName
@@ -26,49 +43,117 @@
                 @Model.SentAt.ToString("g")
             </div>
 
-            @if (!Model.CanReply)
+            @if (Model.IsDeletedBySender)
             {
-                <div class="mb-3">
-                    <strong>Status:</strong>
+                <div class="alert alert-secondary">
 
-                    @if (Model.IsRead)
-                    {
-                        <span class="badge bg-success">Read</span>
-                    }
-                    else
-                    {
-                        <span class="badge bg-secondary">Unread</span>
-                    }
+                    <i class="bi bi-info-circle me-2"></i>
+
+                    This message has been deleted by the sender.
+
                 </div>
             }
+            else
+            {
+                @if (!Model.CanReply)
+                {
+                    <div class="mb-3">
 
-            <hr />
+                        <strong>Status:</strong>
 
-            <div style="white-space: pre-wrap;">@Model.Body</div>
+                        @if (Model.IsRead)
+                        {
+                            <span class="badge bg-success">
+                                Read
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">
+                                Unread
+                            </span>
+                        }
+
+                    </div>
+                }
+
+                <hr />
+
+                <div style="white-space: pre-wrap;">@Model.Body</div>
+            }
+
         </div>
 
-        <div class="card-footer d-flex gap-2">
+        <div class="card-footer d-flex flex-wrap gap-2">
+
             @if (Model.CanReply)
             {
                 <a asp-controller="Message"
                    asp-action="Reply"
                    asp-route-originalMessageId="@Model.Id"
                    class="btn btn-primary">
+
                     Reply
+
                 </a>
+            }
+
+            @if (Model.CanReply)
+            {
+                <form asp-controller="Message"
+                      asp-action="DeleteInbox"
+                      asp-route-id="@Model.Id"
+                      method="post">
+
+                    <button type="submit"
+                            class="btn btn-outline-danger"
+                            onclick="return confirm('Remove this message from your inbox?');">
+
+                        <i class="bi bi-trash me-1"></i>
+                        Delete
+
+                    </button>
+
+                </form>
+            }
+            else if (Model.SenderUserId == User.FindFirst(
+                         System.Security.Claims.ClaimTypes.NameIdentifier)?.Value)
+            {
+                <form asp-controller="Message"
+                      asp-action="DeleteSent"
+                      asp-route-id="@Model.Id"
+                      method="post">
+
+                    <button type="submit"
+                            class="btn btn-outline-danger"
+                            onclick="return confirm('Delete this sent message? The recipient will see a deleted-message notification.');">
+
+                        <i class="bi bi-trash me-1"></i>
+                        Delete sent message
+
+                    </button>
+
+                </form>
             }
 
             <a asp-controller="Message"
                asp-action="Inbox"
                class="btn btn-outline-secondary">
+
                 Inbox
+
             </a>
 
             <a asp-controller="Message"
                asp-action="Sent"
                class="btn btn-outline-secondary">
+
                 Sent messages
+
             </a>
+
         </div>
+
     </div>
+
 </div>

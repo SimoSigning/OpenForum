@@ -51,6 +51,15 @@ namespace Repository.Repositories
                     f.Status == FriendshipStatus.Pending);
         }
 
+        public async Task<IEnumerable<Friendship>> GetOutgoingPendingRequestsAsync(string userId)
+        {
+            return await context.Friendships
+                .AsNoTracking()
+                .Where(f => f.RequesterUserId == userId && f.Status == FriendshipStatus.Pending)
+                .OrderByDescending(f => f.CreatedAt)
+                .ToListAsync();
+        }
+
         public async Task<IEnumerable<Friendship>> GetAcceptedForUserAsync(string userId)
         {
             return await context.Friendships

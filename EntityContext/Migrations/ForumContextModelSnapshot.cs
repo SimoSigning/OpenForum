@@ -309,6 +309,15 @@ namespace EntityContext.Migrations
                         .HasMaxLength(5000)
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<DateTime?>("DeletedBySenderAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsDeletedByRecipient")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDeletedBySender")
+                        .HasColumnType("bit");
+
                     b.Property<bool>("IsRead")
                         .HasColumnType("bit");
 

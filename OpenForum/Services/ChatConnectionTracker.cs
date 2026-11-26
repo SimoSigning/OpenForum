@@ -117,6 +117,17 @@ public class ChatConnectionTracker
         }
     }
 
+    public List<string> GetConnectionsInRoom(int roomId)
+    {
+        lock (_lock)
+        {
+            return _connectionRooms
+                .Where(pair => pair.Value.Contains(roomId))
+                .Select(pair => pair.Key)
+                .ToList();
+        }
+    }
+
     public bool HasOtherConnectionInRoom(string userId, string connectionId, int roomId)
     {
         lock (_lock)

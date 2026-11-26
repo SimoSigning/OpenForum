@@ -15,7 +15,7 @@ namespace Repository.Interfaces.Repositories
 
         Task CreateRoomWithMembersAsync(ChatRoom room, IEnumerable<ChatRoomMember> members);
 
-        Task LeaveRoomAsync(int roomId, string userId);
+        Task<bool> LeaveRoomAsync(int roomId, string userId);
 
         Task<string?> GetTopicTitleAsync(int topicId);
 
@@ -24,6 +24,8 @@ namespace Repository.Interfaces.Repositories
         Task<int> GetUnseenPrivateRoomCountAsync(string userId);
 
         Task MarkRoomAsVisitedAsync(int roomId, string userId);
+
+        Task DeletePrivateRoomAsync(int roomId, string userId);
 
         // Membership
         Task<ChatRoomMember?> GetMembershipAsync(int roomId, string userId);

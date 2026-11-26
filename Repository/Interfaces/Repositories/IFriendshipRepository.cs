@@ -14,6 +14,8 @@ namespace Repository.Interfaces.Repositories
 
         Task<int> GetIncomingPendingRequestCountAsync(string userId);
 
+        Task<IEnumerable<Friendship>> GetOutgoingPendingRequestsAsync(string userId);
+
         Task<IEnumerable<Friendship>> GetAcceptedForUserAsync(string userId);
 
         Task AddAsync(Friendship friendship);

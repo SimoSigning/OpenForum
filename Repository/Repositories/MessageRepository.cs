@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
+﻿
 using EntityContext;
 using EntityModels;
 using Microsoft.EntityFrameworkCore;
@@ -22,7 +19,7 @@ namespace Repository.Repositories
         {
             return await context.Messages
                 .AsNoTracking()
-                .Where(m => m.RecipientUserId == recipientUserId)
+                .Where(m => m.RecipientUserId == recipientUserId && !m.IsDeletedByRecipient)
                 .OrderByDescending(m => m.SentAt)
                 .ThenByDescending(m => m.Id)
                 .ToListAsync();
@@ -32,7 +29,7 @@ namespace Repository.Repositories
         {
             return await context.Messages
                 .AsNoTracking()
-                .Where(m => m.SenderUserId == senderUserId)
+                .Where(m => m.SenderUserId == senderUserId && !m.IsDeletedBySender)
                 .OrderByDescending(m => m.SentAt)
                 .ThenByDescending(m => m.Id)
                 .ToListAsync();
@@ -49,7 +46,9 @@ namespace Repository.Repositories
             return await context.Messages
                 .CountAsync(m =>
                     m.RecipientUserId == recipientUserId &&
-                    !m.IsRead);
+                    !m.IsRead &&
+                    !m.IsDeletedByRecipient &&
+                    !m.IsDeletedBySender);
         }
 
         public async Task AddAsync(Message message)

@@ -4,23 +4,18 @@ document.addEventListener("DOMContentLoaded", async () => {
     const roomId = window.chatRoomId;
 
     const messagesContainer = document.getElementById("messagesContainer");
-
     const messagesLoading = document.getElementById("messagesLoading");
-
     const messageForm = document.getElementById("messageForm");
-
     const messageInput = document.getElementById("messageInput");
-
     const sendMessageButton = document.getElementById("sendMessageButton");
-
     const errorElement = document.getElementById("chatError");
 
     const MAX_MESSAGES = 100;
-
     const messages = new Map();
 
     let connection = null;
     let isPageLeaving = false;
+    let isLeavingRoom = false;
 
     // --------------------------------
     // Error handling
@@ -58,11 +53,14 @@ document.addEventListener("DOMContentLoaded", async () => {
         sortedMessages.forEach(message => {
 
             // Determine ownership for the currently logged-in user.
-            const isOwnMessage = message.senderUserId === window.chatCurrentUserId;
+            const isOwnMessage =
+                message.senderUserId === window.chatCurrentUserId;
 
             const messageElement = document.createElement("div");
 
-            messageElement.className = isOwnMessage ? "align-self-start bg-primary text-white rounded p-3" : "align-self-end bg-light border rounded p-3";
+            messageElement.className = isOwnMessage
+                ? "align-self-start bg-primary text-white rounded p-3"
+                : "align-self-end bg-light border rounded p-3";
 
             messageElement.style.maxWidth = "75%";
 
@@ -77,14 +75,14 @@ document.addEventListener("DOMContentLoaded", async () => {
 
             const timestamp = document.createElement("small");
 
-            timestamp.className = isOwnMessage ? "d-block mt-2 text-white-50" : "d-block mt-2 text-muted";
+            timestamp.className = isOwnMessage
+                ? "d-block mt-2 text-white-50"
+                : "d-block mt-2 text-muted";
 
             const sentAt = new Date(message.sentAt);
-
             timestamp.textContent = sentAt.toLocaleString();
 
             messageElement.append(sender, content, timestamp);
-
             messagesContainer.appendChild(messageElement);
         });
 
@@ -92,6 +90,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     function addMessage(message) {
+
+        if (isPageLeaving || isLeavingRoom)
+            return;
 
         // Prevent duplicates when history and SignalR overlap.
         if (messages.has(message.id))
@@ -108,8 +109,13 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     async function loadMessages() {
 
+        if (isPageLeaving || isLeavingRoom)
+            return;
+
         try {
-            const response = await fetch(`/Chat/Messages?roomId=${roomId}`
+
+            const response = await fetch(
+                `/Chat/Messages?roomId=${roomId}`
             );
 
             if (!response.ok) {
@@ -117,6 +123,10 @@ document.addEventListener("DOMContentLoaded", async () => {
             }
 
             const loadedMessages = await response.json();
+
+            // The user may have started leaving while the request was running.
+            if (isPageLeaving || isLeavingRoom)
+                return;
 
             loadedMessages.forEach(message => {
                 addMessage(message);
@@ -126,7 +136,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         } catch (error) {
 
-            if (!isPageLeaving) {
+            if (!isPageLeaving && !isLeavingRoom) {
                 showError(error.message);
                 messagesLoading.classList.add("d-none");
             }
@@ -139,8 +149,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     async function connectToChat() {
 
-        // Do not create another connection while leaving the page.
-        if (isPageLeaving)
+        // Do not create or reconnect while leaving the page or room.
+        if (isPageLeaving || isLeavingRoom)
             return;
 
         // Avoid creating a duplicate connection.
@@ -156,7 +166,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         // Receive messages from other users.
         connection.on("ReceiveMessage", message => {
-            if (!isPageLeaving) {
+
+            if (!isPageLeaving && !isLeavingRoom) {
                 addMessage(message);
             }
         });
@@ -164,7 +175,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         // Receive notifications when room membership changes.
         connection.on("RoomMembersChanged", changedRoomId => {
 
-            if (isPageLeaving)
+            if (isPageLeaving || isLeavingRoom)
                 return;
 
             if (Number(changedRoomId) !== Number(roomId))
@@ -173,68 +184,124 @@ document.addEventListener("DOMContentLoaded", async () => {
             loadRoomMembers();
         });
 
-        connection.onreconnecting(() => {
+        // Handle deletion of the current chatroom.
+        connection.on("RoomDeleted", async deletedRoomId => {
+
+            if (Number(deletedRoomId) !== Number(roomId))
+                return;
 
             if (isPageLeaving)
+                return;
+
+            // Prevent further room operations.
+            isPageLeaving = true;
+
+            // Stop the SignalR connection.
+            if (connection) {
+                try {
+                    await connection.stop();
+                } catch {
+                    // The connection may already have stopped.
+                }
+            }
+
+            // Return the user to the chat overview.
+            window.location.replace("/Chat/Index");
+        });
+
+        // Handle a lost connection.
+        connection.onreconnecting(() => {
+
+            if (isPageLeaving || isLeavingRoom)
                 return;
 
             showError("Connection lost. Reconnecting...");
             sendMessageButton.disabled = true;
         });
 
+        // Rejoin the room after SignalR reconnects.
         connection.onreconnected(async () => {
 
-            if (isPageLeaving)
+            if (isPageLeaving || isLeavingRoom)
                 return;
 
             clearError();
 
             try {
-                await connection.invoke("JoinRoom", roomId);
 
-                if (isPageLeaving)
+                const joined = await connection.invoke("JoinRoom", roomId);
+
+                if (isPageLeaving || isLeavingRoom)
                     return;
 
+                // The server rejected the join because the user is no longer
+                // a member of the room.
+                if (!joined) {
+                    window.location.replace("/Chat/Index");
+                    return;
+                }
+
                 await loadMessages();
+
+                if (isPageLeaving || isLeavingRoom)
+                    return;
 
                 sendMessageButton.disabled = false;
 
             } catch (error) {
 
-                if (!isPageLeaving) {
+                if (!isPageLeaving && !isLeavingRoom) {
                     showError("Could not rejoin the chatroom.");
                     sendMessageButton.disabled = true;
                 }
             }
         });
 
+        // Handle a permanently closed connection.
         connection.onclose(() => {
 
-            if (isPageLeaving)
+            if (isPageLeaving || isLeavingRoom)
                 return;
 
-            showError("Connection to the chatroom was lost. Please refresh the page.");
+            showError(
+                "Connection to the chatroom was lost. Please refresh the page."
+            );
 
             sendMessageButton.disabled = true;
         });
 
+        // Start the SignalR connection.
         try {
 
             await connection.start();
 
-            // The page may have started unloading while connecting.
-            if (isPageLeaving) {
+            // The user may have started leaving while SignalR was connecting.
+            if (isPageLeaving || isLeavingRoom) {
                 await connection.stop();
                 return;
             }
 
-            await connection.invoke("JoinRoom", roomId);
+            const joined = await connection.invoke("JoinRoom", roomId);
+
+            // The user may have started leaving while JoinRoom was executing.
+            if (isPageLeaving || isLeavingRoom) {
+                await connection.stop();
+                return;
+            }
+
+            // The server rejected the join because the user is no longer
+            // a member of the room.
+            if (!joined) {
+                await connection.stop();
+                window.location.replace("/Chat/Index");
+                return;
+            }
 
             clearError();
 
         } catch (error) {
 
-            if (!isPageLeaving) {
+            if (!isPageLeaving && !isLeavingRoom) {
                 showError("Could not connect to the chatroom.");
                 sendMessageButton.disabled = true;
             }
@@ -267,9 +334,14 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         isPageLeaving = false;
 
+        if (isLeavingRoom)
+            return;
+
         await connectToChat();
 
-        if (connection && connection.state === signalR.HubConnectionState.Connected) {
+        if (connection &&
+            connection.state === signalR.HubConnectionState.Connected &&
+            !isLeavingRoom) {
 
             await loadMessages();
             await loadRoomMembers();
@@ -284,7 +356,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         event.preventDefault();
 
-        if (isPageLeaving)
+        if (isPageLeaving || isLeavingRoom)
             return;
 
         clearError();
@@ -299,7 +371,8 @@ document.addEventListener("DOMContentLoaded", async () => {
             return;
         }
 
-        if (!connection || connection.state !== signalR.HubConnectionState.Connected) {
+        if (!connection ||
+            connection.state !== signalR.HubConnectionState.Connected) {
 
             showError("You are not connected to the chatroom.");
             return;
@@ -309,19 +382,27 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         try {
 
-            await connection.invoke("SendMessage", roomId, content
-            );
+            await connection.invoke("SendMessage", roomId, content);
+
+            if (isPageLeaving || isLeavingRoom)
+                return;
 
             messageInput.value = "";
             messageInput.focus();
 
         } catch (error) {
 
-            showError("Could not send your message.");
+            if (!isPageLeaving && !isLeavingRoom) {
+                showError("Could not send your message.");
+            }
 
         } finally {
 
-            sendMessageButton.disabled = !connection || connection.state !== signalR.HubConnectionState.Connected;
+            if (!isPageLeaving && !isLeavingRoom) {
+                sendMessageButton.disabled =
+                    !connection ||
+                    connection.state !== signalR.HubConnectionState.Connected;
+            }
         }
     });
 
@@ -331,13 +412,16 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     async function loadRoomMembers() {
 
-        const membersList = document.getElementById("roomMembersList");
+        if (isPageLeaving || isLeavingRoom)
+            return;
 
+        const membersList = document.getElementById("roomMembersList");
         const loading = document.getElementById("roomMembersLoading");
 
         try {
 
-            const response = await fetch(`/Chat/RoomMembers?roomId=${roomId}`
+            const response = await fetch(
+                `/Chat/RoomMembers?roomId=${roomId}`
             );
 
             if (!response.ok) {
@@ -345,6 +429,10 @@ document.addEventListener("DOMContentLoaded", async () => {
             }
 
             const members = await response.json();
+
+            // The user may have started leaving while the request was running.
+            if (isPageLeaving || isLeavingRoom)
+                return;
 
             membersList.replaceChildren();
 
@@ -361,11 +449,12 @@ document.addEventListener("DOMContentLoaded", async () => {
                 membersList.appendChild(badge);
             });
 
-            document.getElementById("roomMemberCount").textContent = members.length;
+            document.getElementById("roomMemberCount").textContent =
+                members.length;
 
         } catch (error) {
 
-            if (!isPageLeaving) {
+            if (!isPageLeaving && !isLeavingRoom) {
                 showError(error.message);
             }
 
@@ -379,34 +468,45 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Invite friends
     // --------------------------------
 
-    const inviteFriendsButton = document.getElementById("inviteFriendsButton");
+    const inviteFriendsButton =
+        document.getElementById("inviteFriendsButton");
 
     if (inviteFriendsButton) {
 
-        const inviteModalElement = document.getElementById("inviteFriendsModal");
+        const inviteModalElement =
+            document.getElementById("inviteFriendsModal");
 
         const inviteModal = new bootstrap.Modal(inviteModalElement);
 
-        const inviteFriendsList = document.getElementById("inviteFriendsList");
+        const inviteFriendsList =
+            document.getElementById("inviteFriendsList");
 
-        const inviteFriendsError = document.getElementById("inviteFriendsError");
+        const inviteFriendsError =
+            document.getElementById("inviteFriendsError");
 
-        const inviteFriendsSuccess = document.getElementById("inviteFriendsSuccess");
+        const inviteFriendsSuccess =
+            document.getElementById("inviteFriendsSuccess");
 
         async function loadAvailableFriends() {
+
+            if (isPageLeaving || isLeavingRoom)
+                return;
 
             inviteFriendsList.replaceChildren();
 
             inviteFriendsError.classList.add("d-none");
             inviteFriendsSuccess.classList.add("d-none");
 
-            document.getElementById("inviteFriendsLoading").classList.remove("d-none");
+            document.getElementById("inviteFriendsLoading")
+                .classList.remove("d-none");
 
-            document.getElementById("inviteFriendsEmpty").classList.add("d-none");
+            document.getElementById("inviteFriendsEmpty")
+                .classList.add("d-none");
 
             try {
 
-                const response = await fetch(`/Chat/AvailableFriendsToInvite?roomId=${roomId}`
+                const response = await fetch(
+                    `/Chat/AvailableFriendsToInvite?roomId=${roomId}`
                 );
 
                 if (!response.ok) {
@@ -415,11 +515,16 @@ document.addEventListener("DOMContentLoaded", async () => {
 
                 const friends = await response.json();
 
-                document.getElementById("inviteFriendsLoading").classList.add("d-none");
+                if (isPageLeaving || isLeavingRoom)
+                    return;
+
+                document.getElementById("inviteFriendsLoading")
+                    .classList.add("d-none");
 
                 if (friends.length === 0) {
 
-                    document.getElementById("inviteFriendsEmpty").classList.remove("d-none");
+                    document.getElementById("inviteFriendsEmpty")
+                        .classList.remove("d-none");
 
                     return;
                 }
@@ -428,10 +533,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 
                     const item = document.createElement("div");
 
-                    item.className = "list-group-item d-flex justify-content-between align-items-center";
+                    item.className =
+                        "list-group-item d-flex justify-content-between align-items-center";
 
                     const username = document.createElement("span");
-
                     username.textContent = friend.username;
 
                     const button = document.createElement("button");
@@ -445,25 +550,32 @@ document.addEventListener("DOMContentLoaded", async () => {
                     });
 
                     item.append(username, button);
-
                     inviteFriendsList.appendChild(item);
                 });
 
             } catch (error) {
 
-                document.getElementById("inviteFriendsLoading").classList.add("d-none");
+                document.getElementById("inviteFriendsLoading")
+                    .classList.add("d-none");
 
-                inviteFriendsError.textContent = error.message;
-                inviteFriendsError.classList.remove("d-none");
+                if (!isPageLeaving && !isLeavingRoom) {
+                    inviteFriendsError.textContent = error.message;
+                    inviteFriendsError.classList.remove("d-none");
+                }
             }
         }
 
         async function inviteFriend(userId, button) {
 
+            if (isPageLeaving || isLeavingRoom)
+                return;
+
             inviteFriendsError.classList.add("d-none");
             inviteFriendsSuccess.classList.add("d-none");
 
-            const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+            const token = document.querySelector(
+                'input[name="__RequestVerificationToken"]'
+            )?.value;
 
             button.disabled = true;
 
@@ -488,32 +600,49 @@ document.addEventListener("DOMContentLoaded", async () => {
 
                     const result = await response.json();
 
-                    throw new Error(result.error || "Could not invite friend.");
+                    throw new Error(
+                        result.error || "Could not invite friend."
+                    );
                 }
 
-                inviteFriendsSuccess.textContent = "Friend successfully invited.";
+                if (isPageLeaving || isLeavingRoom)
+                    return;
+
+                inviteFriendsSuccess.textContent =
+                    "Friend successfully invited.";
 
                 inviteFriendsSuccess.classList.remove("d-none");
 
                 await loadRoomMembers();
                 await loadAvailableFriends();
 
-                inviteFriendsSuccess.textContent = "Friend successfully invited.";
+                if (isPageLeaving || isLeavingRoom)
+                    return;
+
+                inviteFriendsSuccess.textContent =
+                    "Friend successfully invited.";
 
                 inviteFriendsSuccess.classList.remove("d-none");
 
             } catch (error) {
 
-                inviteFriendsError.textContent = error.message;
-                inviteFriendsError.classList.remove("d-none");
-
-                button.disabled = false;
+                if (!isPageLeaving && !isLeavingRoom) {
+                    inviteFriendsError.textContent = error.message;
+                    inviteFriendsError.classList.remove("d-none");
+                    button.disabled = false;
+                }
             }
         }
 
         inviteFriendsButton.addEventListener("click", async () => {
 
+            if (isPageLeaving || isLeavingRoom)
+                return;
+
             await loadAvailableFriends();
+
+            if (isPageLeaving || isLeavingRoom)
+                return;
 
             inviteModal.show();
         });
@@ -523,24 +652,46 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Leave room
     // --------------------------------
 
-    const leaveRoomButton = document.getElementById("leaveRoomButton");
+    const leaveRoomButton =
+        document.getElementById("leaveRoomButton");
 
     if (leaveRoomButton) {
 
         leaveRoomButton.addEventListener("click", async () => {
 
+            if (isPageLeaving || isLeavingRoom)
+                return;
+
             clearError();
 
-            const confirmed = confirm("Are you sure you want to leave this chatroom?");
+            const confirmed = confirm(
+                "Are you sure you want to leave this chatroom?"
+            );
 
             if (!confirmed)
                 return;
 
-            const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+            // Prevent reconnects and further room operations.
+            isLeavingRoom = true;
+
+            const token = document.querySelector(
+                'input[name="__RequestVerificationToken"]'
+            )?.value;
 
             leaveRoomButton.disabled = true;
+            sendMessageButton.disabled = true;
 
             try {
+
+                // Stop SignalR BEFORE removing the database membership.
+                // This prevents a reconnect from trying to rejoin the room.
+                if (connection) {
+                    try {
+                        await connection.stop();
+                    } catch {
+                        // The connection may already have stopped.
+                    }
+                }
 
                 const response = await fetch("/Chat/LeaveRoom", {
 
@@ -561,10 +712,12 @@ document.addEventListener("DOMContentLoaded", async () => {
                     let errorMessage = "Could not leave the chatroom.";
 
                     try {
+
                         const result = await response.json();
 
-                        if (result.error)
+                        if (result.error) {
                             errorMessage = result.error;
+                        }
 
                     } catch {
                         // Keep the default error message.
@@ -574,14 +727,27 @@ document.addEventListener("DOMContentLoaded", async () => {
                 }
 
                 // Successfully left the room.
-                // Redirect to the application front page.
-                window.location.href = "/";
+                window.location.replace("/");
 
             } catch (error) {
+
+                // The leave request failed. Allow the user to try again.
+                isLeavingRoom = false;
 
                 showError(error.message);
 
                 leaveRoomButton.disabled = false;
+
+                // The previous SignalR connection was stopped.
+                // Reconnect so the user can continue using the room.
+                await connectToChat();
+
+                if (connection &&
+                    connection.state === signalR.HubConnectionState.Connected &&
+                    !isLeavingRoom) {
+
+                    sendMessageButton.disabled = false;
+                }
             }
         });
     }
@@ -597,7 +763,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     await connectToChat();
 
-    if (connection && connection.state === signalR.HubConnectionState.Connected) {
+    if (connection &&
+        connection.state === signalR.HubConnectionState.Connected &&
+        !isLeavingRoom) {
 
         await loadMessages();
         await loadRoomMembers();

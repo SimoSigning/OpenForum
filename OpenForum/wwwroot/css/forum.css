@@ -187,3 +187,7 @@ body {
     border-radius: 5px;
     background-color: #f8f9fa;
 }
+
+#messagesContainer > :first-child {
+        margin-top: auto;
+    }

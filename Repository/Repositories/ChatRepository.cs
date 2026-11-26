@@ -97,34 +97,56 @@ namespace Repository.Repositories
             }
         }
 
-        public async Task LeaveRoomAsync(int roomId, string userId)
+        public async Task<bool> LeaveRoomAsync(int roomId, string userId)
         {
-            await using IDbContextTransaction? transaction = await context.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
+            await using IDbContextTransaction transaction =
+                await context.Database.BeginTransactionAsync(
+                    System.Data.IsolationLevel.Serializable);
 
             try
             {
-                ChatRoom? room = await context.ChatRooms.FirstOrDefaultAsync(r => r.Id == roomId);
+                ChatRoom? room = await context.ChatRooms
+                    .FirstOrDefaultAsync(r => r.Id == roomId);
 
+                // The owner may already have deleted this room.
+                // Treat that as successful cleanup.
                 if (room == null)
-                    throw new KeyNotFoundException("Chat room not found.");
+                {
+                    await transaction.CommitAsync();
+                    return true;
+                }
 
-                ChatRoomMember? member = await context.ChatRoomMembers.FirstOrDefaultAsync(m => m.ChatRoomId == roomId && m.UserId == userId);
+                ChatRoomMember? member = await context.ChatRoomMembers
+                    .FirstOrDefaultAsync(m =>
+                        m.ChatRoomId == roomId &&
+                        m.UserId == userId);
 
+                // The user has already left.
                 if (member == null)
-                    throw new InvalidOperationException("You are not a member of this chat room.");
+                {
+                    await transaction.CommitAsync();
+                    return false;
+                }
 
-                List<ChatRoomMember> remainingMembers = await context.ChatRoomMembers.Where(m => m.ChatRoomId == roomId && m.UserId != userId).ToListAsync();
+                List<ChatRoomMember> remainingMembers =
+                    await context.ChatRoomMembers
+                        .Where(m => m.ChatRoomId == roomId && m.UserId != userId)
+                        .ToListAsync();
 
-                // Only private rooms are deleted when their final
-                // member leaves.
-                if (room.RoomType == ChatRoomType.Private && remainingMembers.Count == 0)
+                bool roomDeleted = false;
+
+                // Delete a private room when its final member leaves.
+                if (room.RoomType == ChatRoomType.Private &&
+                    remainingMembers.Count == 0)
                 {
                     context.ChatRooms.Remove(room);
+                    roomDeleted = true;
                 }
                 else
                 {
-                    // Transfer ownership if the current owner leaves.
-                    if (room.RoomType == ChatRoomType.Private && room.OwnerUserId == userId)
+                    // Transfer ownership when the current owner leaves.
+                    if (room.RoomType == ChatRoomType.Private &&
+                        room.OwnerUserId == userId)
                     {
                         ChatRoomMember newOwner = remainingMembers
                             .OrderBy(m => m.JoinedAt)
@@ -138,8 +160,9 @@ namespace Repository.Repositories
                 }
 
                 await context.SaveChangesAsync();
-
                 await transaction.CommitAsync();
+
+                return roomDeleted;
             }
             catch
             {
@@ -172,6 +195,25 @@ namespace Repository.Repositories
             await context.ChatRoomMembers
                 .Where(m => m.ChatRoomId == roomId && m.UserId == userId)
                 .ExecuteUpdateAsync(setters => setters.SetProperty(m => m.LastVisitedAt, DateTime.UtcNow));
+        }
+
+        public async Task DeletePrivateRoomAsync(int roomId, string userId)
+        {
+            ChatRoom? room = await context.ChatRooms
+                .FirstOrDefaultAsync(r => r.Id == roomId);
+
+            if (room == null)
+                throw new KeyNotFoundException("Chat room not found.");
+
+            if (room.RoomType != ChatRoomType.Private)
+                throw new InvalidOperationException("Only private chatrooms can be deleted.");
+
+            if (room.OwnerUserId != userId)
+                throw new UnauthorizedAccessException("Only the chatroom owner can delete this chatroom.");
+
+            context.ChatRooms.Remove(room);
+
+            await context.SaveChangesAsync();
         }
 
         // -------------------------

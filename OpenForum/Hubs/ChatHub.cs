@@ -54,18 +54,31 @@ namespace OpenForum.Hubs
             await base.OnDisconnectedAsync(exception);
         }
 
-        public async Task JoinRoom(int roomId)
+        public async Task<bool> JoinRoom(int roomId)
         {
             if (roomId <= 0)
                 throw new ArgumentException("Invalid room ID.");
 
-            await chatService.GetRoomAsync(roomId);
+            try
+            {
+                await chatService.GetRoomAsync(roomId);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                // The user may have left while SignalR was reconnecting.
+                // Do not add them to the SignalR group.
+                return false;
+            }
 
             connectionTracker.AddRoom(Context.ConnectionId, roomId);
 
             try
             {
-                await Groups.AddToGroupAsync(Context.ConnectionId, GetGroupName(roomId));
+                await Groups.AddToGroupAsync(
+                    Context.ConnectionId,
+                    GetGroupName(roomId));
+
+                return true;
             }
             catch
             {

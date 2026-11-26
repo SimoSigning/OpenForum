@@ -152,5 +152,51 @@ namespace OpenForum.Controllers
                 return View("Compose", model);
             }
         }
+
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteSent(int id)
+        {
+            try
+            {
+                await messageService.DeleteSentMessageAsync(id);
+
+                TempData["Success"] = "Message deleted from sent messages.";
+
+                return RedirectToAction(nameof(Sent));
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound();
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Forbid();
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteInbox(int id)
+        {
+            try
+            {
+                await messageService.DeleteInboxMessageAsync(id);
+
+                TempData["Success"] = "Message removed from your inbox.";
+
+                return RedirectToAction(nameof(Inbox));
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound();
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Forbid();
+            }
+        }
+
     }
 }

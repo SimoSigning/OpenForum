@@ -29,10 +29,13 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             rooms.forEach(room => {
-                const item = document.createElement("a");
 
-                item.href = `/Chat/OpenRoom?roomId=${room.id}`;
-                item.className = "list-group-item list-group-item-action";
+                const item = document.createElement("div");
+
+                item.className = "list-group-item d-flex justify-content-between align-items-center";
+
+                // Room information
+                const info = document.createElement("div");
 
                 const title = document.createElement("strong");
                 title.textContent = room.name;
@@ -41,12 +44,111 @@ document.addEventListener("DOMContentLoaded", () => {
                 details.className = "small text-muted";
                 details.textContent = `${room.memberCount} members`;
 
-                item.append(title, details);
+                info.append(title, details);
+
+                // Room actions
+                const actions = document.createElement("div");
+                actions.className = "d-flex gap-2";
+
+                // Open button
+                const openButton = document.createElement("a");
+
+                openButton.href = `/Chat/OpenRoom?roomId=${room.id}`;
+                openButton.className = "btn btn-outline-primary btn-sm";
+                openButton.textContent = "Open";
+
+                actions.appendChild(openButton);
+
+                // Only the current owner gets the delete button.
+                if (room.isOwner) {
+
+                    const deleteButton = document.createElement("button");
+
+                    deleteButton.type = "button";
+                    deleteButton.className = "btn btn-outline-danger btn-sm";
+                    deleteButton.textContent = "Delete";
+
+                    deleteButton.addEventListener("click", async () => {
+                        await deletePrivateRoom(room.id, deleteButton);
+                    });
+
+                    actions.appendChild(deleteButton);
+                }
+
+                item.append(info, actions);
+
                 privateRoomsList.appendChild(item);
             });
 
         } catch (error) {
             showError(error.message);
+        }
+    }
+
+    async function deletePrivateRoom(roomId, button) {
+
+        const confirmed = confirm(
+            "Are you sure you want to delete this private chatroom?"
+        );
+
+        if (!confirmed)
+            return;
+
+        const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+
+        button.disabled = true;
+
+        try {
+
+            const response = await fetch("/Chat/DeletePrivateRoom", {
+
+                method: "POST",
+
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded"
+                },
+
+                body: new URLSearchParams({
+                    roomId,
+                    __RequestVerificationToken: token
+                })
+            });
+
+            if (!response.ok) {
+
+                let errorMessage = "Could not delete the chatroom.";
+
+                try {
+                    const result = await response.json();
+
+                    if (result.error)
+                        errorMessage = result.error;
+
+                } catch {
+                    // Keep default error message.
+                }
+
+                throw new Error(errorMessage);
+            }
+
+            // Remove the deleted room from the list.
+            const item = button.closest(".list-group-item");
+
+            if (item) {
+                item.remove();
+            }
+
+            // If there are no private rooms left, show the empty message.
+            if (privateRoomsList.children.length === 0) {
+                document.getElementById("privateRoomsEmpty")
+                    .classList.remove("d-none");
+            }
+
+        } catch (error) {
+
+            showError(error.message);
+
+            button.disabled = false;
         }
     }
 

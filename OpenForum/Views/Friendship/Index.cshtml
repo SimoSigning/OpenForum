@@ -7,83 +7,232 @@
 <div class="row justify-content-left">
     <div class="col-12 col-lg-10">
 
-        <div class="mb-4">
-            <h1 class="mb-1">Friends</h1>
-            <p class="text-muted mb-0">
-                Manage your friends and incoming friend requests.
-            </p>
-        </div>
+        @{
+            int incomingCount = Model.IncomingRequests.Count();
+            int outgoingCount = Model.OutgoingRequests.Count();
+        }
 
-        <!-- Incoming friend requests -->
-        <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2 mb-3">
-            <div>
-                <h2 class="h4 mb-1">Incoming Requests</h2>
+        <!-- Friend request tabs -->
+        <div class="mb-4">
+
+            <div class="mb-3">
+                <h2 class="h4 mb-1">Friend Requests</h2>
                 <p class="text-muted mb-0">
-                    People who would like to connect with you.
+                    Manage requests you have received and sent.
                 </p>
             </div>
 
-            <span class="badge bg-secondary rounded-pill align-self-start align-self-sm-center">
-                @Model.IncomingRequests.Count() @(Model.IncomingRequests.Count() == 1 ? "request" : "requests")
-            </span>
-        </div>
+            <!-- Toggle buttons -->
+            <ul class="nav nav-pills gap-2 mb-3" id="friendRequestTabs" role="tablist">
 
-        @if (!Model.IncomingRequests.Any())
-        {
-            <div class="card shadow-sm mb-4">
-                <div class="card-body text-center py-4">
-                    <h3 class="h5 mb-2">No incoming requests</h3>
-                    <p class="text-muted mb-0">
-                        You don't have any pending friend requests.
-                    </p>
-                </div>
-            </div>
-        }
-        else
-        {
-            <div class="d-flex flex-column gap-3 mb-4">
-                @foreach (var request in Model.IncomingRequests)
-                {
-                    <div class="card shadow-sm">
-                        <div class="card-body">
-                            <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3">
-                                <div>
-                                    <h3 class="h5 mb-1">
-                                        <a asp-controller="PublicProfile"
-                                           asp-action="Index"
-                                           asp-route-userName="@request.Username"
-                                           asp-route-returnUrl="@(Context.Request.Path + Context.Request.QueryString)"
-                                           class="text-decoration-none text-body">
-                                            @request.Username
-                                        </a>
-                                    </h3>
-                                    <span class="text-muted small">
-                                        Sent @request.CreatedAt
-                                    </span>
-                                </div>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active"
+                            id="incoming-tab"
+                            data-bs-toggle="pill"
+                            data-bs-target="#incoming-requests"
+                            type="button"
+                            role="tab"
+                            aria-controls="incoming-requests"
+                            aria-selected="true">
 
-                                <div class="d-flex flex-wrap gap-2">
-                                    <form asp-controller="Friendship" asp-action="AcceptRequest" method="post">
-                                        <input type="hidden" name="friendshipId" value="@request.FriendshipId" />
-                                        <button type="submit" class="btn btn-primary btn-sm">
-                                            Accept
-                                        </button>
-                                    </form>
+                        Incoming
+                        <span class="badge bg-secondary rounded-pill ms-1">
+                            @incomingCount
+                        </span>
 
-                                    <form asp-controller="Friendship" asp-action="DeclineRequest" method="post"
-                                          onsubmit="return confirm('Are you sure you want to decline this friend request?');">
-                                        <input type="hidden" name="friendshipId" value="@request.FriendshipId" />
-                                        <button type="submit" class="btn btn-outline-danger btn-sm">
-                                            Decline
-                                        </button>
-                                    </form>
-                                </div>
+                    </button>
+                </li>
+
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link"
+                            id="outgoing-tab"
+                            data-bs-toggle="pill"
+                            data-bs-target="#outgoing-requests"
+                            type="button"
+                            role="tab"
+                            aria-controls="outgoing-requests"
+                            aria-selected="false">
+
+                        Sent
+                        <span class="badge bg-secondary rounded-pill ms-1">
+                            @outgoingCount
+                        </span>
+
+                    </button>
+                </li>
+
+            </ul>
+
+            <!-- Tab content -->
+            <div class="tab-content">
+
+                <!-- Incoming requests -->
+                <div class="tab-pane fade show active"
+                     id="incoming-requests"
+                     role="tabpanel"
+                     aria-labelledby="incoming-tab"
+                     tabindex="0">
+
+                    @if (!Model.IncomingRequests.Any())
+                    {
+                        <div class="card shadow-sm">
+                            <div class="card-body text-center py-4">
+                                <h3 class="h5 mb-2">No incoming requests</h3>
+                                <p class="text-muted mb-0">
+                                    You don't have any pending friend requests.
+                                </p>
                             </div>
                         </div>
-                    </div>
-                }
+                    }
+                    else
+                    {
+                        <div class="d-flex flex-column gap-3">
+
+                            @foreach (var request in Model.IncomingRequests)
+                            {
+                                <div class="card shadow-sm">
+                                    <div class="card-body">
+
+                                        <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3">
+
+                                            <div>
+                                                <h3 class="h5 mb-1">
+                                                    <a asp-controller="PublicProfile"
+                                                       asp-action="Index"
+                                                       asp-route-userName="@request.Username"
+                                                       asp-route-returnUrl="@(Context.Request.Path + Context.Request.QueryString)"
+                                                       class="text-decoration-none text-body">
+                                                        @request.Username
+                                                    </a>
+                                                </h3>
+
+                                                <span class="text-muted small">
+                                                    Sent @request.CreatedAt
+                                                </span>
+                                            </div>
+
+                                            <div class="d-flex flex-wrap gap-2">
+
+                                                <form asp-controller="Friendship"
+                                                      asp-action="AcceptRequest"
+                                                      method="post">
+
+                                                    <input type="hidden"
+                                                           name="friendshipId"
+                                                           value="@request.FriendshipId" />
+
+                                                    <button type="submit"
+                                                            class="btn btn-primary btn-sm">
+                                                        Accept
+                                                    </button>
+                                                </form>
+
+                                                <form asp-controller="Friendship"
+                                                      asp-action="DeclineRequest"
+                                                      method="post"
+                                                      onsubmit="return confirm('Are you sure you want to decline this friend request?');">
+
+                                                    <input type="hidden"
+                                                           name="friendshipId"
+                                                           value="@request.FriendshipId" />
+
+                                                    <button type="submit"
+                                                            class="btn btn-outline-danger btn-sm">
+                                                        Decline
+                                                    </button>
+                                                </form>
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+
+                        </div>
+                    }
+
+                </div>
+
+                <!-- Outgoing requests -->
+                <div class="tab-pane fade"
+                     id="outgoing-requests"
+                     role="tabpanel"
+                     aria-labelledby="outgoing-tab"
+                     tabindex="0">
+
+                    @if (!Model.OutgoingRequests.Any())
+                    {
+                        <div class="card shadow-sm">
+                            <div class="card-body text-center py-4">
+                                <h3 class="h5 mb-2">No sent requests</h3>
+                                <p class="text-muted mb-0">
+                                    You haven't sent any pending friend requests.
+                                </p>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="d-flex flex-column gap-3">
+
+                            @foreach (var request in Model.OutgoingRequests)
+                            {
+                                <div class="card shadow-sm">
+                                    <div class="card-body">
+
+                                        <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3">
+
+                                            <div>
+                                                <h3 class="h5 mb-1">
+                                                    <a asp-controller="PublicProfile"
+                                                       asp-action="Index"
+                                                       asp-route-userName="@request.Username"
+                                                       asp-route-returnUrl="@(Context.Request.Path + Context.Request.QueryString)"
+                                                       class="text-decoration-none text-body">
+                                                        @request.Username
+                                                    </a>
+                                                </h3>
+
+                                                <span class="badge bg-secondary">
+                                                    Awaiting response
+                                                </span>
+
+                                                <div class="text-muted small mt-1">
+                                                    Sent @request.CreatedAt
+                                                </div>
+                                            </div>
+
+                                            <div>
+                                                <form asp-controller="Friendship"
+                                                      asp-action="CancelRequest"
+                                                      method="post"
+                                                      onsubmit="return confirm('Are you sure you want to cancel this friend request?');">
+
+                                                    <input type="hidden"
+                                                           name="friendshipId"
+                                                           value="@request.FriendshipId" />
+
+                                                    <button type="submit"
+                                                            class="btn btn-outline-danger btn-sm">
+                                                        Cancel Request
+                                                    </button>
+
+                                                </form>
+                                            </div>
+
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+
+                        </div>
+                    }
+
+                </div>
+
             </div>
-        }
+        </div>
+
 
         <hr class="my-4" />
 

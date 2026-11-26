@@ -1,24 +1,5 @@
 Things to work through:
-1. Chat functionality:
-
-	* Users can create their own chats with friends, where they can invite friends into the chatrooms, that will be a private chat
-	just between those friends. And ofcourse everyone should be able to leave the chatroom etc. There should also just be a few misc
-	chatrooms just for the fun of it.
-
-	* Topics should have their own chatroom. For each topic you can click a "chat" button and get into a chatroom dedicated to that topic.
-
-	-More detailed description:
-
-	In the left menu. There should be a "chat" button, which navigates the users to a page dedicated to chat functionality. Here
-	the users should be able to create a chat with their friends etc, as described in bullet one. But there should also be a list of
-	misc chatrooms they can join, perhaps underneath the functionality for making a chatroom with friends.
-
-	For bullet two, about topics having their own chatrooms. The chat button will be on each topic on the list rendered on the 		frontpage.
-
-	All chats should have a upper limit of how many messages are shown at a time. Chats shouldnt have pagination. Just a upper
-	limit of messages. To ensure proper memory usage.
-
-2. Cleanup/optimization after implementation of chat functionality.
+1.Do one extra optimization run with the chat. And extra tests. This is delicate. Test all cases.
 
 3. comments in relation to reply and title not being obligated on viewmodel level, makes for interesting
 ui behavior that needs correcting

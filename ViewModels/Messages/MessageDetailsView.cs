@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace ViewModels.Messages
+﻿namespace ViewModels.Messages
 {
     public class MessageDetailsView
     {
@@ -25,5 +21,8 @@ namespace ViewModels.Messages
         public bool IsRead { get; set; }
 
         public bool CanReply { get; set; }
+
+        // Indicates that the sender deleted the message.
+        public bool IsDeletedBySender { get; set; }
     }
 }

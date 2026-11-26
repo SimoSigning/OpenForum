@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
+﻿
 namespace EntityModels
 {
     public class Message
@@ -22,5 +19,14 @@ namespace EntityModels
 
         // False until the recipient opens the message.
         public bool IsRead { get; set; } = false;
+
+        // Sender has deleted their copy.
+        public bool IsDeletedBySender { get; set; } = false;
+
+        // Recipient has deleted their copy.
+        public bool IsDeletedByRecipient { get; set; } = false;
+
+        // Records when the sender deleted the message.
+        public DateTime? DeletedBySenderAt { get; set; }
     }
 }

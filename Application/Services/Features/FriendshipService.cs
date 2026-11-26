@@ -109,6 +109,21 @@ namespace Application.Services.Features
             await friendshipRepository.DeleteAsync(friendship.Id);
         }
 
+        public async Task CancelRequestAsync(int friendshipId)
+        {
+            string currentUserId = currentUserService.GetRequiredUserId();
+
+            Friendship friendship = await GetFriendshipOrThrowAsync(friendshipId);
+
+            if (friendship.RequesterUserId != currentUserId)//the difference from  decline.
+                throw new UnauthorizedAccessException("Only the sender can cancel this friend request.");
+
+            if (friendship.Status != FriendshipStatus.Pending)
+                throw new InvalidOperationException("Only pending friend requests can be cancelled.");
+
+            await friendshipRepository.DeleteAsync(friendship.Id);
+        }
+
         public async Task RemoveFriendAsync(int friendshipId)
         {
             string currentUserId = currentUserService.GetRequiredUserId();
@@ -145,6 +160,13 @@ namespace Application.Services.Features
             string currentUserId = currentUserService.GetRequiredUserId();
 
             return await friendshipRepository.GetIncomingPendingRequestCountAsync(currentUserId);
+        }
+
+        public async Task<IEnumerable<Friendship>> GetOutgoingRequestsAsync()
+        {
+            string currentUserId = currentUserService.GetRequiredUserId();
+
+            return await friendshipRepository.GetOutgoingPendingRequestsAsync(currentUserId);
         }
 
         private async Task<Friendship> GetFriendshipOrThrowAsync(int id)
@@ -240,15 +262,18 @@ namespace Application.Services.Features
         {
             string currentUserId = currentUserService.GetRequiredUserId();
 
-            // Retrieve accepted friendships and incoming requests.
+            // Retrieve accepted friendships and pending requests.
             List<Friendship> friendships = (await GetFriendsAsync()).ToList();
 
             List<Friendship> incomingRequests = (await GetIncomingRequestsAsync()).ToList();
+
+            List<Friendship> outgoingRequests = (await GetOutgoingRequestsAsync()).ToList();
 
             // Find the IDs of all other users.
             List<string> userIds = friendships
                 .Select(f => f.RequesterUserId == currentUserId ? f.AddresseeUserId : f.RequesterUserId)
                 .Concat(incomingRequests.Select(f => f.RequesterUserId))
+                .Concat(outgoingRequests.Select(f => f.AddresseeUserId))
                 .Distinct()
                 .ToList();
 
@@ -259,7 +284,9 @@ namespace Application.Services.Features
             List<UserSearchItemView> friends = friendships
                 .Select(f =>
                 {
-                    string friendUserId = f.RequesterUserId == currentUserId ? f.AddresseeUserId : f.RequesterUserId;
+                    string friendUserId = f.RequesterUserId == currentUserId
+                        ? f.AddresseeUserId
+                        : f.RequesterUserId;
 
                     usernames.TryGetValue(friendUserId, out string? username);
 
@@ -275,8 +302,7 @@ namespace Application.Services.Features
                 .ToList();
 
             // Map incoming requests.
-            List<FriendRequestItemView> requests = incomingRequests
-                .Select(f =>
+            List<FriendRequestItemView> requests = incomingRequests.Select(f =>
                 {
                     usernames.TryGetValue(f.RequesterUserId, out string? username);
 
@@ -290,10 +316,26 @@ namespace Application.Services.Features
                 })
                 .ToList();
 
+            // Map outgoing requests.
+            List<FriendRequestItemView> outgoing = outgoingRequests.Select(f =>
+                {
+                    usernames.TryGetValue(f.AddresseeUserId, out string? username);
+
+                    return new FriendRequestItemView
+                    {
+                        FriendshipId = f.Id,
+                        UserId = f.AddresseeUserId,
+                        Username = username ?? "Unknown user",
+                        CreatedAt = f.CreatedAt
+                    };
+                })
+                .ToList();
+
             return new FriendsIndexView
             {
                 Friends = friends,
-                IncomingRequests = requests
+                IncomingRequests = requests,
+                OutgoingRequests = outgoing
             };
         }
 

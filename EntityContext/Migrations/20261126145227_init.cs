@@ -43,7 +43,10 @@ namespace EntityContext.Migrations
                     Subject = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: false),
                     Body = table.Column<string>(type: "nvarchar(max)", maxLength: 5000, nullable: false),
                     SentAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    IsRead = table.Column<bool>(type: "bit", nullable: false)
+                    IsRead = table.Column<bool>(type: "bit", nullable: false),
+                    IsDeletedBySender = table.Column<bool>(type: "bit", nullable: false),
+                    IsDeletedByRecipient = table.Column<bool>(type: "bit", nullable: false),
+                    DeletedBySenderAt = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
                 constraints: table =>
                 {

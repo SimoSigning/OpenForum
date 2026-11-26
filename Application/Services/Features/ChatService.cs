@@ -299,6 +299,13 @@ namespace Application.Services.Features
             await membershipNotifier.NotifyMembersChangedAsync(roomId);
         }
 
+        public async Task DeletePrivateRoomAsync(int roomId)
+        {
+            string userId = currentUser.GetRequiredUserId();
+
+            await chatRepository.DeletePrivateRoomAsync(roomId, userId);
+        }
+
         // --------------------------------
         // Membership
         // --------------------------------
@@ -354,13 +361,13 @@ namespace Application.Services.Features
             await membershipNotifier.NotifyMembersChangedAsync(roomId);
         }
 
-        public async Task LeaveRoomAsync(int roomId)
+        public async Task<bool> LeaveRoomAsync(int roomId)
         {
             string userId = currentUser.GetRequiredUserId();
 
-            await chatRepository.LeaveRoomAsync(roomId, userId);
+            bool roomDeleted = await chatRepository.LeaveRoomAsync(roomId, userId);
 
-            await membershipNotifier.NotifyMembersChangedAsync(roomId);
+            return roomDeleted;
         }
 
         public async Task<int> GetUnseenPrivateRoomCountAsync()

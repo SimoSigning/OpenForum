@@ -22,6 +22,7 @@ namespace Application.Services.Features
             this.currentUser = currentUser;
         }
 
+
         public async Task<InboxView> GetInboxAsync()
         {
             string userId = currentUser.GetRequiredUserId();
@@ -36,17 +37,24 @@ namespace Application.Services.Features
                 {
                     Id = m.Id,
                     OtherUserId = m.SenderUserId,
-                    OtherUserName = usernames.GetValueOrDefault(
-                        m.SenderUserId, "Unknown user"),
-                    Subject = m.Subject,
-                    BodyPreview = CreatePreview(m.Body),
+                    OtherUserName = usernames.GetValueOrDefault(m.SenderUserId, "Unknown user"),
+
+                    // Hide original content if sender deleted the message.
+                    Subject = m.IsDeletedBySender ? string.Empty : m.Subject,
+
+                    BodyPreview = m.IsDeletedBySender ? string.Empty : CreatePreview(m.Body),
+
                     SentAt = m.SentAt,
-                    IsRead = m.IsRead
+                    IsRead = m.IsRead,
+
+                    IsDeletedBySender = m.IsDeletedBySender
                 }),
 
                 UnreadCount = await messageRepository.GetUnreadCountAsync(userId)
             };
         }
+
+
 
         public async Task<SentMessagesView> GetSentAsync()
         {
@@ -54,7 +62,7 @@ namespace Application.Services.Features
 
             List<Message> messages = await messageRepository.GetSentAsync(userId);
 
-            Dictionary<string, string> usernames =await userService.GetUsernamesByIdsAsync(messages.Select(m => m.RecipientUserId));
+            Dictionary<string, string> usernames = await userService.GetUsernamesByIdsAsync(messages.Select(m => m.RecipientUserId));
 
             return new SentMessagesView
             {
@@ -62,7 +70,9 @@ namespace Application.Services.Features
                 {
                     Id = m.Id,
                     OtherUserId = m.RecipientUserId,
+
                     OtherUserName = usernames.GetValueOrDefault(m.RecipientUserId, "Unknown user"),
+
                     Subject = m.Subject,
                     BodyPreview = CreatePreview(m.Body),
                     SentAt = m.SentAt,
@@ -90,8 +100,20 @@ namespace Application.Services.Features
                 throw new UnauthorizedAccessException("You are not allowed to access this message.");
             }
 
-            // Only mark incoming messages as read.
-            if (isRecipient && !message.IsRead)
+            // Sender cannot access a message they have deleted.
+            if (isSender && message.IsDeletedBySender)
+            {
+                throw new KeyNotFoundException("Message not found.");
+            }
+
+            // Recipient cannot access a message they have deleted.
+            if (isRecipient && message.IsDeletedByRecipient)
+            {
+                throw new KeyNotFoundException("Message not found.");
+            }
+
+            // Only mark incoming, non-deleted messages as read.
+            if (isRecipient && !message.IsRead && !message.IsDeletedBySender)
             {
                 message.IsRead = true;
 
@@ -112,14 +134,20 @@ namespace Application.Services.Features
                 RecipientUserId = message.RecipientUserId,
                 RecipientUserName = recipientUsername,
 
-                Subject = message.Subject,
-                Body = message.Body,
+                // Hide original contents after sender deletion.
+                Subject = message.IsDeletedBySender ? string.Empty : message.Subject,
+
+                Body = message.IsDeletedBySender ? string.Empty : message.Body,
+
                 SentAt = message.SentAt,
                 IsRead = message.IsRead,
 
-                CanReply = isRecipient
+                CanReply = isRecipient && !message.IsDeletedBySender,
+
+                IsDeletedBySender = message.IsDeletedBySender
             };
         }
+
 
         public async Task<ComposeMessageView> GetComposeViewAsync(string recipientUserName)
         {
@@ -161,6 +189,11 @@ namespace Application.Services.Features
             if (originalMessage.RecipientUserId != userId)
             {
                 throw new UnauthorizedAccessException("You are not allowed to reply to this message.");
+            }
+
+            if (originalMessage.IsDeletedBySender)
+            {
+                throw new InvalidOperationException("You cannot reply to a deleted message.");
             }
 
             if (!await userService.UserExistsAsync(originalMessage.SenderUserId))
@@ -209,6 +242,12 @@ namespace Application.Services.Features
                 if (originalMessage.RecipientUserId != senderUserId)
                 {
                     throw new UnauthorizedAccessException("You are not allowed to reply to this message.");
+                }
+
+                if (originalMessage.IsDeletedBySender)
+                {
+                    throw new InvalidOperationException(
+                        "You cannot reply to a deleted message.");
                 }
 
                 recipientUserId = originalMessage.SenderUserId;
@@ -309,5 +348,63 @@ namespace Application.Services.Features
             // The database allows a maximum of 150 characters.
             return subject.Length <= 150 ? subject : subject.Substring(0, 150);
         }
+
+
+        public async Task DeleteSentMessageAsync(int messageId)
+        {
+            string userId = currentUser.GetRequiredUserId();
+
+            Message? message = await messageRepository.GetByIdAsync(messageId);
+
+            if (message == null)
+            {
+                throw new KeyNotFoundException("Message not found.");
+            }
+
+            // Only the original sender can delete their sent message.
+            if (message.SenderUserId != userId)
+            {
+                throw new UnauthorizedAccessException("You are not allowed to delete this message.");
+            }
+
+            if (message.IsDeletedBySender)
+            {
+                return;
+            }
+
+            message.IsDeletedBySender = true;
+            message.DeletedBySenderAt = DateTime.UtcNow;
+
+            await messageRepository.UpdateAsync(message);
+        }
+
+        public async Task DeleteInboxMessageAsync(int messageId)
+        {
+            string userId = currentUser.GetRequiredUserId();
+
+            Message? message = await messageRepository.GetByIdAsync(messageId);
+
+            if (message == null)
+            {
+                throw new KeyNotFoundException("Message not found.");
+            }
+
+            // Only the original recipient can delete their inbox copy.
+            if (message.RecipientUserId != userId)
+            {
+                throw new UnauthorizedAccessException("You are not allowed to delete this message.");
+            }
+
+            if (message.IsDeletedByRecipient)
+            {
+                return;
+            }
+
+            message.IsDeletedByRecipient = true;
+
+            await messageRepository.UpdateAsync(message);
+        }
+
+
     }
 }

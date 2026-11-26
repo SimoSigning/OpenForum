@@ -124,6 +124,32 @@ namespace OpenForum.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CancelRequest(int friendshipId)
+        {
+            try
+            {
+                await friendshipService.CancelRequestAsync(friendshipId);
+
+                TempData["SuccessMessage"] = "Friend request cancelled.";
+            }
+            catch (InvalidOperationException ex)
+            {
+                TempData["ErrorMessage"] = ex.Message;
+            }
+            catch (UnauthorizedAccessException)
+            {
+                TempData["ErrorMessage"] = "You are not allowed to cancel this friend request.";
+            }
+            catch (KeyNotFoundException ex)
+            {
+                TempData["ErrorMessage"] = ex.Message;
+            }
+
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> RemoveFriend(int friendshipId)
         {
             try

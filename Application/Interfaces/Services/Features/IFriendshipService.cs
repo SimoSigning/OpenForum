@@ -14,6 +14,8 @@ namespace Application.Interfaces.Services.Features
 
         Task DeclineRequestAsync(int friendshipId);
 
+        Task CancelRequestAsync(int friendshipId);
+
         Task RemoveFriendAsync(int friendshipId);
 
         Task<IEnumerable<Friendship>> GetFriendsAsync();
@@ -21,6 +23,8 @@ namespace Application.Interfaces.Services.Features
         Task<IEnumerable<Friendship>> GetIncomingRequestsAsync();
 
         Task<int> GetIncomingPendingRequestCountAsync();
+
+        Task<IEnumerable<Friendship>> GetOutgoingRequestsAsync();
 
         Task<UserSearchView> SearchUsersAsync(string query, int page = 1);
 

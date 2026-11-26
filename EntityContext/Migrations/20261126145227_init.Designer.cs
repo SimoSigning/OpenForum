@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EntityContext.Migrations
 {
     [DbContext(typeof(ForumContext))]
-    [Migration("20261125212337_init")]
+    [Migration("20261126145227_init")]
     partial class init
     {
         /// <inheritdoc />
@@ -311,6 +311,15 @@ namespace EntityContext.Migrations
                         .IsRequired()
                         .HasMaxLength(5000)
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("DeletedBySenderAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsDeletedByRecipient")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDeletedBySender")
+                        .HasColumnType("bit");
 
                     b.Property<bool>("IsRead")
                         .HasColumnType("bit");

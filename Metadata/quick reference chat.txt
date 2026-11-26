@@ -1,3 +1,5 @@
+I have a forum where i got this chat functionality implemented. 
+
 namespace EntityModels
 {
     public class ChatRoom
@@ -24,23 +26,6 @@ namespace EntityModels
     }
 }
 
-namespace EntityModels
-{
-    public class ChatMessage
-    {
-        public long Id { get; set; }
-
-        public int ChatRoomId { get; set; }
-
-        public string SenderUserId { get; set; } = null!;
-
-        public string Content { get; set; } = string.Empty;
-
-        public DateTime SentAt { get; set; } = DateTime.UtcNow;
-
-        public ChatRoom ChatRoom { get; set; } = null!;
-    }
-}
 
 namespace EntityModels
 {
@@ -60,6 +45,23 @@ namespace EntityModels
     }
 }
 
+namespace EntityModels
+{
+    public class ChatMessage
+    {
+        public long Id { get; set; }
+
+        public int ChatRoomId { get; set; }
+
+        public string SenderUserId { get; set; } = null!;
+
+        public string Content { get; set; } = string.Empty;
+
+        public DateTime SentAt { get; set; } = DateTime.UtcNow;
+
+        public ChatRoom ChatRoom { get; set; } = null!;
+    }
+}
 
 using System;
 using System.Collections.Generic;
@@ -74,6 +76,390 @@ namespace EntityModels
         Topic = 3
     }
 }
+
+using EntityModels;
+using Microsoft.EntityFrameworkCore;
+
+namespace EntityContext
+{
+    public class ForumContext : DbContext
+    {
+        public ForumContext(DbContextOptions<ForumContext> options) : base(options){}
+
+        public DbSet<Topic> Topics => Set<Topic>();
+        public DbSet<Post> Posts => Set<Post>();
+        public DbSet<Comment> Comments => Set<Comment>();
+        public DbSet<Like> Likes => Set<Like>();
+        public DbSet<UserProfile> UserProfiles => Set<UserProfile>();
+        public DbSet<Friendship> Friendships => Set<Friendship>();
+        public DbSet<Message> Messages => Set<Message>();
+        public DbSet<ChatRoom> ChatRooms => Set<ChatRoom>();
+        public DbSet<ChatRoomMember> ChatRoomMembers => Set<ChatRoomMember>();
+        public DbSet<ChatMessage> ChatMessages => Set<ChatMessage>();
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<Post>()
+                .HasOne(p => p.Topic)
+                .WithMany()
+                .HasForeignKey(p => p.TopicId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Comment>()
+                .HasOne(c => c.Post)
+                .WithMany(p => p.Comments)
+                .HasForeignKey(c => c.PostId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Comment>()
+                .HasOne(c => c.ParentComment)
+                .WithMany(c => c.Replies)
+                .HasForeignKey(c => c.ParentCommentId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<Like>(entity =>
+            {
+                entity.ToTable("Likes", table =>
+                    table.HasCheckConstraint(
+                        "CK_Likes_ExactlyOneTarget",
+                        """
+                        ([PostId] IS NOT NULL AND [CommentId] IS NULL)
+                        OR
+                        ([PostId] IS NULL AND [CommentId] IS NOT NULL)
+                        """
+                        ));
+
+                entity.HasKey(l => l.Id);
+
+                entity.Property(l => l.UserId)
+                    .IsRequired();
+
+                entity.Property(l => l.CreatedAt)
+                    .IsRequired();
+
+                entity.HasOne(l => l.Post)
+                    .WithMany(p => p.Likes)
+                    .HasForeignKey(l => l.PostId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(l => l.Comment)
+                    .WithMany(c => c.Likes)
+                    .HasForeignKey(l => l.CommentId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasIndex(l => new { l.UserId, l.PostId })
+                    .IsUnique()
+                    .HasFilter("[PostId] IS NOT NULL");
+
+                entity.HasIndex(l => new { l.UserId, l.CommentId })
+                    .IsUnique()
+                    .HasFilter("[CommentId] IS NOT NULL");
+            });
+
+            modelBuilder.Entity<UserProfile>(entity =>
+            {
+                entity.HasKey(p => p.Id);
+
+                entity.Property(p => p.UserId)
+                    .IsRequired();
+
+                entity.HasIndex(p => p.UserId)
+                    .IsUnique();
+
+                entity.Property(p => p.FirstName)
+                    .HasMaxLength(100);
+
+                entity.Property(p => p.LastName)
+                    .HasMaxLength(100);
+
+                entity.Property(p => p.Address)
+                    .HasMaxLength(200);
+
+                entity.Property(p => p.PostalCode)
+                    .HasMaxLength(20);
+
+                entity.Property(p => p.City)
+                    .HasMaxLength(100);
+
+                entity.Property(p => p.ProfileText)
+                    .HasMaxLength(5000);
+            });
+
+            modelBuilder.Entity<Friendship>(entity =>
+            {
+                entity.ToTable("Friendships", table =>
+                    table.HasCheckConstraint(
+                        "CK_Friendships_DifferentUsers",
+                        "[UserIdLow] <> [UserIdHigh]"
+                    ));
+
+                entity.Property(f => f.RequesterUserId)
+                    .IsRequired()
+                    .HasMaxLength(450);
+
+                entity.Property(f => f.AddresseeUserId)
+                    .IsRequired()
+                    .HasMaxLength(450);
+
+                entity.Property(f => f.UserIdLow)
+                    .IsRequired()
+                    .HasMaxLength(450);
+
+                entity.Property(f => f.UserIdHigh)
+                    .IsRequired()
+                    .HasMaxLength(450);
+
+                entity.HasIndex(f => new
+                {
+                    f.UserIdLow,
+                    f.UserIdHigh
+                }).IsUnique();
+            });
+
+            modelBuilder.Entity<Message>(entity =>
+            {
+                entity.HasKey(m => m.Id);
+
+                entity.Property(m => m.SenderUserId)
+                    .IsRequired()
+                    .HasMaxLength(450);
+
+                entity.Property(m => m.RecipientUserId)
+                    .IsRequired()
+                    .HasMaxLength(450);
+
+                entity.Property(m => m.Subject)
+                    .IsRequired()
+                    .HasMaxLength(150);
+
+                entity.Property(m => m.Body)
+                    .IsRequired()
+                    .HasMaxLength(5000);
+
+                entity.Property(m => m.SentAt)
+                    .IsRequired();
+
+                entity.Property(m => m.IsRead)
+                    .IsRequired();
+
+                // Helps retrieve inbox messages and unread messages.
+                entity.HasIndex(m => new
+                {
+                    m.RecipientUserId,
+                    m.IsRead,
+                    m.SentAt
+                });
+
+                // Helps retrieve sent messages.
+                entity.HasIndex(m => new
+                {
+                    m.SenderUserId,
+                    m.SentAt
+                });
+            });
+
+            // Chat rooms
+            modelBuilder.Entity<ChatRoom>(entity =>
+            {
+                entity.ToTable("ChatRooms", table =>
+                table.HasCheckConstraint(
+                    "CK_ChatRooms_ValidRoomConfiguration",
+                    """
+                    (
+                        [RoomType] = 1
+                        AND [TopicId] IS NULL
+                        AND [OwnerUserId] IS NOT NULL
+                    )
+                    OR
+                    (
+                        [RoomType] = 2
+                        AND [TopicId] IS NULL
+                        AND [OwnerUserId] IS NULL
+                    )
+                    OR
+                    (
+                        [RoomType] = 3
+                        AND [TopicId] IS NOT NULL
+                        AND [OwnerUserId] IS NULL
+                    )
+                    """
+                ));
+
+                entity.HasKey(r => r.Id);
+
+                entity.Property(r => r.Name)
+                    .IsRequired()
+                    .HasMaxLength(100);
+
+                entity.Property(r => r.RoomType)
+                    .IsRequired();
+
+                entity.Property(r => r.CreatedByUserId)
+                    .IsRequired()
+                    .HasMaxLength(450);
+
+                entity.Property(r => r.OwnerUserId)
+                    .HasMaxLength(450);
+
+                entity.Property(r => r.CreatedAt)
+                    .IsRequired();
+
+                // A topic can only have one chatroom.
+                entity.HasIndex(r => r.TopicId)
+                    .IsUnique()
+                    .HasFilter("[TopicId] IS NOT NULL");
+
+                // Topic relationship.
+                entity.HasOne(r => r.Topic)
+                    .WithOne()
+                    .HasForeignKey<ChatRoom>(r => r.TopicId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                // Helpful when retrieving rooms by type.
+                entity.HasIndex(r => r.RoomType);
+            });
+
+
+
+            // Chat room members
+            modelBuilder.Entity<ChatRoomMember>(entity =>
+            {
+                entity.HasKey(m => m.Id);
+
+                entity.Property(m => m.UserId)
+                    .IsRequired()
+                    .HasMaxLength(450);
+
+                entity.Property(m => m.JoinedAt)
+                    .IsRequired();
+
+                entity.Property(m => m.LastVisitedAt)
+                    .IsRequired(false);
+
+                entity.HasOne(m => m.ChatRoom)
+                    .WithMany(r => r.Members)
+                    .HasForeignKey(m => m.ChatRoomId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                // A user can only belong to a room once.
+                entity.HasIndex(m => new
+                {
+                    m.ChatRoomId,
+                    m.UserId
+                }).IsUnique();
+
+                // Find all rooms belonging to a user.
+                entity.HasIndex(m => m.UserId);
+            });
+
+            // Chat messages
+            modelBuilder.Entity<ChatMessage>(entity =>
+            {
+                entity.HasKey(m => m.Id);
+
+                entity.Property(m => m.SenderUserId)
+                    .IsRequired()
+                    .HasMaxLength(450);
+
+                entity.Property(m => m.Content)
+                    .IsRequired()
+                    .HasMaxLength(2000);
+
+                entity.Property(m => m.SentAt)
+                    .IsRequired();
+
+                entity.HasOne(m => m.ChatRoom)
+                    .WithMany(r => r.Messages)
+                    .HasForeignKey(m => m.ChatRoomId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                // Supports retrieving the latest messages efficiently.
+                entity.HasIndex(m => new
+                {
+                    m.ChatRoomId,
+                    m.Id
+                });
+            });
+
+            SeedData(modelBuilder);
+        }
+        private static void SeedData(ModelBuilder modelBuilder)
+        {
+            int topicId = 1;
+            int postId = 1;
+            int commentId = 1;
+
+            modelBuilder.Entity<Topic>().HasData(
+                new Topic
+                {
+                    Id = topicId,
+                    Title = "Welcome to the forum",
+                    CreatedByUserId = "seed-user",
+                    CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+                }
+            );
+
+            modelBuilder.Entity<Post>().HasData(
+                new Post
+                {
+                    Id = postId,
+                    TopicId = topicId,
+                    Content = "This is the first post",
+                    CreatedByUserId = "seed-user",
+                    CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+                }
+            );
+
+            modelBuilder.Entity<Comment>().HasData(
+                new Comment
+                {
+                    Id = commentId,
+                    PostId = postId,
+                    Content = "First comment!",
+                    CreatedByUserId = "seed-user",
+                    CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+                }
+            );
+
+            modelBuilder.Entity<ChatRoom>().HasData(
+                new ChatRoom
+                {
+                    Id = 1,
+                    Name = "General",
+                    RoomType = ChatRoomType.Miscellaneous,
+                    CreatedByUserId = "seed-user",
+                    OwnerUserId = null,
+                    TopicId = null,
+                    CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+                },
+                new ChatRoom
+                {
+                    Id = 2,
+                    Name = "Introductions",
+                    RoomType = ChatRoomType.Miscellaneous,
+                    CreatedByUserId = "seed-user",
+                    OwnerUserId = null,
+                    TopicId = null,
+                    CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+                },
+                new ChatRoom
+                {
+                    Id = 3,
+                    Name = "Off-topic",
+                    RoomType = ChatRoomType.Miscellaneous,
+                    CreatedByUserId = "seed-user",
+                    OwnerUserId = null,
+                    TopicId = null,
+                    CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+                }
+             );
+        }
+    }
+}
+
+
 
 using EntityContext;
 using EntityModels;
@@ -95,7 +481,6 @@ namespace Repository.Repositories
         // -------------------------
         // Chat rooms
         // -------------------------
-
         public async Task<ChatRoom?> GetRoomByIdAsync(int roomId)
         {
             return await context.ChatRooms.FirstOrDefaultAsync(r => r.Id == roomId);
@@ -175,7 +560,6 @@ namespace Repository.Repositories
             }
         }
 
-
         public async Task LeaveRoomAsync(int roomId, string userId)
         {
             await using IDbContextTransaction? transaction = await context.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
@@ -253,10 +637,28 @@ namespace Repository.Repositories
                 .ExecuteUpdateAsync(setters => setters.SetProperty(m => m.LastVisitedAt, DateTime.UtcNow));
         }
 
+        public async Task DeletePrivateRoomAsync(int roomId, string userId)
+        {
+            ChatRoom? room = await context.ChatRooms
+                .FirstOrDefaultAsync(r => r.Id == roomId);
+
+            if (room == null)
+                throw new KeyNotFoundException("Chat room not found.");
+
+            if (room.RoomType != ChatRoomType.Private)
+                throw new InvalidOperationException("Only private chatrooms can be deleted.");
+
+            if (room.OwnerUserId != userId)
+                throw new UnauthorizedAccessException("Only the chatroom owner can delete this chatroom.");
+
+            context.ChatRooms.Remove(room);
+
+            await context.SaveChangesAsync();
+        }
+
         // -------------------------
         // Membership
         // -------------------------
-
         public async Task<ChatRoomMember?> GetMembershipAsync(int roomId, string userId)
         {
             return await context.ChatRoomMembers.FirstOrDefaultAsync(m => m.ChatRoomId == roomId && m.UserId == userId);
@@ -288,7 +690,6 @@ namespace Repository.Repositories
         // -------------------------
         // Messages
         // -------------------------
-
         public async Task<IEnumerable<ChatMessage>> GetLatestMessagesAsync(int roomId, int count)
         {
             return await context.ChatMessages
@@ -333,6 +734,7 @@ namespace Repository.Repositories
     }
 }
 
+
 using Application.Interfaces.Services.Features;
 using Application.Interfaces.Services.User;
 using EntityModels;
@@ -350,6 +752,7 @@ namespace Application.Services.Features
         private readonly IFriendshipRepository friendshipRepository;
         private readonly ICurrentUserService currentUser;
         private readonly IUserService userService;
+        private readonly IChatMembershipNotifier membershipNotifier;
 
         private const int MessageLimit = 100;
         private const int MaxMessageLength = 2000;
@@ -358,12 +761,14 @@ namespace Application.Services.Features
             IChatRepository chatRepository,
             IFriendshipRepository friendshipRepository,
             ICurrentUserService currentUser,
-            IUserService userService)
+            IUserService userService,
+            IChatMembershipNotifier membershipNotifier)
         {
             this.chatRepository = chatRepository;
             this.friendshipRepository = friendshipRepository;
             this.currentUser = currentUser;
             this.userService = userService;
+            this.membershipNotifier = membershipNotifier;
         }
 
         // --------------------------------
@@ -406,7 +811,8 @@ namespace Application.Services.Features
 
             if (room.RoomType == ChatRoomType.Topic)
             {
-                ChatRoomMember? membership = await chatRepository.GetMembershipAsync(roomId, userId);
+                ChatRoomMember? membership =
+                    await chatRepository.GetMembershipAsync(roomId, userId);
 
                 if (membership == null)
                 {
@@ -416,6 +822,8 @@ namespace Application.Services.Features
                         UserId = userId,
                         JoinedAt = DateTime.UtcNow
                     });
+
+                    await membershipNotifier.NotifyMembersChangedAsync(roomId);
                 }
             }
             else if (room.RoomType == ChatRoomType.Miscellaneous)
@@ -624,6 +1032,15 @@ namespace Application.Services.Features
                 UserId = invitedUserId,
                 JoinedAt = DateTime.UtcNow
             });
+
+            await membershipNotifier.NotifyMembersChangedAsync(roomId);
+        }
+
+        public async Task DeletePrivateRoomAsync(int roomId)
+        {
+            string userId = currentUser.GetRequiredUserId();
+
+            await chatRepository.DeletePrivateRoomAsync(roomId, userId);
         }
 
         // --------------------------------
@@ -650,6 +1067,8 @@ namespace Application.Services.Features
                 UserId = userId,
                 JoinedAt = DateTime.UtcNow
             });
+
+            await membershipNotifier.NotifyMembersChangedAsync(roomId);
         }
 
         public async Task RemoveTemporaryMembershipAsync(int roomId, string userId)
@@ -675,6 +1094,8 @@ namespace Application.Services.Features
                 return;
 
             await chatRepository.RemoveMemberAsync(membership);
+
+            await membershipNotifier.NotifyMembersChangedAsync(roomId);
         }
 
         public async Task LeaveRoomAsync(int roomId)
@@ -682,6 +1103,8 @@ namespace Application.Services.Features
             string userId = currentUser.GetRequiredUserId();
 
             await chatRepository.LeaveRoomAsync(roomId, userId);
+
+            await membershipNotifier.NotifyMembersChangedAsync(roomId);
         }
 
         public async Task<int> GetUnseenPrivateRoomCountAsync()
@@ -910,6 +1333,24 @@ namespace ViewModels.Chat
     }
 }
 
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace ViewModels.Chat
+{
+    public class ChatMemberView
+    {
+        public string UserId { get; set; } = string.Empty;
+
+        public string Username { get; set; } = string.Empty;
+
+        public DateTime JoinedAt { get; set; }
+
+        public bool IsOwner { get; set; }
+    }
+}
+
 
 using System;
 using System.Collections.Generic;
@@ -935,24 +1376,6 @@ namespace ViewModels.Chat
     }
 }
 
-using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace ViewModels.Chat
-{
-    public class ChatMemberView
-    {
-        public string UserId { get; set; } = string.Empty;
-
-        public string Username { get; set; } = string.Empty;
-
-        public DateTime JoinedAt { get; set; }
-
-        public bool IsOwner { get; set; }
-    }
-}
-
 namespace ViewModels.Chat
 {
     public class ChatFriendView
@@ -960,240 +1383,6 @@ namespace ViewModels.Chat
         public string UserId { get; set; } = string.Empty;
 
         public string Username { get; set; } = string.Empty;
-    }
-}
-
-
-using Application.Interfaces.Services.Features;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.SignalR;
-using OpenForum.Services;
-using ViewModels.Chat;
-
-namespace OpenForum.Hubs
-{
-    [Authorize]
-    public class ChatHub : Hub
-    {
-        private readonly IChatService chatService;
-        private readonly ChatConnectionTracker connectionTracker;
-
-        public ChatHub(
-            IChatService chatService,
-            ChatConnectionTracker connectionTracker)
-        {
-            this.chatService = chatService;
-            this.connectionTracker = connectionTracker;
-        }
-
-        public override async Task OnConnectedAsync()
-        {
-            string? userId = Context.UserIdentifier;
-
-            if (!string.IsNullOrEmpty(userId))
-            {
-                connectionTracker.AddConnection(userId, Context.ConnectionId);
-            }
-
-            await base.OnConnectedAsync();
-        }
-
-        public override async Task OnDisconnectedAsync(Exception? exception)
-        {
-            string? userId = Context.UserIdentifier;
-
-            if (!string.IsNullOrEmpty(userId))
-            {
-                // Atomically remove this connection and find rooms
-                // where this was the user's last active connection.
-                List<int> roomsToCleanUp = connectionTracker.RemoveConnectionAndGetLastRooms(userId, Context.ConnectionId);
-
-                foreach (int roomId in roomsToCleanUp)
-                {
-                    // The service will only remove membership from
-                    // Miscellaneous and Topic rooms.
-                    await chatService.RemoveTemporaryMembershipAsync(roomId, userId);
-                }
-            }
-
-            await base.OnDisconnectedAsync(exception);
-        }
-
-        public async Task JoinRoom(int roomId)
-        {
-            if (roomId <= 0)
-                throw new ArgumentException("Invalid room ID.");
-
-            await chatService.GetRoomAsync(roomId);
-
-            connectionTracker.AddRoom(Context.ConnectionId, roomId);
-
-            try
-            {
-                await Groups.AddToGroupAsync(Context.ConnectionId, GetGroupName(roomId));
-            }
-            catch
-            {
-                connectionTracker.RemoveRoom(Context.ConnectionId, roomId);
-                throw;
-            }
-        }
-
-        public async Task LeaveRoom(int roomId)
-        {
-            if (roomId <= 0)
-                throw new ArgumentException("Invalid room ID.");
-
-            await Groups.RemoveFromGroupAsync(Context.ConnectionId, GetGroupName(roomId));
-
-            connectionTracker.RemoveRoom(Context.ConnectionId, roomId);
-        }
-
-        public async Task SendMessage(int roomId, string content)
-        {
-            if (roomId <= 0)
-                throw new ArgumentException("Invalid room ID.");
-
-            ChatMessageView message = await chatService.SendMessageAsync(roomId, content);
-
-            await Clients.Group(GetGroupName(roomId)).SendAsync("ReceiveMessage", message);
-        }
-
-        public static string GetGroupName(int roomId)
-        {
-            return $"chatroom_{roomId}";
-        }
-    }
-}
-
-
-using System.Collections.Concurrent;
-
-public class ChatConnectionTracker
-{
-    private readonly object _lock = new();
-
-    // User ID -> connection IDs
-    private readonly Dictionary<string, HashSet<string>> _userConnections = new();
-
-    // Connection ID -> joined room IDs
-    private readonly Dictionary<string, HashSet<int>> _connectionRooms = new();
-
-    public List<string> GetConnections(string userId)
-    {
-        lock (_lock)
-        {
-            return _userConnections.TryGetValue(userId, out var connections) ? connections.ToList() : new List<string>();
-        }
-    }
-
-    public void AddConnection(string userId, string connectionId)
-    {
-        lock (_lock)
-        {
-            if (!_userConnections.TryGetValue(userId, out var connections))
-            {
-                connections = new HashSet<string>();
-                _userConnections[userId] = connections;
-            }
-
-            connections.Add(connectionId);
-
-            if (!_connectionRooms.ContainsKey(connectionId))
-            {
-                _connectionRooms[connectionId] = new HashSet<int>();
-            }
-        }
-    }
-
-    public void RemoveConnection(string userId, string connectionId)
-    {
-        lock (_lock)
-        {
-            if (_userConnections.TryGetValue(userId, out var connections))
-            {
-                connections.Remove(connectionId);
-
-                if (connections.Count == 0)
-                {
-                    _userConnections.Remove(userId);
-                }
-            }
-
-            _connectionRooms.Remove(connectionId);
-        }
-    }
-
-    public List<int> RemoveConnectionAndGetLastRooms(string userId, string connectionId)
-    {
-        lock (_lock)
-        {
-            var joinedRooms = _connectionRooms.TryGetValue(connectionId, out var rooms) ? rooms.ToList() : new List<int>();
-
-            _connectionRooms.Remove(connectionId);
-
-            if (!_userConnections.TryGetValue(userId, out var connections))
-                return joinedRooms;
-
-            connections.Remove(connectionId);
-
-            if (connections.Count == 0)
-            {
-                _userConnections.Remove(userId);
-                return joinedRooms;
-            }
-
-            // Only return rooms that no remaining connection for this user
-            // is currently joined to.
-            return joinedRooms
-                .Where(roomId => !connections.Any(otherConnectionId =>
-                    _connectionRooms.TryGetValue(otherConnectionId, out var otherRooms) && otherRooms.Contains(roomId)))
-                .ToList();
-        }
-    }
-
-    public void AddRoom(string connectionId, int roomId)
-    {
-        lock (_lock)
-        {
-            if (!_connectionRooms.TryGetValue(connectionId, out var rooms))
-            {
-                rooms = new HashSet<int>();
-                _connectionRooms[connectionId] = rooms;
-            }
-
-            rooms.Add(roomId);
-        }
-    }
-
-    public void RemoveRoom(string connectionId, int roomId)
-    {
-        lock (_lock)
-        {
-            if (_connectionRooms.TryGetValue(connectionId, out var rooms))
-            {
-                rooms.Remove(roomId);
-            }
-        }
-    }
-
-    public List<int> GetRooms(string connectionId)
-    {
-        lock (_lock)
-        {
-            return _connectionRooms.TryGetValue(connectionId, out var rooms) ? rooms.ToList() : new List<int>();
-        }
-    }
-
-    public bool HasOtherConnectionInRoom(string userId, string connectionId, int roomId)
-    {
-        lock (_lock)
-        {
-            if (!_userConnections.TryGetValue(userId, out var connections))
-                return false;
-
-            return connections.Where(id => id != connectionId).Any(id => _connectionRooms.TryGetValue(id, out var rooms) && rooms.Contains(roomId));
-        }
     }
 }
 
@@ -1439,6 +1628,48 @@ namespace OpenForum.Controllers
         }
 
         // --------------------------------
+        // Delete private rooms
+        // --------------------------------
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeletePrivateRoom(int roomId)
+        {
+            try
+            {
+                // Delete the room and its database records.
+                await chatService.DeletePrivateRoomAsync(roomId);
+
+                // Find all active connections currently in this room.
+                List<string> connections = connectionTracker.GetConnectionsInRoom(roomId);
+
+                string groupName = ChatHub.GetGroupName(roomId);
+
+                // Remove every connection from the deleted room.
+                foreach (string connectionId in connections)
+                {
+                    await chatHub.Groups.RemoveFromGroupAsync(connectionId, groupName);
+
+                    connectionTracker.RemoveRoom(connectionId, roomId);
+                }
+
+                return Ok();
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound();
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Forbid();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
+        // --------------------------------
         // Membership
         // --------------------------------
 
@@ -1553,6 +1784,262 @@ namespace OpenForum.Controllers
     }
 }
 
+
+using Application.Interfaces.Services.Features;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.SignalR;
+using OpenForum.Services;
+using ViewModels.Chat;
+
+namespace OpenForum.Hubs
+{
+    [Authorize]
+    public class ChatHub : Hub
+    {
+        private readonly IChatService chatService;
+        private readonly ChatConnectionTracker connectionTracker;
+
+        public ChatHub(
+            IChatService chatService,
+            ChatConnectionTracker connectionTracker)
+        {
+            this.chatService = chatService;
+            this.connectionTracker = connectionTracker;
+        }
+
+        public override async Task OnConnectedAsync()
+        {
+            string? userId = Context.UserIdentifier;
+
+            if (!string.IsNullOrEmpty(userId))
+            {
+                connectionTracker.AddConnection(userId, Context.ConnectionId);
+            }
+
+            await base.OnConnectedAsync();
+        }
+
+        public override async Task OnDisconnectedAsync(Exception? exception)
+        {
+            string? userId = Context.UserIdentifier;
+
+            if (!string.IsNullOrEmpty(userId))
+            {
+                // Atomically remove this connection and find rooms
+                // where this was the user's last active connection.
+                List<int> roomsToCleanUp = connectionTracker.RemoveConnectionAndGetLastRooms(userId, Context.ConnectionId);
+
+                foreach (int roomId in roomsToCleanUp)
+                {
+                    // The service will only remove membership from
+                    // Miscellaneous and Topic rooms.
+                    await chatService.RemoveTemporaryMembershipAsync(roomId, userId);
+                }
+            }
+
+            await base.OnDisconnectedAsync(exception);
+        }
+
+        public async Task JoinRoom(int roomId)
+        {
+            if (roomId <= 0)
+                throw new ArgumentException("Invalid room ID.");
+
+            await chatService.GetRoomAsync(roomId);
+
+            connectionTracker.AddRoom(Context.ConnectionId, roomId);
+
+            try
+            {
+                await Groups.AddToGroupAsync(Context.ConnectionId, GetGroupName(roomId));
+            }
+            catch
+            {
+                connectionTracker.RemoveRoom(Context.ConnectionId, roomId);
+                throw;
+            }
+        }
+
+        public async Task LeaveRoom(int roomId)
+        {
+            if (roomId <= 0)
+                throw new ArgumentException("Invalid room ID.");
+
+            await Groups.RemoveFromGroupAsync(Context.ConnectionId, GetGroupName(roomId));
+
+            connectionTracker.RemoveRoom(Context.ConnectionId, roomId);
+        }
+
+        public async Task SendMessage(int roomId, string content)
+        {
+            if (roomId <= 0)
+                throw new ArgumentException("Invalid room ID.");
+
+            ChatMessageView message = await chatService.SendMessageAsync(roomId, content);
+
+            await Clients.Group(GetGroupName(roomId)).SendAsync("ReceiveMessage", message);
+        }
+
+        public static string GetGroupName(int roomId)
+        {
+            return $"chatroom_{roomId}";
+        }
+    }
+}
+
+
+using System.Collections.Concurrent;
+
+public class ChatConnectionTracker
+{
+    private readonly object _lock = new();
+
+    // User ID -> connection IDs
+    private readonly Dictionary<string, HashSet<string>> _userConnections = new();
+
+    // Connection ID -> joined room IDs
+    private readonly Dictionary<string, HashSet<int>> _connectionRooms = new();
+
+    public List<string> GetConnections(string userId)
+    {
+        lock (_lock)
+        {
+            return _userConnections.TryGetValue(userId, out var connections) ? connections.ToList() : new List<string>();
+        }
+    }
+
+    public void AddConnection(string userId, string connectionId)
+    {
+        lock (_lock)
+        {
+            if (!_userConnections.TryGetValue(userId, out var connections))
+            {
+                connections = new HashSet<string>();
+                _userConnections[userId] = connections;
+            }
+
+            connections.Add(connectionId);
+
+            if (!_connectionRooms.ContainsKey(connectionId))
+            {
+                _connectionRooms[connectionId] = new HashSet<int>();
+            }
+        }
+    }
+
+    public void RemoveConnection(string userId, string connectionId)
+    {
+        lock (_lock)
+        {
+            if (_userConnections.TryGetValue(userId, out var connections))
+            {
+                connections.Remove(connectionId);
+
+                if (connections.Count == 0)
+                {
+                    _userConnections.Remove(userId);
+                }
+            }
+
+            _connectionRooms.Remove(connectionId);
+        }
+    }
+
+    public List<int> RemoveConnectionAndGetLastRooms(string userId, string connectionId)
+    {
+        lock (_lock)
+        {
+            var joinedRooms = _connectionRooms.TryGetValue(connectionId, out var rooms) ? rooms.ToList() : new List<int>();
+
+            _connectionRooms.Remove(connectionId);
+
+            if (!_userConnections.TryGetValue(userId, out var connections))
+                return joinedRooms;
+
+            connections.Remove(connectionId);
+
+            if (connections.Count == 0)
+            {
+                _userConnections.Remove(userId);
+                return joinedRooms;
+            }
+
+            // Only return rooms that no remaining connection for this user
+            // is currently joined to.
+            return joinedRooms
+                .Where(roomId => !connections.Any(otherConnectionId =>
+                    _connectionRooms.TryGetValue(otherConnectionId, out var otherRooms) && otherRooms.Contains(roomId)))
+                .ToList();
+        }
+    }
+
+    public void AddRoom(string connectionId, int roomId)
+    {
+        lock (_lock)
+        {
+            if (!_connectionRooms.TryGetValue(connectionId, out var rooms))
+            {
+                rooms = new HashSet<int>();
+                _connectionRooms[connectionId] = rooms;
+            }
+
+            rooms.Add(roomId);
+        }
+    }
+
+    public void RemoveRoom(string connectionId, int roomId)
+    {
+        lock (_lock)
+        {
+            if (_connectionRooms.TryGetValue(connectionId, out var rooms))
+            {
+                rooms.Remove(roomId);
+            }
+        }
+    }
+
+    public List<int> GetRooms(string connectionId)
+    {
+        lock (_lock)
+        {
+            return _connectionRooms.TryGetValue(connectionId, out var rooms) ? rooms.ToList() : new List<int>();
+        }
+    }
+
+    public bool HasOtherConnectionInRoom(string userId, string connectionId, int roomId)
+    {
+        lock (_lock)
+        {
+            if (!_userConnections.TryGetValue(userId, out var connections))
+                return false;
+
+            return connections.Where(id => id != connectionId).Any(id => _connectionRooms.TryGetValue(id, out var rooms) && rooms.Contains(roomId));
+        }
+    }
+}
+
+using Application.Interfaces.Services.Features;
+using Microsoft.AspNetCore.SignalR;
+using OpenForum.Hubs;
+
+namespace OpenForum.Services
+{
+    public class ChatMembershipNotifier : IChatMembershipNotifier
+    {
+        private readonly IHubContext<ChatHub> hubContext;
+
+        public ChatMembershipNotifier(IHubContext<ChatHub> hubContext)
+        {
+            this.hubContext = hubContext;
+        }
+
+        public async Task NotifyMembersChangedAsync(int roomId)
+        {
+            await hubContext.Clients.Group(ChatHub.GetGroupName(roomId)).SendAsync("RoomMembersChanged", roomId);
+        }
+    }
+}
+
 //chat-index.js
 document.addEventListener("DOMContentLoaded", () => {
 
@@ -1584,10 +2071,13 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             rooms.forEach(room => {
-                const item = document.createElement("a");
 
-                item.href = `/Chat/OpenRoom?roomId=${room.id}`;
-                item.className = "list-group-item list-group-item-action";
+                const item = document.createElement("div");
+
+                item.className = "list-group-item d-flex justify-content-between align-items-center";
+
+                // Room information
+                const info = document.createElement("div");
 
                 const title = document.createElement("strong");
                 title.textContent = room.name;
@@ -1596,12 +2086,111 @@ document.addEventListener("DOMContentLoaded", () => {
                 details.className = "small text-muted";
                 details.textContent = `${room.memberCount} members`;
 
-                item.append(title, details);
+                info.append(title, details);
+
+                // Room actions
+                const actions = document.createElement("div");
+                actions.className = "d-flex gap-2";
+
+                // Open button
+                const openButton = document.createElement("a");
+
+                openButton.href = `/Chat/OpenRoom?roomId=${room.id}`;
+                openButton.className = "btn btn-outline-primary btn-sm";
+                openButton.textContent = "Open";
+
+                actions.appendChild(openButton);
+
+                // Only the current owner gets the delete button.
+                if (room.isOwner) {
+
+                    const deleteButton = document.createElement("button");
+
+                    deleteButton.type = "button";
+                    deleteButton.className = "btn btn-outline-danger btn-sm";
+                    deleteButton.textContent = "Delete";
+
+                    deleteButton.addEventListener("click", async () => {
+                        await deletePrivateRoom(room.id, deleteButton);
+                    });
+
+                    actions.appendChild(deleteButton);
+                }
+
+                item.append(info, actions);
+
                 privateRoomsList.appendChild(item);
             });
 
         } catch (error) {
             showError(error.message);
+        }
+    }
+
+    async function deletePrivateRoom(roomId, button) {
+
+        const confirmed = confirm(
+            "Are you sure you want to delete this private chatroom?"
+        );
+
+        if (!confirmed)
+            return;
+
+        const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+
+        button.disabled = true;
+
+        try {
+
+            const response = await fetch("/Chat/DeletePrivateRoom", {
+
+                method: "POST",
+
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded"
+                },
+
+                body: new URLSearchParams({
+                    roomId,
+                    __RequestVerificationToken: token
+                })
+            });
+
+            if (!response.ok) {
+
+                let errorMessage = "Could not delete the chatroom.";
+
+                try {
+                    const result = await response.json();
+
+                    if (result.error)
+                        errorMessage = result.error;
+
+                } catch {
+                    // Keep default error message.
+                }
+
+                throw new Error(errorMessage);
+            }
+
+            // Remove the deleted room from the list.
+            const item = button.closest(".list-group-item");
+
+            if (item) {
+                item.remove();
+            }
+
+            // If there are no private rooms left, show the empty message.
+            if (privateRoomsList.children.length === 0) {
+                document.getElementById("privateRoomsEmpty")
+                    .classList.remove("d-none");
+            }
+
+        } catch (error) {
+
+            showError(error.message);
+
+            button.disabled = false;
         }
     }
 
@@ -1840,7 +2429,6 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 
-
 document.addEventListener("DOMContentLoaded", async () => {
 
     const roomId = window.chatRoomId;
@@ -2001,6 +2589,18 @@ document.addEventListener("DOMContentLoaded", async () => {
             if (!isPageLeaving) {
                 addMessage(message);
             }
+        });
+
+        // Receive notifications when room membership changes.
+        connection.on("RoomMembersChanged", changedRoomId => {
+
+            if (isPageLeaving)
+                return;
+
+            if (Number(changedRoomId) !== Number(roomId))
+                return;
+
+            loadRoomMembers();
         });
 
         connection.onreconnecting(() => {
@@ -2435,6 +3035,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 });
 
+
 <!-- /Views/Chat/Index.cshtml-->
 @{
     ViewData["Title"] = "Chat";
@@ -2784,165 +3385,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     <script src="~/js/chat-room.js" asp-append-version="true"></script>
 }
 
---- and chat implementation for topics inside the topic service now we are at it: 
 
-using Application.common.Application.Common;
-using Application.Interfaces.Contexts;
-using Application.Interfaces.Mappers.Forum;
-using Application.Interfaces.Services.Features;
-using Application.Interfaces.Services.Forum;
-using Application.Interfaces.Services.User;
-using EntityContext;
-using EntityModels;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage;
-using Repository.Interfaces.Repositories;
-using Repository.Interfaces.Utils;
-using ViewModels.Topic;
+Right now for private chatrooms, they are only deleted, after the last member who get set as owner, leaves the chatroom
 
-namespace Application.Services.Forum
-{
-    public class TopicService : ITopicService
-    {
-        private readonly ITopicRepository topicRepository;
-        private readonly ITopicMapper topicMapper;
-        private readonly ICurrentUserService currentUser;
-        private readonly IUserService userService;
-        private readonly IUnitOfWork unitOfWork;
-        private readonly IChatService chatService;
-        private const int PageSize = 5;
-
-        public TopicService(
-            ITopicRepository topicRepository,
-            ITopicMapper topicMapper,
-            ICurrentUserService currentUser,
-            IUserService userService,
-            IUnitOfWork unitOfWork,
-            IChatService chatService)
-        {
-            this.topicRepository = topicRepository;
-            this.topicMapper = topicMapper;
-            this.currentUser = currentUser;
-            this.userService = userService;
-            this.unitOfWork = unitOfWork;
-            this.chatService = chatService;
-        }
-
-        public async Task<TopicIndexView> GetTopicIndexViewAsync(int page = 1, TopicCreateView? createTopic = null)
-        {
-            page = Math.Max(1, page);
-
-            (IEnumerable<Topic> Items, int TotalCount) result = await topicRepository.GetPageAsync(page, PageSize);
-
-            int totalPages = Math.Max(1, (int)Math.Ceiling(result.TotalCount / (double)PageSize));
-
-            // If the requested page is beyond the last page,
-            // use the last valid page instead.
-            if (page > totalPages)
-            {
-                page = totalPages;
-                result = await topicRepository.GetPageAsync(page, PageSize);
-            }
-
-            string? userId = currentUser.GetUserIdOrNull();
-
-            List<TopicListItemView> topics = result.Items.Select(
-                topic => 
-                {
-                    TopicListItemView item = topicMapper.ToListItemView(topic);
-                    item.CreatorDisplayName = CreatorDisplayNameResolver.Resolve(userId, topic.CreatedByUserId, item.Creator);
-                    item.CanManage = userId != null && topic.CreatedByUserId == userId;
-                    return item;
-                })
-                .ToList();
-
-            return new TopicIndexView
-            {
-                Topics = topics,
-                CreateTopic = createTopic ?? new TopicCreateView(),
-                EditTopic = null,
-                CanCreate = userId != null,
-                CurrentPage = page,
-                TotalPages = totalPages
-            };
-        }
-
-        public async Task<TopicIndexView?> GetEditViewAsync(int id, int page = 1, TopicEditView? editTopic = null)
-        {
-            Topic? topic = await topicRepository.GetByIdAsync(id);
-
-            if (topic == null)
-                return null;
-
-            string userId = currentUser.GetRequiredUserId();
-
-            if (topic.CreatedByUserId != userId)
-                throw new UnauthorizedAccessException("You are not allowed to edit this topic.");
-
-            TopicIndexView viewModel = await GetTopicIndexViewAsync(page);
-
-            viewModel.EditTopic = editTopic ?? topicMapper.ToEditView(topic);
-
-            return viewModel;
-        }
-
-        public async Task CreateAsync(TopicCreateView model)
-        {
-            string userId = currentUser.GetRequiredUserId();
-
-            Topic topic = topicMapper.ToEntity(model);
-            topic.CreatedByUserId = userId;
-            topic.CreatedByUserName = await userService.GetUsernameByIdAsync(userId);
-
-            await unitOfWork.BeginTransactionAsync();
-
-            try
-            {
-                // Save the topic first so it receives its database ID.
-                await topicRepository.AddAsync(topic);
-
-                // Create its chatroom and add the creator as the first member.
-                await chatService.GetOrCreateTopicRoomAsync(topic.Id);
-
-                await unitOfWork.CommitTransactionAsync();
-            }
-            catch
-            {
-                await unitOfWork.RollbackTransactionAsync();
-                throw;
-            }
-        }
-
-        public async Task UpdateAsync(TopicEditView model)
-        {
-            string userId = currentUser.GetRequiredUserId();
-            Topic? topic = await topicRepository.GetByIdAsync(model.Id);
-
-            if (topic == null)
-                return;
-
-            if (topic.CreatedByUserId != userId)
-                throw new UnauthorizedAccessException("You are not allowed to edit this topic.");
-
-            topic.Title = model.Title;
-
-            await topicRepository.UpdateAsync(topic);
-        }
-
-        public async Task DeleteAsync(int id)
-        {
-            string userId = currentUser.GetRequiredUserId();
-
-            Topic? topic = await topicRepository.GetByIdAsync(id);
-
-            if (topic == null)
-                return;
-
-            if (topic.CreatedByUserId != userId)
-                throw new UnauthorizedAccessException("You are not allowed to delete this topic.");
-
-            await topicRepository.DeleteAsync(id);
-        }
-
-    }
-}
+I want to make a change to it. In the list of private chatrooms, The one who is currently set as the owner of a private chatroom, should be able to delete the chatroom at anytime. So a deletebutton on private chats for the current owner of the private chat. Its only for private chats this should be possible. When the private chat is deleted, the members of that chat ofcourse gets disassociated with it. Hopefully that all makes sense

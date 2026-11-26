@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace ViewModels.Messages
+﻿namespace ViewModels.Messages
 {
     public class MessageItemView
     {
@@ -19,5 +15,8 @@ namespace ViewModels.Messages
         public DateTime SentAt { get; set; }
 
         public bool IsRead { get; set; }
+
+        // Indicates that the sender deleted the message.
+        public bool IsDeletedBySender { get; set; }
     }
 }

@@ -240,6 +240,51 @@ namespace OpenForum.Controllers
         }
 
         // --------------------------------
+        // Delete private rooms
+        // --------------------------------
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeletePrivateRoom(int roomId)
+        {
+            try
+            {
+                // Delete the room and its database records.
+                await chatService.DeletePrivateRoomAsync(roomId);
+
+                string groupName = ChatHub.GetGroupName(roomId);
+
+                // Notify everyone currently in the room before removing
+                // their connections from the SignalR group.
+                await chatHub.Clients.Group(groupName).SendAsync("RoomDeleted", roomId);
+
+                // Find all active connections currently in this room.
+                List<string> connections = connectionTracker.GetConnectionsInRoom(roomId);
+
+                foreach (string connectionId in connections)
+                {
+                    await chatHub.Groups.RemoveFromGroupAsync(connectionId, groupName);
+
+                    connectionTracker.RemoveRoom(connectionId, roomId);
+                }
+
+                return Ok();
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound();
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Forbid();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
+        // --------------------------------
         // Membership
         // --------------------------------
 
@@ -269,34 +314,42 @@ namespace OpenForum.Controllers
         {
             try
             {
-                // Identify the authenticated user.
                 string? userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
                 if (string.IsNullOrEmpty(userId))
                     return Forbid();
 
-                // First remove the user's database membership.
-                await chatService.LeaveRoomAsync(roomId);
-
-                // Find every active SignalR connection belonging to this user.
-                IReadOnlyList<string> connections = connectionTracker.GetConnections(userId);
+                // Leave the room. Returns true if the room was deleted
+                // or had already been deleted.
+                bool roomDeleted = await chatService.LeaveRoomAsync(roomId);
 
                 string groupName = ChatHub.GetGroupName(roomId);
 
+                // If the final member caused deletion, notify the remaining
+                // connected clients before removing the SignalR connections.
+                if (roomDeleted)
+                {
+                    await chatHub.Clients.Group(groupName)
+                        .SendAsync("RoomDeleted", roomId);
+                }
+
+                // Remove all active connections belonging to this user.
+                IReadOnlyList<string> connections =
+                    connectionTracker.GetConnections(userId);
+
                 foreach (string connectionId in connections)
                 {
-                    // Remove the connection from the SignalR group.
+                    // Remove the departing user's connections first.
                     await chatHub.Groups.RemoveFromGroupAsync(connectionId, groupName);
 
-                    // Also update our connection tracker.
                     connectionTracker.RemoveRoom(connectionId, roomId);
                 }
 
+                // Now notify only the remaining room members.
+                await chatHub.Clients.Group(groupName)
+                    .SendAsync("RoomMembersChanged", roomId);
+
                 return Ok();
-            }
-            catch (KeyNotFoundException)
-            {
-                return NotFound();
             }
             catch (UnauthorizedAccessException)
             {
@@ -307,7 +360,6 @@ namespace OpenForum.Controllers
                 return BadRequest(new { error = ex.Message });
             }
         }
-
 
         // --------------------------------
         // Topic rooms
